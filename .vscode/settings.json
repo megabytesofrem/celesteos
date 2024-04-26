@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "cstdint": "cpp",
+        "string.h": "c"
+    }
+}
