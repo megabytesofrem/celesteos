@@ -2,6 +2,7 @@
 #include <cpu/idt.h>
 #include <cpu/ports.h>
 #include <drivers/framebuffer.h>
+#include <macho.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
 
@@ -10,7 +11,9 @@
 #include <limine.h>
 
 #include <cstdint>
-#include "pony.h"
+
+// Mach-O test payload
+#include "macho_test.h"
 
 /* Macro so I can avoid typing this over and over again */
 #define HCF \
@@ -124,11 +127,12 @@ extern "C" void kmain(void) {
     klog(LOG_INFO, "kmain: Test page allocated successfully.\n");
     klog(LOG_INFO, "       Test page address: 0x%p\n", test_page);
 
-    // Framebuffer test: render a pony
-    klog(LOG_INFO, "kmain: Here is a pony to celebrate!\n");
-    drivers::Framebuffer::instance().draw_gimp_image(15, 100, header_data, image_width, image_height);
+    /* Mach-O test parsing */
+    macho::MachOInfo macho_info;
 
-    klog(LOG_INFO, "kmain: Pony rendered successfully :)\n");
+    klog(LOG_INFO, "kmain: Try to parse Mach-O test payload...\n");
+    macho::parse_macho(test_macho, macho_info);
+
     // Halt the CPU in an infinite loop
     HCF
 }

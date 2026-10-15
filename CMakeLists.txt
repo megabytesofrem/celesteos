@@ -52,6 +52,7 @@ add_executable(celesteos.elf
     src/stdlib/libkernel.cpp
     src/kernel/drivers/framebuffer.cpp
     src/kernel/drivers/font_8x16.h
+    src/kernel/macho.cpp
 )
 
 # Include directory setup for kernel headers

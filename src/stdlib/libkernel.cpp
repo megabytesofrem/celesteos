@@ -59,9 +59,9 @@ static void vkprint(const char* format,
                 kputs(buffer, fg_color, bg_color);
             } else if (format[i] == 'x') {
                 // %x: format an integer as a hexadecimal number
-                int x = va_arg(args, int);
+                unsigned int x = va_arg(args, unsigned int);
                 char buffer[12];
-                itoa(x, buffer, 16);
+                utoa(x, buffer, 16);
                 kputs(buffer, fg_color, bg_color);
             } else if (format[i] == 'p') {
                 // %p: format a pointer as a hexadecimal address

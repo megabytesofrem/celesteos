@@ -3,7 +3,6 @@
 #include <stdlib/string.h>
 
 #include "font_8x16.h"
-#include "pony.h"
 
 namespace drivers {
 
@@ -62,7 +61,7 @@ void Framebuffer::draw_gimp_image(size_t start_x, size_t start_y, const char* da
             uint8_t pixel[3];
 
             // Use GIMP's exact unpacking macro logic
-            HEADER_PIXEL(current_data, pixel);
+            //HEADER_PIXEL(current_data, pixel);
 
             uint8_t r = pixel[0];
             uint8_t g = pixel[1];

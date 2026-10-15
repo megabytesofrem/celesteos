@@ -164,7 +164,7 @@ void utoa(unsigned int value, char* str, int base) {
     int i = 0;
 
     do {
-        str[i++] = (value % base) + '0';
+        str[i++] = "0123456789abcdefghijklmnopqrstuvwxyz"[value % base];
     } while ((value /= base) > 0);
 
     str[i] = '\0';
