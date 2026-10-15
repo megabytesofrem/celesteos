@@ -23,7 +23,7 @@ gdt_entry_t gdt_entry_create(uint8_t access, uint8_t granularity) {
 /**
  * Initialize the GDT and load it into the CPU.
  */
-void initialize_gdt() {
+void gdt_initialize() {
     gdt.null_descriptor = gdt_entry_null();         /* null descriptor */
     gdt.kernel_code = gdt_entry_create(0x9A, 0x20); /* kernel code segment, ring 0, executable, long mode */
     gdt.kernel_data = gdt_entry_create(0x92, 0x00); /* kernel data segment, ring 0, writable */

@@ -1,15 +1,17 @@
 #include <cpu/gdt.h>
 #include <cpu/idt.h>
+#include <cpu/isr.h>
 #include <cpu/ports.h>
+#include <cpu/pic.h>
 #include <drivers/framebuffer.h>
-#include <macho.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
-#include <memory/heap_alloc.h>
+#include <memory/kmalloc.h>
 
 #include <stdlib/string.h>
 #include <libkernel.h>
 #include <limine.h>
+#include <macho.h>
 
 #include <stdint.h>
 
@@ -81,10 +83,13 @@ void kmain(void) {
     /* CPU Initialization */
 
     // Initialize the Global Descriptor Table (GDT)
-    initialize_gdt();
+    gdt_initialize();
 
     // Initialize the Interrupt Descriptor Table (IDT)
-    initialize_idt();
+    idt_initialize();
+
+    // Install ISRs
+    isr_install();
 
     /* Drivers Initialization */
 
@@ -105,6 +110,10 @@ void kmain(void) {
     }
 
     framebuffer_init(&global_framebuffer, fb);
+
+    /* FIXME: INTENTIONAL PAGE FAULT, REMOVE AFTER TESTING  */
+    uint64_t* test = (uint64_t*)0xCAFEBABE;
+    *test = 0xCAFECAFE;
 
     /* Memory Initialization */
 

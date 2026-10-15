@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CELESTEOS_IDT_H
+#define CELESTEOS_IDT_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -29,5 +30,11 @@ _Static_assert(sizeof(idt_pointer_t) == 10, "IDTR operands must be 10 bytes");
 _Static_assert(offsetof(idt_pointer_t, base) == 2,
                "IDTR base must follow the 16-bit limit");
 
-void idt_set_entry(int entry, uint64_t handler, int type_attr);
-void initialize_idt();
+typedef void (*idt_handler_t)(void);
+
+void idt_set_entry(int entry, idt_handler_t handler, int type_attr);
+/* Loading the IDT does not enable interrupts; isr_install completes setup. */
+void idt_initialize(void);
+void idt_load(void);
+
+#endif  // CELESTEOS_IDT_H

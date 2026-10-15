@@ -3,11 +3,16 @@
 #include <stdlib/string.h>
 
 #include "ter_u16b.h"
+#include "ter_u16n.h"
 
 struct framebuffer_state global_framebuffer;
 
 bool framebuffer_is_initialized(struct framebuffer_state* fb) {
     return (fb != NULL && fb->fb != NULL);
+}
+
+void framebuffer_set_bold(struct framebuffer_state* fb, bool bold) {
+    fb->bold = bold;
 }
 
 void framebuffer_init(struct framebuffer_state* fb, struct limine_framebuffer* limine_fb) {
@@ -38,9 +43,16 @@ void framebuffer_draw_pixel(struct framebuffer_state* fb, size_t x, size_t y, ui
 
 void framebuffer_draw_char(struct framebuffer_state* fb, char c, size_t x, size_t y, uint32_t fg_color, uint32_t bg_color) {
     uint8_t glyph_index = (uint8_t)c;
+    uint8_t* glyph = NULL;
 
     // Get the glyph bitmap for the character from the font table
-    const uint8_t* glyph = font_8x16[glyph_index];
+    // TODO: this is hacky, is there a better way?
+
+    if (fb->bold) {
+        glyph = font_8x16_b[glyph_index];
+    } else {
+        glyph = font_8x16_n[glyph_index];
+    }
 
     for (size_t row = 0; row < FONT_HEIGHT; row++) {
         uint8_t bitmap_row = glyph[row];

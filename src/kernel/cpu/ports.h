@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CELESTEOS_PORTS_H
+#define CELESTEOS_PORTS_H
 
 #include <stdint.h>
 
@@ -61,6 +62,14 @@ static inline void outl(uint16_t port, uint32_t value) {
                      : "a"(value), "Nd"(port));
 }
 
+static inline void io_wait(void) {
+    /* Port 0x80 is used for 'checkpoints' during POST. */
+    /* The Linux kernel seems to think it is free for use :-/ */
+    __asm__ volatile("outb %%al, $0x80" : : "a"(0));
+
+    /* %%al instead of %0 makes no difference.  TODO: does the register need to be zeroed? */
+}
+
 /* Debug port (Bochs/QEMU 0xE9) */
 
 /**
@@ -71,3 +80,5 @@ static inline void e9_write(const char* str) {
         outb(0xE9, *str++);
     }
 }
+
+#endif  // CELESTEOS_PORTS_H

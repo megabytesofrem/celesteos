@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CELESTEOS_GDT_H
+#define CELESTEOS_GDT_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -67,7 +68,7 @@ _Static_assert(offsetof(task_state_segment_t, ist) == 36,
 _Static_assert(offsetof(task_state_segment_t, io_map_base) == 102,
                "TSS I/O map base must be at offset 102");
 
-void initialize_gdt();
+void gdt_initialize();
 gdt_entry_t gdt_entry_null();
 gdt_entry_t gdt_entry_create(uint8_t access, uint8_t granularity);
 
@@ -80,3 +81,5 @@ extern void load_gdt(const gdt_pointer_t* gdt_ptr, uint16_t cs, uint16_t ds);
  * Load the Task State Segment (TSS) with the given segment selector.
  */
 extern void load_tss(uint16_t tss_selector);
+
+#endif  // CELESTEOS_GDT_H
