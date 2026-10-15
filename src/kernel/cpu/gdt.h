@@ -52,8 +52,8 @@ struct GDT {
     GDTEntry user_code;       /* user code segment: 0x20 (access: 0xFA, flags: 0x20) */
 };
 
-static GDT gdt;
-static GDTPointer gdt_ptr;
+[[maybe_unused]] static GDT gdt;
+[[maybe_unused]] static GDTPointer gdt_ptr;
 
 /**
  * Load the Global Descriptor Table (GDT) and update segment registers.

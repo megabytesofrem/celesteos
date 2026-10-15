@@ -8,7 +8,7 @@ _start:
     ; Clear direction flag (AMD64 ABI requirement)
     cld
 
-    ; Call C++ main entry point
+    ; Call kmain from kmain.cpp
     call kmain
 
 .hang:

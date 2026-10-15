@@ -43,6 +43,8 @@ add_executable(celesteos.elf
     src/stdlib/string.c
 
     src/kernel/kmain.cpp
+    src/kernel/cpu/gdt.cpp
+    src/kernel/cpu/load_gdt.asm
     src/kernel/cpu/idt.cpp
 )
 
@@ -115,9 +117,8 @@ add_custom_target(qemu
     COMMAND "${QEMU_EXECUTABLE}"
             -cdrom "${CMAKE_BINARY_DIR}/celesteos.iso"
             -m 512M
-            -serial stdio
+            -debugcon stdio
             -no-reboot
-            -no-shutdown
     DEPENDS iso
     COMMENT "Launching CelesteOS in QEMU..."
     USES_TERMINAL
