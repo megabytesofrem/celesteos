@@ -40,6 +40,8 @@ class Framebuffer {
     void clear(uint32_t bg_color = 0x00000000);
     void draw_pixel(size_t x, size_t y, uint32_t color);
     void draw_char(char c, size_t x, size_t y, uint32_t fg_color = 0xFFFFFFFF, uint32_t bg_color = 0x00000000);
+    void draw_gimp_image(size_t start_x, size_t start_y, const char* data_ptr, size_t img_width, size_t img_height);
+
     void putchar(char c, uint32_t fg_color = 0xFFFFFFFF, uint32_t bg_color = 0x00000000);
     void print(const char* str, uint32_t fg_color = 0xFFFFFFFF, uint32_t bg_color = 0x00000000);
 };

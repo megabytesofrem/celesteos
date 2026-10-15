@@ -3,6 +3,7 @@
 #include <stdlib/string.h>
 
 #include "font_8x16.h"
+#include "pony.h"
 
 namespace drivers {
 
@@ -50,6 +51,35 @@ void Framebuffer::draw_char(char c, size_t x, size_t y, uint32_t fg_color, uint3
             draw_pixel(x + col, y + row, is_set ? fg_color : bg_color);
         }
     }
+}
+
+void Framebuffer::draw_gimp_image(size_t start_x, size_t start_y, const char* data_ptr, size_t img_width, size_t img_height) {
+    // Non-const pointer to iterate through the encoded ASCII data stream
+    const char* current_data = data_ptr;
+
+    for (size_t y = 0; y < img_height; y++) {
+        for (size_t x = 0; x < img_width; x++) {
+            uint8_t pixel[3];
+
+            // Use GIMP's exact unpacking macro logic
+            HEADER_PIXEL(current_data, pixel);
+
+            uint8_t r = pixel[0];
+            uint8_t g = pixel[1];
+            uint8_t b = pixel[2];
+
+            // Pack into 32-bit XRGB color for Limine
+            uint32_t color = (static_cast<uint32_t>(r) << 16) |
+                             (static_cast<uint32_t>(g) << 8) |
+                             static_cast<uint32_t>(b);
+
+            draw_pixel(start_x + x, start_y + y, color);
+        }
+    }
+
+    // Update the cursor to after the drawn image
+    cursor_x = 0;
+    cursor_y = start_y + img_height + 1;
 }
 
 void Framebuffer::putchar(char c, uint32_t fg_color, uint32_t bg_color) {

@@ -10,6 +10,7 @@
 #include <limine.h>
 
 #include <cstdint>
+#include "pony.h"
 
 /* Macro so I can avoid typing this over and over again */
 #define HCF \
@@ -123,8 +124,11 @@ extern "C" void kmain(void) {
     klog(LOG_INFO, "kmain: Test page allocated successfully.\n");
     klog(LOG_INFO, "       Test page address: 0x%p\n", test_page);
 
-    klog(LOG_INFO, "kmain: Entering main kernel loop.\n");
+    // Framebuffer test: render a pony
+    klog(LOG_INFO, "kmain: Here is a pony to celebrate!\n");
+    drivers::Framebuffer::instance().draw_gimp_image(15, 100, header_data, image_width, image_height);
 
+    klog(LOG_INFO, "kmain: Pony rendered successfully :)\n");
     // Halt the CPU in an infinite loop
     HCF
 }
