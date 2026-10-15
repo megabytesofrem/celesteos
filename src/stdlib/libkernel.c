@@ -1,10 +1,6 @@
-/**
- * Common kernel library functions
- */
-
 #include "libkernel.h"
 
-#include <cpu/ports.h>
+#include <kernel/ports.h>
 #include <drivers/framebuffer.h>
 
 #include <stdarg.h>

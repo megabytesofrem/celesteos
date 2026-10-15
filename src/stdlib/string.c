@@ -1,7 +1,3 @@
-/**
- * Standard C library string functions for CelesteOS.
- */
-
 #include "string.h"
 
 #include <stdint.h>
