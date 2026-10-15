@@ -5,4 +5,15 @@ Hobby OS based around the Mach microkernel, aiming for binary compatibility with
 CelesteOS depends on a cross compiler for `x86_64-elf` and `limine`. Both can built by running `./scripts/build_limine.sh` and
 `./scripts/build_toolchain.sh`. You will need to install the packages for `nasm, qemu, xorriso`.
 
+To build CelesteOS:
+```sh
+# first time building
+cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=toolchain-x86_64-elf.cmake
+
+ninja -C build # qemu flag is optional, launches qemu
+```
+
 ## Checklist
+- [x] Framebuffer driver (provided by Limine)
+- [x] Physical and virtual memory manager
+- [x] Core IDT and GDT functions
