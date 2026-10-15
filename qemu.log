@@ -1,10 +1,12 @@
 Servicing hardware INT=0x0e
 Servicing hardware INT=0x0e
+Servicing hardware INT=0x0e
 Servicing hardware INT=0x08
 Servicing hardware INT=0x0e
 Servicing hardware INT=0x0e
 Servicing hardware INT=0x0e
-Servicing hardware INT=0x0e
+Servicing hardware INT=0x08
+Servicing hardware INT=0x08
 Servicing hardware INT=0x08
 Servicing hardware INT=0x08
 Servicing hardware INT=0x08
@@ -24,6 +26,7 @@ Servicing hardware INT=0x08
 Servicing hardware INT=0x08
 Servicing hardware INT=0x09
 Servicing hardware INT=0x08
+Servicing hardware INT=0x09
 check_exception old: 0xffffffff new 0xe
      0: v=0e e=0002 i=0 cpl=0 IP=0008:ffffffff8000116a pc=ffffffff8000116a SP=0010:ffff80001ffb3f70 CR2=00000000cafebabe
 RAX=00000000cafebabe RBX=0000000000000000 RCX=00000000cafecafe RDX=ffff8000fd3e7ffc

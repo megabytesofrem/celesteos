@@ -1,22 +1,22 @@
-#include <cpu/gdt.h>
-#include <cpu/idt.h>
-#include <cpu/isr.h>
-#include <cpu/ports.h>
-#include <cpu/pic.h>
-#include <drivers/framebuffer.h>
-#include <memory/pmm.h>
-#include <memory/vmm.h>
-#include <memory/kmalloc.h>
+#include <kernel/gdt.h>
+#include <kernel/idt.h>
+#include <kernel/isr.h>
+#include <kernel/ports.h>
+#include <kernel/pic.h>
+#include <kernel/drivers/framebuffer.h>
+#include <kernel/memory/pmm.h>
+#include <kernel/memory/vmm.h>
+#include <kernel/memory/kmalloc.h>
 
 #include <stdlib/string.h>
 #include <libkernel.h>
 #include <limine.h>
-#include <macho.h>
+#include <kernel/loader/macho.h>
 
 #include <stdint.h>
 
 // Mach-O test payload
-#include "macho_test.h"
+#include <kernel/loader/macho_test.h>
 
 /* Macro so I can avoid typing this over and over again */
 #define HCF \
