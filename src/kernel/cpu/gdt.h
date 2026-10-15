@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+namespace cpu {
+
 /**
  * An entry in the Global Descriptor Table (GDT).
  */
@@ -55,11 +57,13 @@ struct GDT {
 [[maybe_unused]] static GDT gdt;
 [[maybe_unused]] static GDTPointer gdt_ptr;
 
+void initialize_gdt();
+
 /**
  * Load the Global Descriptor Table (GDT) and update segment registers.
  */
 extern "C" void load_gdt(const GDTPointer* gdt_ptr, uint16_t cs, uint16_t ds);
 
-void initialize_gdt();
+}  // namespace cpu
 
 #endif  // CELESTEOS_GDT_H

@@ -24,6 +24,7 @@ set(KERNEL_FLAGS
     "-mno-sse2"
     "-fno-stack-protector"
     "-Wall"
+    "-Wno-unused-variable"
     "-Wextra"
 )
 
@@ -46,6 +47,7 @@ add_executable(celesteos.elf
     src/kernel/cpu/gdt.cpp
     src/kernel/cpu/load_gdt.asm
     src/kernel/cpu/idt.cpp
+    src/kernel/memory/pmm.cpp
 )
 
 # Include directory setup for kernel headers

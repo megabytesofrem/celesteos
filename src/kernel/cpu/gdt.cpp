@@ -1,5 +1,7 @@
 #include "gdt.h"
 
+namespace cpu {
+
 /**
  * Initialize the GDT and load it into the CPU.
  */
@@ -26,3 +28,5 @@ void initialize_gdt() {
     // Load GDT and reload segment registers
     load_gdt(&gdt_ptr, 0x08, 0x10);
 }
+
+}  // namespace cpu

@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+namespace cpu {
+
 #pragma pack(push, 1)
 
 /**
@@ -32,3 +34,5 @@ void idt_set_entry(int entry, uint64_t handler, int type_attr);
 void initialize_idt();
 
 #endif  // CELESTEOS_IDT_H
+
+}  // namespace cpu

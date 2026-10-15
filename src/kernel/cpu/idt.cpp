@@ -1,5 +1,7 @@
 #include "idt.h"
 
+namespace cpu {
+
 /**
  * The Interrupt Descriptor Table (IDT).
  */
@@ -42,3 +44,5 @@ void initialize_idt() {
     // Load the IDT
     asm volatile("lidt %0" : : "m"(idt_ptr));
 }
+
+}  // namespace cpu

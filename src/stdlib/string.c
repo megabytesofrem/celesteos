@@ -5,7 +5,7 @@
 #include "string.h"
 
 /**
- * strlen: Returns the length of the given string `str`
+ * Returns the length of the given string `str`.
  */
 size_t strlen(const char* str) {
     size_t length = 0;
@@ -16,7 +16,7 @@ size_t strlen(const char* str) {
 }
 
 /**
- * strcmp: Compares two strings `str1` and `str2` lexicographically.
+ * Compares two strings `str1` and `str2` lexicographically.
  *
  * Returns zero if the strings are equal, a negative value if `str1` is less than `str2`,
  * and a positive value if `str1` is greater than `str2`.
@@ -30,7 +30,7 @@ size_t strcmp(const char* str1, const char* str2) {
 }
 
 /**
- * strncmp: Compares at most `num` characters of two strings `str1` and `str2` lexicographically.
+ * Compares at most `num` characters of two strings `str1` and `str2` lexicographically.
  *
  * Returns zero if the strings are equal up to `num` characters, a negative value if `str1` is less than `str2`,
  * and a positive value if `str1` is greater than `str2`.
@@ -53,7 +53,7 @@ size_t strncmp(const char* str1, const char* str2, size_t num) {
 }
 
 /**
- * strcat: Concatenates the string `src` to the end of the string `dest`.
+ * Concatenates the string `src` to the end of the string `dest`.
  *
  * Returns a pointer to the resulting string `dest`.
  */
@@ -70,7 +70,7 @@ char* strcat(char* dest, const char* src) {
 }
 
 /**
- * strcpy: Copies the string `src` to the string `dest`.
+ * Copies the string `src` to the string `dest`.
  *
  * Returns a pointer to the resulting string `dest`.
  */
@@ -84,7 +84,7 @@ char* strcpy(char* dest, const char* src) {
 }
 
 /**
- * strncpy: Copies at most `num` characters of the string `src` to the string `dest`.
+ * Copies at most `num` characters of the string `src` to the string `dest`.
  *
  * Returns a pointer to the resulting string `dest`.
  */
@@ -102,7 +102,7 @@ char* strncpy(char* dest, const char* src, size_t num) {
 }
 
 /**
- * memset: Fills the first `num` bytes of the memory area pointed to by `ptr` with the constant byte `value`.
+ * Fills the first `num` bytes of the memory area pointed to by `ptr` with the constant byte `value`.
  *
  * Returns a pointer to the memory area `ptr`.
  */
@@ -115,7 +115,7 @@ void* memset(void* ptr, int value, size_t num) {
 }
 
 /**
- * memcpy: Copies `num` bytes from memory area `src` to memory area `dest`.
+ * Copies `num` bytes from memory area `src` to memory area `dest`.
  *
  * Returns a pointer to the memory area `dest`.
  */
