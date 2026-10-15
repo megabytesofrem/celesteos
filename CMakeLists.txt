@@ -38,12 +38,31 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${KERNEL_FLAGS_STR} -fno-exceptions -fno
 # -----------------------------------------------------------------------------
 add_executable(celesteos.elf
     src/kernel/entry.asm
+
+    # Standard library implementations
+    src/stdlib/string.c
+
     src/kernel/kmain.cpp
+    src/kernel/cpu/idt.cpp
 )
 
 # Include directory setup for kernel headers
+file(GLOB_RECURSE KERNEL_HEADERS CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/*.hh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/*.hxx"
+)
+
+set(KERNEL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel")
+foreach(KERNEL_HEADER IN LISTS KERNEL_HEADERS)
+    get_filename_component(KERNEL_HEADER_DIR "${KERNEL_HEADER}" DIRECTORY)
+    list(APPEND KERNEL_INCLUDE_DIRS "${KERNEL_HEADER_DIR}")
+endforeach()
+list(REMOVE_DUPLICATES KERNEL_INCLUDE_DIRS)
+
 target_include_directories(celesteos.elf PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/include
+    ${KERNEL_INCLUDE_DIRS}
 )
 
 # -----------------------------------------------------------------------------
