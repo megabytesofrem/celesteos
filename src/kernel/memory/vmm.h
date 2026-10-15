@@ -6,7 +6,7 @@
 
 namespace memory {
 
-enum class PageFlags : uint64_t {
+enum PageFlags : uint64_t {
     Present = 1 << 0,       /* Page is present in memory */
     ReadWrite = 1 << 1,     /* Page is read/write (1 = read/write, 0 = read-only)*/
     User = 1 << 2,          /* Page is accessible by user-mode */
@@ -86,7 +86,7 @@ class VirtualMemoryManager {
     static VirtualMemoryManager& instance();
 
     void initialize(size_t hhdm_base_offset);
-    void map(PageTable* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
+    bool map(PageTable* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
     void unmap(PageTable* pml4, uint64_t virt);
     void switch_pml4(PageTable* new_pml4);
 

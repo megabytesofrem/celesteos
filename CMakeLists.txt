@@ -45,6 +45,7 @@ add_executable(celesteos.elf
     src/kernel/cpu/idt.cpp
     src/kernel/memory/pmm.cpp
     src/kernel/memory/vmm.cpp
+    src/kernel/memory/heap_alloc.cpp
 
 
     # Standard library implementations

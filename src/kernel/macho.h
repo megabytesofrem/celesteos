@@ -9,7 +9,13 @@ constexpr uint32_t MH_MAGIC_64 = 0xfeedfacf; /* The 64-bit Mach-O magic number *
 constexpr uint32_t MH_CIGAM_64 = 0xcffaedfe; /* MH_MAGIC_64 but byte-swapped */
 
 /* Load command types */
+constexpr uint32_t LC_SEGMENT = 0x1;
+constexpr uint32_t LC_SYMTAB = 0x2;
+constexpr uint32_t LC_DYSYMTAB = 0xb;
 constexpr uint32_t LC_SEGMENT_64 = 0x19;
+constexpr uint32_t LC_LOAD_DYLINKER = 0xe;
+constexpr uint32_t LC_FUNCTION_STARTS = 0x26;
+constexpr uint32_t LC_DATA_IN_CODE = 0x29;
 constexpr uint32_t LC_MAIN = 0x80000028;
 
 struct __attribute__((packed)) mach_header_64 {
@@ -57,6 +63,7 @@ struct MachOInfo {
     uint64_t data_size;   /* size of the __DATA segment */
 };
 
+const char* macho_describe_lc(uint32_t lc);
 bool parse_macho(const uint8_t* data, MachOInfo& out_info);
 
 }  // namespace macho

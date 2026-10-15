@@ -4,6 +4,29 @@
 
 namespace macho {
 
+const char* macho_describe_lc(uint32_t lc) {
+    switch (lc) {
+        case LC_SEGMENT:
+            return "LC_SEGMENT";
+        case LC_SYMTAB:
+            return "LC_SYMTAB";
+        case LC_DYSYMTAB:
+            return "LC_DYSYMTAB";
+        case LC_SEGMENT_64:
+            return "LC_SEGMENT_64";
+        case LC_LOAD_DYLINKER:
+            return "LC_LOAD_DYLINKER";
+        case LC_FUNCTION_STARTS:
+            return "LC_FUNCTION_STARTS";
+        case LC_DATA_IN_CODE:
+            return "LC_DATA_IN_CODE";
+        case LC_MAIN:
+            return "LC_MAIN";
+        default:
+            return "UNKNOWN";
+    }
+}
+
 bool parse_macho(const uint8_t* data, MachOInfo& out_info) {
     const mach_header_64* header = reinterpret_cast<const mach_header_64*>(data);
     if (header->magic != MH_MAGIC_64 && header->magic != MH_CIGAM_64) {
@@ -51,7 +74,8 @@ bool parse_macho(const uint8_t* data, MachOInfo& out_info) {
             default: {
                 // Handle other load commands as needed
 
-                klog(LogLevel::LOG_INFO, "macho: Unhandled load command: 0x%x\n", lc->cmd);
+                const char* lcstr = macho_describe_lc(lc->cmd);
+                klog(LogLevel::LOG_INFO, "macho: Unhandled load command: 0x%x (%s)\n", lc->cmd, lcstr);
                 break;
             }
         }
@@ -60,6 +84,6 @@ bool parse_macho(const uint8_t* data, MachOInfo& out_info) {
         load_cmd_ptr += lc->cmdsize;
     }
     return true;
-}
+}  // namespace macho
 
 }  // namespace macho

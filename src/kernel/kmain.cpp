@@ -5,6 +5,7 @@
 #include <macho.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
+#include <memory/heap_alloc.h>
 
 #include <stdlib/string.h>
 #include <libkernel.h>
@@ -86,18 +87,6 @@ extern "C" void kmain(void) {
     // Initialize the Interrupt Descriptor Table (IDT)
     cpu::initialize_idt();
 
-    /* Memory Initialization */
-
-    // Initialize the PMM
-    auto& pmm = memory::PhysMemoryManager::instance();
-    pmm.initialize(memmap_response, hhdm_base);
-    klog(LOG_INFO, "kmain: PMM initialized.\n");
-
-    // Initialize the Virtual Memory Manager (VMM)
-    auto& vmm = memory::VirtualMemoryManager::instance();
-    vmm.initialize(hhdm_base);
-    klog(LOG_INFO, "kmain: VMM initialized.\n");
-
     /* Drivers Initialization */
 
     // Initialize the Framebuffer driver
@@ -116,6 +105,39 @@ extern "C" void kmain(void) {
         HCF
     }
     framebuffer.initialize(fb);
+
+    /* Memory Initialization */
+
+    auto& pmm = memory::PhysMemoryManager::instance();
+    pmm.initialize(memmap_response, hhdm_base);
+    klog(LOG_INFO, "kmain: PMM initialized.\n");
+
+    auto& vmm = memory::VirtualMemoryManager::instance();
+    vmm.initialize(hhdm_base);
+    klog(LOG_INFO, "kmain: VMM initialized.\n");
+
+    // Keep Limine's existing kernel, stack, and HHDM mappings active.
+    uintptr_t active_cr3;
+    asm volatile("mov %%cr3, %0" : "=r"(active_cr3));
+    auto* active_pml4 = reinterpret_cast<memory::PageTable*>(
+        (active_cr3 & 0x000FFFFFFFFFF000ULL) + hhdm_base);
+    if (!memory::initialize_heap(active_pml4)) {
+        klog(LOG_ERROR, "kmain: Failed to initialize the heap!\n");
+        HCF
+    }
+    volatile uint64_t* heap_test = reinterpret_cast<volatile uint64_t*>(memory::kmalloc(sizeof(uint64_t)));
+    if (heap_test == nullptr) {
+        klog(LOG_ERROR, "kmain: Failed to allocate from the heap!\n");
+        HCF
+    }
+    *heap_test = 0xCE1E57EULL;
+    if (*heap_test != 0xCE1E57EULL) {
+        klog(LOG_ERROR, "kmain: Heap read/write test failed!\n");
+        HCF
+    }
+
+    memory::kfree(const_cast<uint64_t*>(heap_test));
+    klog(LOG_INFO, "kmain: Heap initialized and allocation verified.\n");
 
     // Allocate a test page from the PMM to verify initialization
     void* test_page = pmm.alloc_page();

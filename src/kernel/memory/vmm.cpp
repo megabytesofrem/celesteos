@@ -72,7 +72,7 @@ PageTable* VirtualMemoryManager::get_or_create_next_level(PageTable* current,
  * @param phys The physical address to map to.
  * @param flags The page table entry flags to set for the mapping.
  */
-void VirtualMemoryManager::map(PageTable* pml4,
+bool VirtualMemoryManager::map(PageTable* pml4,
                                uint64_t virt,
                                uint64_t phys,
                                uint64_t flags) {
@@ -82,13 +82,13 @@ void VirtualMemoryManager::map(PageTable* pml4,
     size_t pt_index = (virt >> 12) & 0x1FF;
 
     PageTable* pdpt = get_or_create_next_level(pml4, pml4_index, flags);
-    if (!pdpt) return;
+    if (!pdpt) return false;
 
     PageTable* pd = get_or_create_next_level(pdpt, pdpt_index, flags);
-    if (!pd) return;
+    if (!pd) return false;
 
     PageTable* pt = get_or_create_next_level(pd, pd_index, flags);
-    if (!pt) return;
+    if (!pt) return false;
 
     // Map the page table entry to the target physical address
     PageTableEntry& entry = pt->entries[pt_index];
@@ -99,6 +99,7 @@ void VirtualMemoryManager::map(PageTable* pml4,
 
     // Flush the TLB for the virtual address being mapped
     flush_tlb(virt);
+    return true;
 }
 
 /**
