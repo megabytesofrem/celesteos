@@ -8,6 +8,14 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
 
+/**
+ * __TEXT is readable (PAGE_PRESENT) and executable (PAGE_EXECUTE), but not writable.
+ * __DATA is readable (PAGE_PRESENT) and writable (PAGE_READ_WRITE), but not executable.
+ * 
+ * __LINKEDIT contains data used by the linker, typically read-only. Its contents are described by
+ * load commands e.g LC_SYMTAB, LC_DYSYMTAB, etc.
+ */
+
 const char* macho_describe_lc(uint32_t lc) {
     switch (lc) {
         case LC_SEGMENT:
@@ -39,7 +47,7 @@ static inline size_t page_align_down(uintptr_t addr) {
     return addr & ~((uintptr_t)VMM_PAGE_SIZE - 1);
 }
 
-static bool map_segment(page_table_t* root, uint64_t vmaddr, uint64_t vmsize, uint64_t hhdm_base) {
+bool map_segment(page_table_t* root, uint64_t vmaddr, uint64_t vmsize, uint64_t hhdm_base) {
     if (vmsize == 0) return true;
 
     uintptr_t vm_start = page_align_down(vmaddr);
@@ -76,7 +84,7 @@ static bool map_segment(page_table_t* root, uint64_t vmaddr, uint64_t vmsize, ui
     return true;
 }
 
-static bool copy_segment_payload(page_table_t* root, uint64_t vmaddr, const uint8_t* payload, uint64_t fileoff, uint64_t filesz, uint64_t hhdm_base) {
+bool copy_segment_payload(page_table_t* root, uint64_t vmaddr, const uint8_t* payload, uint64_t fileoff, uint64_t filesz, uint64_t hhdm_base) {
     if (filesz == 0) return true;
 
     size_t copied = 0;
@@ -105,6 +113,8 @@ static bool copy_segment_payload(page_table_t* root, uint64_t vmaddr, const uint
 bool macho_parse(const uint8_t* data, struct macho_info* out_info) {
     *out_info = (struct macho_info){0};
     const mach_header_64* header = (const mach_header_64*)(data);
+
+    // Validate the Mach-O header magic numbers
     if (header->magic != MH_MAGIC_64 && header->magic != MH_CIGAM_64) {
         klog(KLOG_ERROR, "macho-loader: Invalid Mach-O magic number: %x\n", header->magic);
         return false;
@@ -116,6 +126,19 @@ bool macho_parse(const uint8_t* data, struct macho_info* out_info) {
     // Read each load command
     for (uint32_t i = 0; i < header->ncmds; ++i) {
         const load_command* lc = (const load_command*)(load_cmd_ptr);
+
+        /**
+         * Stubs:
+         * - LC_LOAD_DYLINKER - Asks for dyld to be loaded (stub for now)
+         * - LC_DYSYMTAB - Contains the dynamic symbol table for the binary (stub for now)
+         * - LC_FUNCTION_STARTS - Contains the function start addresses for the binary (stub for now)
+         * - LC_DATA_IN_CODE - Contains information about data in __TEXT segment (stub for now)
+         * 
+         * Implemented:
+         * - LC_SEGMENT_64 - Contains a 64-bit segment of the binary (implemented)
+         * - LC_SYMTAB - Contains the symbol table and string table for the binary (implemented)
+         * - LC_MAIN - Contains the entry point command for the binary (implemented)
+         */
 
         switch (lc->cmd) {
             case LC_SEGMENT_64: {
@@ -141,6 +164,36 @@ bool macho_parse(const uint8_t* data, struct macho_info* out_info) {
                     }
                 }
 
+                break;
+            }
+            case LC_SYMTAB: {
+                klog(KLOG_INFO, "macho-loader: LC_SYMTAB command: stub\n");
+                const symtab_command* symtab = (const symtab_command*)(lc);
+                const struct nlist_64* symbols = (const struct nlist_64*)(data + symtab->symoff);
+                const char* strtab = (const char*)(data + symtab->stroff);
+
+                klog(KLOG_INFO, "macho-loader: Number of symbols: %u, string table size: %u\n", symtab->nsyms, symtab->strsize);
+
+                break;
+            }
+            case LC_DYSYMTAB: {
+                klog(KLOG_INFO, "macho-loader: LC_DYSYMTAB command: stub\n");
+                // Handle dynamic symbol table command if needed
+                break;
+            }
+            case LC_LOAD_DYLINKER: {
+                klog(KLOG_INFO, "macho-loader: LC_LOAD_DYLINKER command: stub\n");
+                // Handle load dylinker command if needed
+                break;
+            }
+            case LC_FUNCTION_STARTS: {
+                klog(KLOG_INFO, "macho-loader: LC_FUNCTION_STARTS command: stub\n");
+                // Handle function starts command if needed
+                break;
+            }
+            case LC_DATA_IN_CODE: {
+                klog(KLOG_INFO, "macho-loader: LC_DATA_IN_CODE command: stub\n");
+                // Handle data in code command if needed
                 break;
             }
             case LC_MAIN: {

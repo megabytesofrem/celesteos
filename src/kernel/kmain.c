@@ -172,6 +172,10 @@ void kmain(void) {
         HCF
     }
 
+    // Map 0x1000 to a newly allocated physical frame
+    void* phys_frame = pmm_alloc_page();
+    vmm_map(active_pml4, 0x1000, (uintptr_t)phys_frame, PAGE_PRESENT | PAGE_USER | PAGE_READ_WRITE);
+
     /* User mode transition test */
     if (!tss_jump_to_usermode(macho_info.entrypoint, active_pml4, hhdm_base)) {
         HCF
