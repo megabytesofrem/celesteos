@@ -1,0 +1,23 @@
+---
+BasedOnStyle: Google
+TabWidth: 4
+IndentWidth: 4
+ColumnLimit: 0
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
+
+# Always use spaces
+UseTab: Never
+
+# Don't try to align trailing macro backslashes across wide lines
+AlignEscapedNewlines: DontAlign
+
+# Prevent clang-format from re-wrapping trailing comments inside macros
+ReflowComments: false
+
+# Keep inline macro comments aligned cleanly without forcing huge gaps
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+
+SortIncludes: Never

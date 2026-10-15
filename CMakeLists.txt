@@ -20,7 +20,6 @@ set(KERNEL_FLAGS
     "-mno-red-zone"
     "-mcmodel=kernel"
     "-mno-mmx"
-    "-mno-sse"
     "-mno-sse2"
     "-fno-stack-protector"
     "-Wall"

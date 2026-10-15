@@ -127,3 +127,88 @@ void* memcpy(void* dest, const void* src, size_t num) {
     }
     return dest;
 }
+
+void itoa(int value, char* str, int base) {
+    int i;
+    int sign;
+
+    if ((sign = value) < 0) {
+        value = -value;
+    }
+
+    i = 0;
+
+    do {
+        str[i++] = (value % base) + '0';
+    } while ((value /= base) > 0);
+
+    if (sign < 0) {
+        str[i++] = '-';
+    }
+
+    str[i] = '\0';
+
+    // Reverse the string
+    int start = 0;
+    int end = i - 1;
+    while (start < end) {
+        char temp = str[start];
+        str[start] = str[end];
+        str[end] = temp;
+        ++start;
+        --end;
+    }
+}
+
+void utoa(unsigned int value, char* str, int base) {
+    int i = 0;
+
+    do {
+        str[i++] = (value % base) + '0';
+    } while ((value /= base) > 0);
+
+    str[i] = '\0';
+
+    // Reverse the string
+    int start = 0;
+    int end = i - 1;
+    while (start < end) {
+        char temp = str[start];
+        str[start] = str[end];
+        str[end] = temp;
+        ++start;
+        --end;
+    }
+}
+
+void ftoa(double value, char* str, int precision) {
+    // Handle negative numbers
+    if (value < 0) {
+        *str++ = '-';
+        value = -value;
+    }
+
+    // Extract integer part
+    int int_part = static_cast<int>(value);
+    itoa(int_part, str, 10);
+
+    // Move the pointer to the end of the integer part
+    while (*str != '\0') {
+        ++str;
+    }
+
+    // Add the decimal point
+    *str++ = '.';
+
+    // Extract fractional part
+    double frac_part = value - int_part;
+    for (int i = 0; i < precision; ++i) {
+        frac_part *= 10;
+        int digit = static_cast<int>(frac_part);
+        *str++ = '0' + digit;
+        frac_part -= digit;
+    }
+
+    // Null-terminate the string
+    *str = '\0';
+}

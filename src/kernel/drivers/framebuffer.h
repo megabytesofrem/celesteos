@@ -34,6 +34,8 @@ class Framebuffer {
 
     static Framebuffer& instance();
 
+    [[nodiscard]] bool is_initialized() const { return pixel_data != nullptr; }
+
     void initialize(limine_framebuffer* fb);
     void clear(uint32_t bg_color = 0x00000000);
     void draw_pixel(size_t x, size_t y, uint32_t color);

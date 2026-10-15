@@ -5,62 +5,117 @@
 #include "libkernel.h"
 
 #include <cpu/ports.h>
+#include <drivers/framebuffer.h>
 
 #include <cstdarg>
 
 #include "string.h"
 
-void _kprintc(char c) {
-    // TODO: Write to the QEMU debug port (0xE9)
+void _kprintc(char c,
+              uint32_t fg_color = 0xFFFFFFFF,
+              uint32_t bg_color = 0x00000000) {
     outb(0xE9, c);
-}
+    auto& framebuffer = drivers::Framebuffer::instance();
 
-void _kputs(const char* str) {
-    while (*str) {
-        _kprintc(*str++);
+    if (framebuffer.is_initialized()) {
+        framebuffer.putchar(c, fg_color, bg_color);
     }
 }
 
-void kputs(char* str) {
-    size_t len = strlen(str);
-    str[len] = '\0';
-
-    _kputs(str);
+void kputs(const char* str, uint32_t fg_color, uint32_t bg_color) {
+    while (*str) {
+        _kprintc(*str++, fg_color, bg_color);
+    }
 }
 
-void printk(const char* format, ...) {
+static void vkprint(const char* format,
+                    uint32_t fg_color,
+                    uint32_t bg_color,
+                    va_list args) {
     int i = 0;
-
-    va_list args;
-    va_start(args, format);
 
     while (format[i]) {
         if (format[i] == '%') {
             i++;
             if (format[i] == 'c') {
+                // %c: format a single character
                 char c = (char)va_arg(args, int);
-                _kprintc(c);
+                _kprintc(c, fg_color, bg_color);
             } else if (format[i] == 's') {
+                // %s: format a string
                 const char* s = va_arg(args, const char*);
-                _kputs(s);
+                kputs(s, fg_color, bg_color);
             } else if (format[i] == 'd') {
-                // TODO: handle integer formatting for %d
+                // %d: format an integer as a decimal number
+                int d = va_arg(args, int);
+                char buffer[12];
+                itoa(d, buffer, 10);
+                kputs(buffer, fg_color, bg_color);
+            } else if (format[i] == 'f') {
+                // %f: format a floating-point number
+                double f = va_arg(args, double);
+                char buffer[32];
+                ftoa(f, buffer, 6);  // Assuming ftoa is implemented
+                kputs(buffer, fg_color, bg_color);
+            } else if (format[i] == 'x') {
+                // %x: format an integer as a hexadecimal number
+                int x = va_arg(args, int);
+                char buffer[12];
+                itoa(x, buffer, 16);
+                kputs(buffer, fg_color, bg_color);
+            } else if (format[i] == 'p') {
+                // %p: format a pointer as a hexadecimal address
+                uintptr_t address =
+                    reinterpret_cast<uintptr_t>(va_arg(args, void*));
+                for (int shift = sizeof(uintptr_t) * 8 - 4; shift >= 0;
+                     shift -= 4) {
+                    _kprintc("0123456789abcdef"[(address >> shift) & 0xF],
+                             fg_color, bg_color);
+                }
+            } else if (format[i] == 'u') {
+                // %u: format an unsigned integer as a decimal number
+                unsigned int u = va_arg(args, unsigned int);
+                char buffer[12];
+                utoa(u, buffer, 10);
+                kputs(buffer, fg_color, bg_color);
+            } else if (format[i] == '%') {
+                // %%: format a literal '%' character
+                _kprintc('%', fg_color, bg_color);
             }
         } else {
-            _kprintc(format[i]);
+            _kprintc(format[i], fg_color, bg_color);
         }
         i++;
     }
+}
 
+void printk(const char* format, uint32_t fg_color, uint32_t bg_color, ...) {
+    va_list args;
+    va_start(args, bg_color);
+    vkprint(format, fg_color, bg_color, args);
     va_end(args);
 }
 
 void klog(LogLevel level, const char* format, ...) {
-    // stub
     va_list args;
     va_start(args, format);
 
-    printk(format, args);
+    switch (level) {
+        case LOG_INFO:
+            kputs("[INFO] ", 0xb5b5b3, 0x00000000);
+            break;
+        case LOG_WARN:
+            kputs("[WARN] ", 0xfff952, 0x00000000);
+            break;
+        case LOG_ERROR:
+            kputs("[ERROR] ", 0xe33b3b, 0x00000000);
+            break;
+        default:
+            kputs("[UNKNOWN] ", 0xb5b5b3, 0x00000000);  // Unknown
+            break;
+    }
+
+    vkprint(format, 0xFFFFFFFF, 0x00000000, args);
 
     va_end(args);
 }

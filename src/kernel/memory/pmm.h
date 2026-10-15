@@ -44,11 +44,19 @@ class PhysMemoryManager {
 
     [[nodiscard]] size_t get_total_pages() const { return total_pages; }
     [[nodiscard]] size_t get_used_pages() const { return used_pages; }
-    [[nodiscard]] size_t get_free_pages() const { return total_pages - used_pages; }
+    [[nodiscard]] size_t get_free_pages() const {
+        return total_pages - used_pages;
+    }
 
-    [[nodiscard]] size_t get_total_memory() const { return total_pages * PHYS_PAGE_SIZE; }
-    [[nodiscard]] size_t get_used_memory() const { return used_pages * PHYS_PAGE_SIZE; }
-    [[nodiscard]] size_t get_free_memory() const { return (total_pages - used_pages) * PHYS_PAGE_SIZE; }
+    [[nodiscard]] size_t get_total_memory() const {
+        return total_pages * PHYS_PAGE_SIZE;
+    }
+    [[nodiscard]] size_t get_used_memory() const {
+        return used_pages * PHYS_PAGE_SIZE;
+    }
+    [[nodiscard]] size_t get_free_memory() const {
+        return (total_pages - used_pages) * PHYS_PAGE_SIZE;
+    }
 };
 
 }  // namespace memory
