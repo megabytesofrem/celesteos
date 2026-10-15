@@ -21,8 +21,8 @@ class PhysMemoryManager {
     size_t total_pages = 0;
     size_t used_pages = 0;
 
-    // Higher Half Direct Mapping (HHDM) base address
-    uint64_t hhdm_base = 0;
+    // Base address of the Higher Half Direct Map (HHDM)
+    uint64_t higher_half_base = 0;
 
     void set_bit(size_t page);
     void clear_bit(size_t page);

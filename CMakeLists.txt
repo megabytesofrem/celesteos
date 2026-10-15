@@ -40,14 +40,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${KERNEL_FLAGS_STR} -fno-exceptions -fno
 add_executable(celesteos.elf
     src/kernel/entry.asm
 
-    # Standard library implementations
-    src/stdlib/string.c
-
     src/kernel/kmain.cpp
     src/kernel/cpu/gdt.cpp
     src/kernel/cpu/load_gdt.asm
     src/kernel/cpu/idt.cpp
     src/kernel/memory/pmm.cpp
+    src/kernel/memory/vmm.cpp
+
+
+    # Standard library implementations
+    src/stdlib/string.c
 )
 
 # Include directory setup for kernel headers

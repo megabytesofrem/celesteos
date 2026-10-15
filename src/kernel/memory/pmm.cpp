@@ -26,7 +26,7 @@ bool PhysMemoryManager::test_bit(size_t page) const {
  * @param hh_offset: Higher half offset for physical memory mapping.
  */
 void PhysMemoryManager::initialize(limine_memmap_response* memmap, uint64_t hhdm_base_offset) {
-    this->hhdm_base = hhdm_base_offset;
+    this->higher_half_base = hhdm_base_offset;
     this->used_pages = 0;
 
     // Calculate highest usable address
@@ -52,7 +52,7 @@ void PhysMemoryManager::initialize(limine_memmap_response* memmap, uint64_t hhdm
     for (size_t i = 0; i < memmap->entry_count; i++) {
         limine_memmap_entry* entry = memmap->entries[i];
         if (entry->type == LIMINE_MEMMAP_USABLE && entry->length >= bitmap_size_aligned) {
-            bitmap = reinterpret_cast<uint8_t*>(entry->base + hhdm_base);
+            bitmap = reinterpret_cast<uint8_t*>(entry->base + higher_half_base);
             break;
         }
     }
@@ -77,7 +77,7 @@ void PhysMemoryManager::initialize(limine_memmap_response* memmap, uint64_t hhdm
     }
 
     // Reserve the physical pages backing the bitmap itself
-    uint64_t bitmap_phys = reinterpret_cast<uint64_t>(bitmap) - hhdm_base;
+    uint64_t bitmap_phys = reinterpret_cast<uint64_t>(bitmap) - higher_half_base;
     for (uint64_t addr = bitmap_phys; addr < bitmap_phys + bitmap_size_aligned; addr += PHYS_PAGE_SIZE) {
         set_bit(addr / PHYS_PAGE_SIZE);
         this->used_pages++;

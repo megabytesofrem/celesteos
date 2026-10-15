@@ -5,9 +5,10 @@
 #include "cpu/idt.h"
 #include "cpu/ports.h"
 #include "memory/pmm.h"
+#include "vmm.h"
 
 /* Macro so I can avoid typing this over and over again */
-#define FOREVER              \
+#define HCF                  \
     while (true) {           \
         asm volatile("hlt"); \
     }
@@ -39,13 +40,13 @@ extern "C" void kmain(void) {
     // Limine boilerplate
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
         e9_write("[ERROR] Limine base revision not supported!\n");
-        FOREVER
+        HCF
     }
 
     // Check if the Higher Half Direct Mapping (HHDM) is available
     if (hhdm_request.response == nullptr || memmap_request.response == nullptr) {
         e9_write("[ERROR] Limine HHDM/memory mapping not available!\n");
-        FOREVER
+        HCF
     }
 
     // Store the HHDM base address for later use
@@ -64,11 +65,14 @@ extern "C" void kmain(void) {
     // Initialize the PMM
     memory::PhysMemoryManager::instance().initialize(memmap_response, hhdm_base);
 
-    // Test the PMM by allocating a page
+    // Initialize the Virtual Memory Manager (VMM)
+    memory::VirtualMemoryManager::instance().initialize(hhdm_base);
+
+    // Allocate a test page from the PMM to verify initialization
     void* test_page = memory::PhysMemoryManager::instance().alloc_page();
     if (test_page == nullptr) {
         e9_write("[ERROR] Failed to allocate a test page!\n");
-        FOREVER
+        HCF
     }
 
     e9_write("[INFO] Test page allocated successfully.\n");
@@ -83,6 +87,6 @@ extern "C" void kmain(void) {
 
     e9_write("[INFO] Entering main kernel loop.\n");
 
-    // Welcome to Ring 0 C++!
-    FOREVER
+    // Halt the CPU in an infinite loop
+    HCF
 }
