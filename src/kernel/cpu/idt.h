@@ -1,5 +1,4 @@
-#ifndef CELESTEOS_IDT_H
-#define CELESTEOS_IDT_H
+#pragma once
 
 #include <cstdint>
 
@@ -32,7 +31,5 @@ struct IDTPointer {
 
 void idt_set_entry(int entry, uint64_t handler, int type_attr);
 void initialize_idt();
-
-#endif  // CELESTEOS_IDT_H
 
 }  // namespace cpu

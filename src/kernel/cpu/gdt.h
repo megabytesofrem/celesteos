@@ -1,5 +1,4 @@
-#ifndef CELESTEOS_GDT_H
-#define CELESTEOS_GDT_H
+#pragma once
 
 #include <cstdint>
 
@@ -52,10 +51,29 @@ struct GDT {
     GDTEntry kernel_data;     /* kernel data segment: 0x10 (access: 0x92, flags: 0x00) */
     GDTEntry user_data;       /* user data segment: 0x18 (access: 0xF2, flags: 0x00) */
     GDTEntry user_code;       /* user code segment: 0x20 (access: 0xFA, flags: 0x20) */
+
+    uint64_t tss_low;  /* low 64 bits of the TSS base address */
+    uint64_t tss_high; /* high 64 bits of the TSS base address */
 };
+
+/**
+ * 64-bit Task State Segment structure.
+ */
+struct alignas(16) TaskStateSegment {
+    uint32_t reserved0;
+    uint64_t rsp0; /* kernel stack pointer */
+    uint64_t rsp1; /* ring 1 stack pointer? */
+    uint64_t rsp2; /* ring 2 stack pointer? */
+    uint64_t reserved1;
+    uint64_t ist[7]; /* interrupt stack table pointers */
+    uint64_t reserved2;
+    uint16_t reserved3;
+    uint16_t io_map_base;
+} __attribute__((packed));
 
 [[maybe_unused]] static GDT gdt;
 [[maybe_unused]] static GDTPointer gdt_ptr;
+[[maybe_unused]] static TaskStateSegment kernel_tss;
 
 void initialize_gdt();
 
@@ -64,6 +82,9 @@ void initialize_gdt();
  */
 extern "C" void load_gdt(const GDTPointer* gdt_ptr, uint16_t cs, uint16_t ds);
 
-}  // namespace cpu
+/**
+ * Load the Task State Segment (TSS) with the given segment selector.
+ */
+extern "C" void load_tss(uint16_t tss_selector);
 
-#endif  // CELESTEOS_GDT_H
+}  // namespace cpu
