@@ -80,11 +80,10 @@ class VirtualMemoryManager {
     PageTable* get_or_create_next_level(PageTable* current_level, size_t index, uint64_t flags);
 
    public:
-    static VirtualMemoryManager& instance();
-
-    // Delete copy constructor and assignment operator to enforce the singleton pattern
     VirtualMemoryManager(const VirtualMemoryManager&) = delete;
     VirtualMemoryManager& operator=(const VirtualMemoryManager&) = delete;
+
+    static VirtualMemoryManager& instance();
 
     void initialize(size_t hhdm_base_offset);
     void map(PageTable* pml4, uint64_t virt, uint64_t phys, uint64_t flags);

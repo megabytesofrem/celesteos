@@ -49,7 +49,10 @@ add_executable(celesteos.elf
 
 
     # Standard library implementations
-    src/stdlib/string.c
+    src/stdlib/string.cpp
+    src/stdlib/libkernel.cpp
+    src/kernel/drivers/framebuffer.cpp
+    src/kernel/drivers/font_8x16.h
 )
 
 # Include directory setup for kernel headers
@@ -68,6 +71,8 @@ endforeach()
 list(REMOVE_DUPLICATES KERNEL_INCLUDE_DIRS)
 
 target_include_directories(celesteos.elf PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/stdlib"
     ${KERNEL_INCLUDE_DIRS}
 )
 

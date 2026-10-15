@@ -29,11 +29,10 @@ class PhysMemoryManager {
     bool test_bit(size_t page) const;
 
    public:
-    static PhysMemoryManager& instance();
-
-    // Delete copy constructor and assignment operator to enforce the singleton pattern
     PhysMemoryManager(const PhysMemoryManager&) = delete;
     PhysMemoryManager& operator=(const PhysMemoryManager&) = delete;
+
+    static PhysMemoryManager& instance();
 
     void initialize(limine_memmap_response* memmap, uint64_t hhdm_base_offset);
     void* alloc_page();
