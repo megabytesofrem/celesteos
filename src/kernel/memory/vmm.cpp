@@ -1,6 +1,7 @@
 #include "vmm.h"
 
-#include "../../stdlib/string.h"
+#include <stdlib/string.h>
+
 #include "pmm.h"
 
 namespace memory {
@@ -26,7 +27,7 @@ void VirtualMemoryManager::initialize(size_t hhdm_base_offset) {
     this->pml4 = reinterpret_cast<PageTable*>(this->pml4_phys_addr + this->higher_half_base);
 
     // Zero out the PML4 to start with a clean slate
-    memset(this->pml4, 0, PHYS_PAGE_SIZE);
+    memset(this->pml4, 0, VIRT_PAGE_SIZE);
 }
 
 PageTable* VirtualMemoryManager::get_or_create_next_level(PageTable* current, size_t index, uint64_t flags) {
@@ -47,7 +48,7 @@ PageTable* VirtualMemoryManager::get_or_create_next_level(PageTable* current, si
 
     // Access and zero out table via higher-half mapped virtual address
     auto* new_table_virt = reinterpret_cast<PageTable*>(new_frame_phys + this->higher_half_base);
-    memset(new_table_virt, 0, PHYS_PAGE_SIZE);
+    memset(new_table_virt, 0, VIRT_PAGE_SIZE);
 
     entry.set_address(new_frame_phys);
 

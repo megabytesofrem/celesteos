@@ -4,8 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#define VIRT_PAGE_SIZE 4096
-
 namespace memory {
 
 enum class PageFlags : uint64_t {
@@ -68,6 +66,8 @@ struct alignas(4096) PageTable {
 class VirtualMemoryManager {
    private:
     VirtualMemoryManager() = default;
+
+    static constexpr size_t VIRT_PAGE_SIZE = 4096;
 
     PageTable* pml4 = nullptr;
 

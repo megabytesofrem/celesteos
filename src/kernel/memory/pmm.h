@@ -6,13 +6,13 @@
 
 #include "../../limine.h"
 
-#define PHYS_PAGE_SIZE 4096
-
 namespace memory {
 
 class PhysMemoryManager {
    private:
     PhysMemoryManager() = default;
+
+    static constexpr size_t PHYS_PAGE_SIZE = 4096;
 
     uint8_t* bitmap = nullptr;
     size_t bitmap_size = 0;
