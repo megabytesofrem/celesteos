@@ -1,19 +1,19 @@
 cmake_minimum_required(VERSION 3.20)
 
 # Enable C, C++, and NASM Assembly languages
-project(CelesteOS LANGUAGES C CXX ASM_NASM)
+project(CelesteOS LANGUAGES C ASM_NASM)
 
-# Enforce C++20 standard
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+# Enforce C standard
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
 # Configure NASM for 64-bit ELF output format
 set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
 set(CMAKE_ASM_NASM_FLAGS_DEBUG "-g -F dwarf")
 
 # -----------------------------------------------------------------------------
-# Bare-Metal C/C++ Compiler Flags
+# Bare-Metal C Compiler Flags
 # -----------------------------------------------------------------------------
 set(KERNEL_FLAGS
     "-ffreestanding"
@@ -31,37 +31,31 @@ set(KERNEL_FLAGS
 list(JOIN KERNEL_FLAGS " " KERNEL_FLAGS_STR)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${KERNEL_FLAGS_STR}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${KERNEL_FLAGS_STR} -fno-exceptions -fno-rtti")
 
 # -----------------------------------------------------------------------------
 # Executable Definition
 # -----------------------------------------------------------------------------
 add_executable(celesteos.elf
-    src/kernel/entry.asm
-
-    src/kernel/kmain.cpp
-    src/kernel/cpu/gdt.cpp
+    src/kernel/kmain.c
+    src/kernel/cpu/gdt.c
     src/kernel/cpu/load_gdt.asm
-    src/kernel/cpu/idt.cpp
-    src/kernel/memory/pmm.cpp
-    src/kernel/memory/vmm.cpp
-    src/kernel/memory/heap_alloc.cpp
+    src/kernel/cpu/idt.c
+    src/kernel/memory/pmm.c
+    src/kernel/memory/vmm.c
+    src/kernel/memory/heap_alloc.c
 
 
     # Standard library implementations
-    src/stdlib/string.cpp
-    src/stdlib/libkernel.cpp
-    src/kernel/drivers/framebuffer.cpp
-    src/kernel/drivers/font_8x16.h
-    src/kernel/macho.cpp
+    src/stdlib/string.c
+    src/stdlib/libkernel.c
+    src/kernel/drivers/framebuffer.c
+    src/kernel/drivers/ter_u16b.h
+    src/kernel/macho.c
 )
 
 # Include directory setup for kernel headers
 file(GLOB_RECURSE KERNEL_HEADERS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/*.hh"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/*.hxx"
 )
 
 set(KERNEL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel")

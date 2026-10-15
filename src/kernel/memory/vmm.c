@@ -1,0 +1,163 @@
+#include "vmm.h"
+
+#include "pmm.h"
+
+static page_table_t* pml4;
+static uint64_t pml4_phys_addr;
+static uint64_t higher_half_base;
+
+/**
+ * Clear all entries in the given page table.
+ */
+static void clear_page_table(page_table_t* table) {
+    for (size_t i = 0; i < 512; ++i) {
+        table->entries[i].value = 0;
+    }
+}
+
+/**
+ * Get or create the next level page table.
+ */
+static page_table_t* get_or_create_next_level(page_table_t* current,
+                                              size_t index,
+                                              uint64_t flags) {
+    page_table_entry_t* entry = &current->entries[index];
+    if (page_table_entry_is_present(entry)) {
+        uint64_t next_level_phys = page_table_entry_get_address(entry);
+        return (page_table_t*)(uintptr_t)(next_level_phys + higher_half_base);
+    }
+
+    void* new_frame = pmm_alloc_page();
+    if (new_frame == NULL) {
+        return NULL;
+    }
+
+    uint64_t new_frame_phys = (uint64_t)(uintptr_t)new_frame;
+    page_table_t* new_table =
+        (page_table_t*)(uintptr_t)(new_frame_phys + higher_half_base);
+    clear_page_table(new_table);
+
+    page_table_entry_set_address(entry, new_frame_phys);
+    page_table_entry_set_flags(entry,
+                               PAGE_FLAG_PRESENT | PAGE_FLAG_READ_WRITE |
+                                   flags);
+    return new_table;
+}
+
+/**
+ * Initialize the virtual memory manager.
+ * 
+ * @param hhdm_base_offset The offset for the higher half direct mapping.
+ * @return true if the virtual memory manager was successfully initialized, false otherwise.
+ */
+bool vmm_initialize(uint64_t hhdm_base_offset) {
+    void* pml4_frame = pmm_alloc_page();
+    if (pml4_frame == NULL) {
+        return false;
+    }
+
+    higher_half_base = hhdm_base_offset;
+    pml4_phys_addr = (uint64_t)(uintptr_t)pml4_frame;
+    pml4 = (page_table_t*)(uintptr_t)(pml4_phys_addr + higher_half_base);
+    clear_page_table(pml4);
+    return true;
+}
+
+page_table_t* vmm_get_pml4(void) { return pml4; }
+
+uint64_t vmm_get_pml4_physical(void) { return pml4_phys_addr; }
+
+/**
+ * Map a virtual address to a physical address, creating the necessary levels
+ * of the page table hierarchy if they do not already exist.
+ * 
+ * @param root The root page table (PML4) to start the mapping from.
+ * @param virt The virtual address to map.
+ * @param phys The physical address to map to.
+ * @param flags The flags to set for the page table entry.
+ * @return true if the mapping was successful, false otherwise.
+ */
+bool vmm_map(page_table_t* root,
+             uint64_t virt,
+             uint64_t phys,
+             uint64_t flags) {
+    if (root == NULL) {
+        return false;
+    }
+    size_t pml4_index = (size_t)((virt >> 39) & 0x1FF);
+    size_t pdpt_index = (size_t)((virt >> 30) & 0x1FF);
+    size_t pd_index = (size_t)((virt >> 21) & 0x1FF);
+    size_t pt_index = (size_t)((virt >> 12) & 0x1FF);
+
+    page_table_t* pdpt = get_or_create_next_level(root, pml4_index, flags);
+    if (pdpt == NULL) {
+        return false;
+    }
+    page_table_t* pd = get_or_create_next_level(pdpt, pdpt_index, flags);
+    if (pd == NULL) {
+        return false;
+    }
+    page_table_t* pt = get_or_create_next_level(pd, pd_index, flags);
+    if (pt == NULL) {
+        return false;
+    }
+
+    page_table_entry_t* entry = &pt->entries[pt_index];
+    page_table_entry_set_address(entry, phys);
+    page_table_entry_set_flags(entry, PAGE_FLAG_PRESENT | flags);
+
+    // Flush the TLB for the newly mapped virtual address.
+    vmm_flush_tlb(virt);
+    return true;
+}
+
+/**
+ * Unmap a virtual address, removing its mapping from the page table hierarchy.
+ * 
+ * @param root The root page table (PML4) to start the unmapping from.
+ * @param virt The virtual address to unmap.
+ */
+void vmm_unmap(page_table_t* root, uint64_t virt) {
+    if (root == NULL) {
+        return;
+    }
+    size_t pml4_index = (size_t)((virt >> 39) & 0x1FF);
+    size_t pdpt_index = (size_t)((virt >> 30) & 0x1FF);
+    size_t pd_index = (size_t)((virt >> 21) & 0x1FF);
+    size_t pt_index = (size_t)((virt >> 12) & 0x1FF);
+
+    page_table_entry_t* entry = &root->entries[pml4_index];
+    if (!page_table_entry_is_present(entry)) {
+        return;
+    }
+    page_table_t* pdpt = (page_table_t*)(uintptr_t)(page_table_entry_get_address(entry) + higher_half_base);
+
+    entry = &pdpt->entries[pdpt_index];
+    if (!page_table_entry_is_present(entry)) {
+        return;
+    }
+    page_table_t* pd = (page_table_t*)(uintptr_t)(page_table_entry_get_address(entry) + higher_half_base);
+
+    entry = &pd->entries[pd_index];
+    if (!page_table_entry_is_present(entry)) {
+        return;
+    }
+    page_table_t* pt = (page_table_t*)(uintptr_t)(page_table_entry_get_address(entry) + higher_half_base);
+
+    entry = &pt->entries[pt_index];
+    if (!page_table_entry_is_present(entry)) {
+        return;
+    }
+    entry->value = 0;
+
+    // Flush the TLB for the unmapped virtual address.
+    vmm_flush_tlb(virt);
+}
+
+void vmm_switch_pml4(page_table_t* new_pml4) {
+    __asm__ volatile("mov %0, %%cr3" : : "r"(new_pml4));
+}
+
+void vmm_flush_tlb(uint64_t virt) {
+    __asm__ volatile("invlpg (%0)" : : "r"(virt) : "memory");
+}

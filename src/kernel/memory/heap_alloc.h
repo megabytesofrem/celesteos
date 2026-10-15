@@ -1,21 +1,13 @@
-#pragma once
+#ifndef CELESTEOS_HEAP_ALLOC_H
+#define CELESTEOS_HEAP_ALLOC_H
 
-#include <cstdint>
-#include <cstddef>
+#include <stdbool.h>
+#include <stddef.h>
 
 #include "vmm.h"
 
-namespace memory {
-
-// The supplied PML4 must be active so the heap is accessible immediately.
-[[nodiscard]] bool initialize_heap(PageTable* kernel_pml4);
+bool initialize_heap(page_table_t* kernel_pml4);
 void* kmalloc(size_t size);
 void kfree(void* ptr);
 
-}  // namespace memory
-
-void* operator new(size_t size);
-void* operator new[](size_t size);
-void operator delete(void* ptr) noexcept;
-void operator delete[](void* ptr) noexcept;
-void operator delete(void* ptr, size_t size) noexcept;
+#endif

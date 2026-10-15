@@ -1,7 +1,6 @@
-#ifndef CELESTEOS_PORTS_H
-#define CELESTEOS_PORTS_H
+#pragma once
 
-#include <cstdint>
+#include <stdint.h>
 
 /**
  * Read a byte from the specified I/O port.
@@ -72,5 +71,3 @@ static inline void e9_write(const char* str) {
         outb(0xE9, *str++);
     }
 }
-
-#endif  // CELESTEOS_PORTS_H

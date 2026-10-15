@@ -7,18 +7,16 @@
 #include <cpu/ports.h>
 #include <drivers/framebuffer.h>
 
-#include <cstdarg>
-
+#include <stdarg.h>
 #include "string.h"
 
 void _kprintc(char c,
-              uint32_t fg_color = 0xFFFFFFFF,
-              uint32_t bg_color = 0x00000000) {
+              uint32_t fg_color,
+              uint32_t bg_color) {
     outb(0xE9, c);
-    auto& framebuffer = drivers::Framebuffer::instance();
 
-    if (framebuffer.is_initialized()) {
-        framebuffer.putchar(c, fg_color, bg_color);
+    if (framebuffer_is_initialized(&global_framebuffer)) {
+        framebuffer_putchar(&global_framebuffer, c, fg_color, bg_color);
     }
 }
 
@@ -65,8 +63,7 @@ static void vkprint(const char* format,
                 kputs(buffer, fg_color, bg_color);
             } else if (format[i] == 'p') {
                 // %p: format a pointer as a hexadecimal address
-                uintptr_t address =
-                    reinterpret_cast<uintptr_t>(va_arg(args, void*));
+                uintptr_t address = (uintptr_t)(va_arg(args, void*));
                 for (int shift = sizeof(uintptr_t) * 8 - 4; shift >= 0;
                      shift -= 4) {
                     _kprintc("0123456789abcdef"[(address >> shift) & 0xF],
@@ -96,18 +93,18 @@ void printk(const char* format, uint32_t fg_color, uint32_t bg_color, ...) {
     va_end(args);
 }
 
-void klog(LogLevel level, const char* format, ...) {
+void klog(enum log_level level, const char* format, ...) {
     va_list args;
     va_start(args, format);
 
     switch (level) {
-        case LOG_INFO:
+        case KLOG_INFO:
             kputs("[INFO] ", 0xb5b5b3, 0x00000000);
             break;
-        case LOG_WARN:
+        case KLOG_WARN:
             kputs("[WARN] ", 0xfff952, 0x00000000);
             break;
-        case LOG_ERROR:
+        case KLOG_ERROR:
             kputs("[ERROR] ", 0xe33b3b, 0x00000000);
             break;
         default:

@@ -4,6 +4,8 @@
 
 #include "string.h"
 
+#include <stdint.h>
+
 /**
  * Returns the length of the given string `str`.
  */
@@ -59,7 +61,9 @@ size_t strncmp(const char* str1, const char* str2, size_t num) {
  */
 char* strcat(char* dest, const char* src) {
     char* original_dest = dest;
-    while (*dest) *dest++;
+    while (*dest != '\0') {
+        ++dest;
+    }
 
     while (*src) {
         *dest++ = *src++;
@@ -128,6 +132,23 @@ void* memcpy(void* dest, const void* src, size_t num) {
     return dest;
 }
 
+void* memmove(void* dest, const void* src, size_t num) {
+    unsigned char* d = (unsigned char*)dest;
+    const unsigned char* s = (const unsigned char*)src;
+
+    if ((uintptr_t)d < (uintptr_t)s) {
+        for (size_t i = 0; i < num; ++i) {
+            d[i] = s[i];
+        }
+    } else if ((uintptr_t)d > (uintptr_t)s) {
+        while (num > 0) {
+            --num;
+            d[num] = s[num];
+        }
+    }
+    return dest;
+}
+
 void itoa(int value, char* str, int base) {
     int i;
     int sign;
@@ -189,7 +210,7 @@ void ftoa(double value, char* str, int precision) {
     }
 
     // Extract integer part
-    int int_part = static_cast<int>(value);
+    int int_part = (int)value;
     itoa(int_part, str, 10);
 
     // Move the pointer to the end of the integer part
@@ -204,7 +225,7 @@ void ftoa(double value, char* str, int precision) {
     double frac_part = value - int_part;
     for (int i = 0; i < precision; ++i) {
         frac_part *= 10;
-        int digit = static_cast<int>(frac_part);
+        int digit = (int)frac_part;
         *str++ = '0' + digit;
         frac_part -= digit;
     }

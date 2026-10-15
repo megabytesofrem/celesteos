@@ -1,104 +1,108 @@
 #ifndef CELESTEOS_VMM_H
 #define CELESTEOS_VMM_H
 
-#include <cstddef>
-#include <cstdint>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-namespace memory {
+#define VMM_PAGE_SIZE 4096U
 
-enum PageFlags : uint64_t {
-    Present = 1 << 0,       /* Page is present in memory */
-    ReadWrite = 1 << 1,     /* Page is read/write (1 = read/write, 0 = read-only)*/
-    User = 1 << 2,          /* Page is accessible by user-mode */
-    WriteThrough = 1 << 3,  /* Write-through caching enabled */
-    CacheDisabled = 1 << 4, /* Caching disabled for this page */
-    Accessed = 1 << 5,      /* Set by CPU when the page is accessed */
-    Dirty = 1 << 6,         /* Set by CPU when the page is written to */
-    HugePage = 1 << 7,      /* 2 MiB or 1 GiB page */
-    Global = 1 << 8,        /* Global page (not flushed from TLB on CR3 reload) */
-    NoExecute = 1 << 9      /* Page cannot be executed (NX bit) */
-};
-
-struct PageTableEntry {
-    uint64_t value;
-
-    void set_address(uint64_t phys_addr) {
-        // Physical address occupies bits 12-51 of the page table entry
-        value = (value & ~0x000FFFFFFFFFF000ULL) | (phys_addr & 0x000FFFFFFFFFF000ULL);
-    }
-
-    uint64_t get_address() const {
-        return value & 0x000FFFFFFFFFF000ULL;
-    }
-
-    void set_flags(uint64_t flags) {
-        value |= flags;
-    }
-
-    void clear_flags(uint64_t flags) {
-        value &= ~flags;
-    }
-
-    bool is_present() const {
-        return (value & static_cast<uint64_t>(PageFlags::Present)) != 0;
-    }
-
-    bool is_user() const {
-        return (value & static_cast<uint64_t>(PageFlags::User)) != 0;
-    }
-
-    bool is_writable() const {
-        return (value & static_cast<uint64_t>(PageFlags::ReadWrite)) != 0;
-    }
-
-    bool is_huge_page() const {
-        return (value & static_cast<uint64_t>(PageFlags::HugePage)) != 0;
-    }
-};
+typedef enum page_flags {
+    PAGE_FLAG_PRESENT = 1ULL << 0,
+    PAGE_FLAG_READ_WRITE = 1ULL << 1,
+    PAGE_FLAG_USER = 1ULL << 2,
+    PAGE_FLAG_WRITE_THROUGH = 1ULL << 3,
+    PAGE_FLAG_CACHE_DISABLED = 1ULL << 4,
+    PAGE_FLAG_ACCESSED = 1ULL << 5,
+    PAGE_FLAG_DIRTY = 1ULL << 6,
+    PAGE_FLAG_HUGE_PAGE = 1ULL << 7,
+    PAGE_FLAG_GLOBAL = 1ULL << 8,
+    PAGE_FLAG_NO_EXECUTE = 1ULL << 9
+} page_flags;
 
 /**
- * Page table aligned to 4096 bytes (4 KiB) with 512 entries.
+ * A single entry in the page table.
  */
-struct alignas(4096) PageTable {
-    PageTableEntry entries[512];
-};
+typedef struct page_table_entry_t {
+    uint64_t value;
+} page_table_entry_t;
 
-class VirtualMemoryManager {
-   private:
-    VirtualMemoryManager() = default;
+/**
+ * Set the physical address for a page table entry.
+ */
+static inline void page_table_entry_set_address(page_table_entry_t* entry,
+                                                uint64_t phys_addr) {
+    entry->value = (entry->value & ~0x000FFFFFFFFFF000ULL) |
+                   (phys_addr & 0x000FFFFFFFFFF000ULL);
+}
 
-    static constexpr size_t VIRT_PAGE_SIZE = 4096;
+/**
+ * Get the physical address from a page table entry.
+ */
+static inline uint64_t page_table_entry_get_address(
+    const page_table_entry_t* entry) {
+    return entry->value & 0x000FFFFFFFFFF000ULL;
+}
 
-    PageTable* pml4 = nullptr;
+/**
+ * Set the flags for a page table entry.
+ */
+static inline void page_table_entry_set_flags(page_table_entry_t* entry,
+                                              uint64_t flags) {
+    entry->value |= flags;
+}
 
-    // Physical address of the PML4 table
-    uint64_t pml4_phys_addr = 0;
+/**
+ * Clear the specified flags for a page table entry.
+ */
+static inline void page_table_entry_clear_flags(page_table_entry_t* entry,
+                                                uint64_t flags) {
+    entry->value &= ~flags;
+}
 
-    // Base address of the Higher Half Direct Map (HHDM)
-    uint64_t higher_half_base = 0;
+/**
+ * Check if a page table entry is present.
+ */
+static inline bool page_table_entry_is_present(const page_table_entry_t* entry) {
+    return (entry->value & PAGE_FLAG_PRESENT) != 0;
+}
 
-    PageTable* get_or_create_next_level(PageTable* current_level, size_t index, uint64_t flags);
+/**
+ * Check if a page table entry is a user entry.
+ */
+static inline bool page_table_entry_is_user(const page_table_entry_t* entry) {
+    return (entry->value & PAGE_FLAG_USER) != 0;
+}
 
-   public:
-    VirtualMemoryManager(const VirtualMemoryManager&) = delete;
-    VirtualMemoryManager& operator=(const VirtualMemoryManager&) = delete;
+/**
+ * Check if a page table entry is writable.
+ */
+static inline bool page_table_entry_is_writable(const page_table_entry_t* entry) {
+    return (entry->value & PAGE_FLAG_READ_WRITE) != 0;
+}
 
-    static VirtualMemoryManager& instance();
+/**
+ * Check if a page table entry is a huge page.
+ */
+static inline bool page_table_entry_is_huge_page(
+    const page_table_entry_t* entry) {
+    return (entry->value & PAGE_FLAG_HUGE_PAGE) != 0;
+}
 
-    void initialize(size_t hhdm_base_offset);
-    bool map(PageTable* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
-    void unmap(PageTable* pml4, uint64_t virt);
-    void switch_pml4(PageTable* new_pml4);
+/**
+ * Page table aligned to 4096 bytes (4KiB) containing 512 entries.
+ */
+typedef struct page_table_t {
+    page_table_entry_t entries[512];
+} page_table_t __attribute__((aligned(4096)));
 
-    static inline void flush_tlb(uint64_t virt) {
-        asm volatile("invlpg (%0)" ::"r"(virt) : "memory");
-    }
+bool vmm_initialize(uint64_t hhdm_base_offset);
+page_table_t* vmm_get_pml4(void);
+uint64_t vmm_get_pml4_physical(void);
 
-    /* Helpers to query the current PML4 and its physical address */
-    PageTable* get_pml4() const { return pml4; }
-    uint64_t get_pml4_physical() const { return pml4_phys_addr; }
-};
+bool vmm_map(page_table_t* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
+void vmm_unmap(page_table_t* pml4, uint64_t virt);
+void vmm_switch_pml4(page_table_t* new_pml4);
+void vmm_flush_tlb(uint64_t virt);
 
-}  // namespace memory
-
-#endif  // CELESTEOS_VMM_H
+#endif
