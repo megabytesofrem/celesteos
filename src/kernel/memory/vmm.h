@@ -8,16 +8,16 @@
 #define VMM_PAGE_SIZE 4096U
 
 typedef enum page_flags {
-    PAGE_FLAG_PRESENT = 1ULL << 0,
-    PAGE_FLAG_READ_WRITE = 1ULL << 1,
-    PAGE_FLAG_USER = 1ULL << 2,
-    PAGE_FLAG_WRITE_THROUGH = 1ULL << 3,
-    PAGE_FLAG_CACHE_DISABLED = 1ULL << 4,
-    PAGE_FLAG_ACCESSED = 1ULL << 5,
-    PAGE_FLAG_DIRTY = 1ULL << 6,
-    PAGE_FLAG_HUGE_PAGE = 1ULL << 7,
-    PAGE_FLAG_GLOBAL = 1ULL << 8,
-    PAGE_FLAG_NO_EXECUTE = 1ULL << 9
+    PAGE_PRESENT = 1ULL << 0,
+    PAGE_READ_WRITE = 1ULL << 1,
+    PAGE_USER = 1ULL << 2,
+    PAGE_WRITE_THROUGH = 1ULL << 3,
+    PAGE_CACHE_DISABLED = 1ULL << 4,
+    PAGE_ACCESSED = 1ULL << 5,
+    PAGE_DIRTY = 1ULL << 6,
+    PAGE_HUGE_PAGE = 1ULL << 7,
+    PAGE_GLOBAL = 1ULL << 8,
+    PAGE_NO_EXECUTE = 1ULL << 9
 } page_flags;
 
 /**
@@ -64,21 +64,21 @@ static inline void page_table_entry_clear_flags(page_table_entry_t* entry,
  * Check if a page table entry is present.
  */
 static inline bool page_table_entry_is_present(const page_table_entry_t* entry) {
-    return (entry->value & PAGE_FLAG_PRESENT) != 0;
+    return (entry->value & PAGE_PRESENT) != 0;
 }
 
 /**
  * Check if a page table entry is a user entry.
  */
 static inline bool page_table_entry_is_user(const page_table_entry_t* entry) {
-    return (entry->value & PAGE_FLAG_USER) != 0;
+    return (entry->value & PAGE_USER) != 0;
 }
 
 /**
  * Check if a page table entry is writable.
  */
 static inline bool page_table_entry_is_writable(const page_table_entry_t* entry) {
-    return (entry->value & PAGE_FLAG_READ_WRITE) != 0;
+    return (entry->value & PAGE_READ_WRITE) != 0;
 }
 
 /**
@@ -86,7 +86,7 @@ static inline bool page_table_entry_is_writable(const page_table_entry_t* entry)
  */
 static inline bool page_table_entry_is_huge_page(
     const page_table_entry_t* entry) {
-    return (entry->value & PAGE_FLAG_HUGE_PAGE) != 0;
+    return (entry->value & PAGE_HUGE_PAGE) != 0;
 }
 
 /**
@@ -99,10 +99,11 @@ typedef struct page_table_t {
 bool vmm_initialize(uint64_t hhdm_base_offset);
 page_table_t* vmm_get_pml4(void);
 uint64_t vmm_get_pml4_physical(void);
+uintptr_t vmm_get_physical(page_table_t* pml4, uint64_t virt);
 
 bool vmm_map(page_table_t* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
 void vmm_unmap(page_table_t* pml4, uint64_t virt);
 void vmm_switch_pml4(page_table_t* new_pml4);
 void vmm_flush_tlb(uint64_t virt);
 
-#endif
+#endif  // CELESTEOS_VMM_H

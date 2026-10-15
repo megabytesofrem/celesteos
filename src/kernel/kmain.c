@@ -8,16 +8,16 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/memory/kmalloc.h>
 #include <kernel/task.h>
+#include <kernel/mach/loader.h>
 
 #include <stdlib/string.h>
 #include <libkernel.h>
 #include <limine.h>
-#include <kernel/loader/macho.h>
 
 #include <stdint.h>
 
 // Mach-O test payload
-#include <kernel/loader/macho_test.h>
+#include <kernel/mach/macho_test.h>
 
 /* Macro so I can avoid typing this over and over again */
 #define HCF \
@@ -167,7 +167,10 @@ void kmain(void) {
     macho_info macho_info;
 
     klog(KLOG_INFO, "kmain: Try to parse Mach-O test payload...\n");
-    macho_parse(test_macho, &macho_info);
+    if (!macho_load(test_macho, active_pml4, hhdm_base, &macho_info)) {
+        klog(KLOG_ERROR, "kmain: Failed to load Mach-O test payload!\n");
+        HCF
+    }
 
     /* User mode transition test */
     if (!tss_jump_to_usermode(macho_info.entrypoint, active_pml4, hhdm_base)) {

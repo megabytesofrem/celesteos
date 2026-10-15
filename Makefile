@@ -53,7 +53,7 @@ C_SRCS := src/kernel/kmain.c \
           src/stdlib/string.c \
           src/stdlib/libkernel.c \
           src/kernel/drivers/framebuffer.c \
-          src/kernel/loader/macho.c \
+          src/kernel/mach/loader.c \
           src/kernel/task.c
           
 

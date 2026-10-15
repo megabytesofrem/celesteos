@@ -2,7 +2,7 @@
 
 #include <limits.h>
 
-static uint8_t *bitmap;
+static uint8_t* bitmap;
 static size_t total_pages;
 static size_t used_pages;
 static uint64_t higher_half_base;

@@ -38,9 +38,7 @@ static page_table_t* get_or_create_next_level(page_table_t* current,
     clear_page_table(new_table);
 
     page_table_entry_set_address(entry, new_frame_phys);
-    page_table_entry_set_flags(entry,
-                               PAGE_FLAG_PRESENT | PAGE_FLAG_READ_WRITE |
-                                   flags);
+    page_table_entry_set_flags(entry, PAGE_PRESENT | PAGE_READ_WRITE | flags);
     return new_table;
 }
 
@@ -66,6 +64,37 @@ bool vmm_initialize(uint64_t hhdm_base_offset) {
 page_table_t* vmm_get_pml4(void) { return pml4; }
 
 uint64_t vmm_get_pml4_physical(void) { return pml4_phys_addr; }
+
+uintptr_t vmm_get_physical(page_table_t* pml4, uint64_t virt) {
+    if (!pml4) {
+        return 0;
+    }
+    size_t pml4_index = (size_t)((virt >> 39) & 0x1FF);
+    size_t pdpt_index = (size_t)((virt >> 30) & 0x1FF);
+    size_t pd_index = (size_t)((virt >> 21) & 0x1FF);
+    size_t pt_index = (size_t)((virt >> 12) & 0x1FF);
+
+    page_table_entry_t* pml4_entry = &pml4->entries[pml4_index];
+    if (!page_table_entry_is_present(pml4_entry)) {
+        return 0;
+    }
+    page_table_t* pdpt = (page_table_t*)(uintptr_t)(page_table_entry_get_address(pml4_entry) + higher_half_base);
+    page_table_entry_t* pdpt_entry = &pdpt->entries[pdpt_index];
+    if (!page_table_entry_is_present(pdpt_entry)) {
+        return 0;
+    }
+    page_table_t* pd = (page_table_t*)(uintptr_t)(page_table_entry_get_address(pdpt_entry) + higher_half_base);
+    page_table_entry_t* pd_entry = &pd->entries[pd_index];
+    if (!page_table_entry_is_present(pd_entry)) {
+        return 0;
+    }
+    page_table_t* pt = (page_table_t*)(uintptr_t)(page_table_entry_get_address(pd_entry) + higher_half_base);
+    page_table_entry_t* pt_entry = &pt->entries[pt_index];
+    if (!page_table_entry_is_present(pt_entry)) {
+        return 0;
+    }
+    return page_table_entry_get_address(pt_entry);
+}
 
 /**
  * Map a virtual address to a physical address, creating the necessary levels
@@ -104,7 +133,7 @@ bool vmm_map(page_table_t* root,
 
     page_table_entry_t* entry = &pt->entries[pt_index];
     page_table_entry_set_address(entry, phys);
-    page_table_entry_set_flags(entry, PAGE_FLAG_PRESENT | flags);
+    page_table_entry_set_flags(entry, PAGE_PRESENT | PAGE_READ_WRITE | flags);
 
     // Flush the TLB for the newly mapped virtual address.
     vmm_flush_tlb(virt);

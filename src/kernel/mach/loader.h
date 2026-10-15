@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <kernel/memory/vmm.h>
+
 #define MH_MAGIC_64 0xfeedfacf /* The 64-bit Mach-O magic number */
 #define MH_CIGAM_64 0xcffaedfe /* MH_MAGIC_64 but byte-swapped */
 
@@ -57,12 +59,19 @@ typedef struct __attribute__((packed)) entry_point_command {
 typedef struct __attribute__((packed)) macho_info {
     uint64_t entrypoint;  /* entry point of the Mach-O binary */
     uint64_t text_vmaddr; /* virtual memory address of the __TEXT segment */
-    uint64_t text_size;   /* size of the __TEXT segment */
+    uint64_t text_vmsize; /* size of the __TEXT segment */
     uint64_t data_vmaddr; /* virtual memory address of the __DATA segment */
-    uint64_t data_size;   /* size of the __DATA segment */
+    uint64_t data_vmsize; /* size of the __DATA segment */
+
+    uint64_t text_fileoff;  /* file offset of the __TEXT segment */
+    uint64_t text_filesize; /* size of the __TEXT segment */
+    uint64_t data_fileoff;  /* file offset of the __DATA segment */
+    uint64_t data_filesize; /* size of the __DATA segment */
 } macho_info;
 
 const char* macho_describe_lc(uint32_t lc);
+
 bool macho_parse(const uint8_t* data, struct macho_info* out_info);
+bool macho_load(const uint8_t* data, page_table_t* root, uint64_t hhdm_base, struct macho_info* out_info);
 
 #endif  // CELESTEOS_MACHO_H

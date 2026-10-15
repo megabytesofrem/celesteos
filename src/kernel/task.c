@@ -66,7 +66,7 @@ bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t* root, uint64_t hh
     for (size_t page = 0; page < USER_STACK_PAGES; ++page) {
         if (!vmm_map(root, USER_STACK_BASE + page * VMM_PAGE_SIZE,
                      (uintptr_t)stack_frames + page * VMM_PAGE_SIZE,
-                     PAGE_FLAG_USER | PAGE_FLAG_READ_WRITE)) {
+                     PAGE_USER | PAGE_READ_WRITE)) {
             for (size_t mapped = 0; mapped < page; ++mapped) {
                 vmm_unmap(root, USER_STACK_BASE + mapped * VMM_PAGE_SIZE);
             }
