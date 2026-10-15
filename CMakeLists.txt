@@ -1,0 +1,105 @@
+cmake_minimum_required(VERSION 3.20)
+
+# Enable C, C++, and NASM Assembly languages
+project(CelesteOS LANGUAGES C CXX ASM_NASM)
+
+# Enforce C++20 standard
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Configure NASM for 64-bit ELF output format
+set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
+set(CMAKE_ASM_NASM_FLAGS_DEBUG "-g -F dwarf")
+
+# -----------------------------------------------------------------------------
+# Bare-Metal C/C++ Compiler Flags
+# -----------------------------------------------------------------------------
+set(KERNEL_FLAGS
+    "-ffreestanding"
+    "-mno-red-zone"
+    "-mcmodel=kernel"
+    "-mno-mmx"
+    "-mno-sse"
+    "-mno-sse2"
+    "-fno-stack-protector"
+    "-Wall"
+    "-Wextra"
+)
+
+# Safely join list items with spaces instead of embedding multi-line newlines
+list(JOIN KERNEL_FLAGS " " KERNEL_FLAGS_STR)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${KERNEL_FLAGS_STR}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${KERNEL_FLAGS_STR} -fno-exceptions -fno-rtti")
+
+# -----------------------------------------------------------------------------
+# Executable Definition
+# -----------------------------------------------------------------------------
+add_executable(celesteos.elf
+    src/kernel/entry.asm
+    src/kernel/kmain.cpp
+)
+
+# Include directory setup for kernel headers
+target_include_directories(celesteos.elf PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/include
+)
+
+# -----------------------------------------------------------------------------
+# Linker Settings & Script Target
+# -----------------------------------------------------------------------------
+set_target_properties(celesteos.elf PROPERTIES
+    LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld -nostdlib -static"
+)
+
+# Link freestanding support libraries (libgcc for 64-bit integer division/stubs)
+target_link_libraries(celesteos.elf PRIVATE gcc)
+
+# -----------------------------------------------------------------------------
+# Limine ISO Packaging Target
+# -----------------------------------------------------------------------------
+set(ISO_ROOT "${CMAKE_BINARY_DIR}/iso_root")
+set(LIMINE_DIR "${CMAKE_BINARY_DIR}/limine")
+
+find_program(BASH_EXECUTABLE bash REQUIRED)
+find_program(XORRISO_EXECUTABLE xorriso REQUIRED)
+
+add_custom_target(limine_bootloader
+    COMMAND ${CMAKE_COMMAND} -E env "LIMINE_DIR=${LIMINE_DIR}"
+            "${BASH_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/build_limine.sh"
+    COMMENT "Preparing Limine boot files and host installer..."
+    VERBATIM
+)
+
+add_custom_target(iso ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ISO_ROOT}/boot"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:celesteos.elf> "${ISO_ROOT}/boot/kernel.elf"
+    COMMAND ${CMAKE_COMMAND} -E copy ${LIMINE_DIR}/limine-bios.sys ${ISO_ROOT}/
+    COMMAND ${CMAKE_COMMAND} -E copy ${LIMINE_DIR}/limine-bios-cd.bin ${ISO_ROOT}/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/limine.conf ${ISO_ROOT}/
+    COMMAND "${XORRISO_EXECUTABLE}" -as mkisofs -b limine-bios-cd.bin
+            -no-emul-boot -boot-load-size 4 -boot-info-table
+            ${ISO_ROOT} -o ${CMAKE_BINARY_DIR}/celesteos.iso
+    COMMAND ${LIMINE_DIR}/limine bios-install ${CMAKE_BINARY_DIR}/celesteos.iso
+    DEPENDS celesteos.elf limine_bootloader
+    COMMENT "Packaging bootable ISO image with Limine..."
+    VERBATIM
+)
+
+# -----------------------------------------------------------------------------
+# QEMU launch target
+# -----------------------------------------------------------------------------
+find_program(QEMU_EXECUTABLE qemu-system-x86_64 REQUIRED)
+
+add_custom_target(qemu
+    COMMAND "${QEMU_EXECUTABLE}"
+            -cdrom "${CMAKE_BINARY_DIR}/celesteos.iso"
+            -m 512M
+            -serial stdio
+            -no-reboot
+            -no-shutdown
+    DEPENDS iso
+    COMMENT "Launching CelesteOS in QEMU..."
+    USES_TERMINAL
+)
