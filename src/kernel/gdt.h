@@ -38,35 +38,12 @@ typedef struct gdt_t {
     uint64_t tss_high; /* high 64 bits of the TSS base address */
 } gdt_t;
 
-/**
- * Packed 104-byte 64-bit Task State Segment; align instances separately.
- */
-typedef struct __attribute__((packed)) task_state_segment_t {
-    uint32_t reserved0;
-    uint64_t rsp0; /* kernel stack pointer */
-    uint64_t rsp1; /* ring 1 stack pointer? */
-    uint64_t rsp2; /* ring 2 stack pointer? */
-    uint64_t reserved1;
-    uint64_t ist[7]; /* interrupt stack table pointers */
-    uint64_t reserved2;
-    uint16_t reserved3;
-    uint16_t io_map_base;
-} task_state_segment_t;
-
 _Static_assert(sizeof(gdt_entry_t) == 8, "GDT entries must be 8 bytes");
 _Static_assert(sizeof(gdt_pointer_t) == 10, "GDTR operands must be 10 bytes");
 _Static_assert(offsetof(gdt_pointer_t, base) == 2,
                "GDTR base must follow the 16-bit limit");
 _Static_assert(offsetof(gdt_t, tss_low) == 0x28,
                "TSS descriptor must match selector 0x28");
-_Static_assert(sizeof(task_state_segment_t) == 104,
-               "64-bit TSS must be 104 bytes");
-_Static_assert(offsetof(task_state_segment_t, rsp0) == 4,
-               "TSS RSP0 must be at offset 4");
-_Static_assert(offsetof(task_state_segment_t, ist) == 36,
-               "TSS IST entries must begin at offset 36");
-_Static_assert(offsetof(task_state_segment_t, io_map_base) == 102,
-               "TSS I/O map base must be at offset 102");
 
 void gdt_initialize();
 gdt_entry_t gdt_entry_null();

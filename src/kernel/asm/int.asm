@@ -94,7 +94,9 @@ extern irq_handler
 %macro define_isr 1
 isr%1:
   cli
+%if %1 != 8 && %1 != 10 && %1 != 11 && %1 != 12 && %1 != 13 && %1 != 14 && %1 != 17 && %1 != 21 && %1 != 29 && %1 != 30
   push byte 0
+%endif
   push byte %1
   jmp isr_common_stub
 %endmacro

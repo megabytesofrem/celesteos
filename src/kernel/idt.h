@@ -7,7 +7,7 @@
 /**
  * An entry in the Interrupt Descriptor Table (IDT).
  */
-typedef struct __attribute__((aligned(16), packed)) idt_entry_t {
+typedef struct __attribute__((packed)) idt_entry_t {
     uint16_t offset_low;    /* low 16 bits of the offset */
     uint16_t selector;      /* code segment selector */
     uint8_t ist;            /* bits 0..2 hold the Interrupt Stack Table index */
@@ -32,9 +32,10 @@ _Static_assert(offsetof(idt_pointer_t, base) == 2,
 
 typedef void (*idt_handler_t)(void);
 
-void idt_set_entry(int entry, idt_handler_t handler, int type_attr);
-/* Loading the IDT does not enable interrupts; isr_install completes setup. */
 void idt_initialize(void);
+
+void idt_set_entry(int entry, idt_handler_t handler, int type_attr);
+void idt_set_entry_ist(int entry, idt_handler_t handler, int type_attr, int ist_index);
 void idt_load(void);
 
 #endif  // CELESTEOS_IDT_H

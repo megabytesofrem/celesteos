@@ -7,6 +7,7 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/memory/kmalloc.h>
+#include <kernel/task.h>
 
 #include <stdlib/string.h>
 #include <libkernel.h>
@@ -111,9 +112,9 @@ void kmain(void) {
 
     framebuffer_init(&global_framebuffer, fb);
 
-    /* FIXME: INTENTIONAL PAGE FAULT, REMOVE AFTER TESTING  */
-    uint64_t* test = (uint64_t*)0xCAFEBABE;
-    *test = 0xCAFECAFE;
+    // /* FIXME: INTENTIONAL PAGE FAULT, REMOVE AFTER TESTING  */
+    // uint64_t* test = (uint64_t*)0xCAFEBABE;
+    // *test = 0xCAFECAFE;
 
     /* Memory Initialization */
 
@@ -167,6 +168,11 @@ void kmain(void) {
 
     klog(KLOG_INFO, "kmain: Try to parse Mach-O test payload...\n");
     macho_parse(test_macho, &macho_info);
+
+    /* User mode transition test */
+    if (!tss_jump_to_usermode(macho_info.entrypoint, active_pml4, hhdm_base)) {
+        HCF
+    }
 
     // Halt the CPU in an infinite loop
     HCF

@@ -20,7 +20,6 @@ TARGET_ISO := $(BUILD_DIR)/celesteos.iso
 INCLUDES := -Isrc \
             -Isrc/stdlib \
             -Isrc/kernel \
-            -Isrc/kernel/cpu \
             -Isrc/kernel/memory \
             -Isrc/kernel/drivers \
             -Isrc/kernel/asm
@@ -44,21 +43,24 @@ LDFLAGS := -T linker.ld -nostdlib -static
 
 # Source Files
 C_SRCS := src/kernel/kmain.c \
-          src/kernel/cpu/gdt.c \
-          src/kernel/cpu/idt.c \
-          src/kernel/cpu/isr.c \
-          src/kernel/cpu/pic.c \
+          src/kernel/gdt.c \
+          src/kernel/idt.c \
+          src/kernel/isr.c \
+          src/kernel/pic.c \
           src/kernel/memory/pmm.c \
           src/kernel/memory/vmm.c \
           src/kernel/memory/kmalloc.c \
           src/stdlib/string.c \
           src/stdlib/libkernel.c \
           src/kernel/drivers/framebuffer.c \
-          src/kernel/macho.c
+          src/kernel/loader/macho.c \
+          src/kernel/task.c
+          
 
 ASM_SRCS := src/kernel/asm/entry.asm \
             src/kernel/asm/load_gdt.asm \
-            src/kernel/asm/int.asm
+            src/kernel/asm/int.asm \
+            src/kernel/asm/tss_ring3.asm
 
 # Map sources to object files in build directory
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SRCS)) \
