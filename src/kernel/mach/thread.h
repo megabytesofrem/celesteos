@@ -53,19 +53,33 @@ typedef struct thread {
 
     /* Parent task */
     task_t* parent_task; /* pointer to the parent task */
-    struct thread* next; /* pointer to the next thread in the task's thread list */
+    struct thread*
+        next; /* pointer to the next thread in the task's thread list */
 
     /* IPC state*/
     ipc_port_t* waiting_on_port; /* the port the thread is waiting on */
     int32_t wait_result;         /* result of the wait operation */
 } thread_t;
 
+/* HACK: Store a global thread: g_current_thread */
+extern thread_t* g_current_thread;
+
+static inline thread_t* current_thread(void) { return g_current_thread; }
+
+static inline task_t* current_task(void) {
+    thread_t* thread = current_thread();
+    return (thread != NULL) ? thread->parent_task : NULL;
+}
+
 /**
  * Create a new thread attached to a parent task.
  * 
  * Allocates thread_t, initializes its context and kernel stack, and links it to the parent task.
  */
-kern_return_t thread_create(task_t* parent, uintptr_t entry_point, uintptr_t arg, ipc_port_t* out_port);
+kern_return_t thread_create(task_t* parent,
+                            uintptr_t entry_point,
+                            uintptr_t arg,
+                            ipc_port_t* out_port);
 
 /**
  * Destroy a thread and free its resources.

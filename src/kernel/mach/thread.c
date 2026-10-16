@@ -9,11 +9,12 @@
 
 static uintptr_t next_tid = 1;
 
-static uintptr_t generate_tid() {
-    return next_tid++;
-}
+static uintptr_t generate_tid() { return next_tid++; }
 
-kern_return_t thread_create(task_t* parent, uintptr_t entry_point, uintptr_t arg, thread_t** out_thread) {
+kern_return_t thread_create(task_t* parent,
+                            uintptr_t entry_point,
+                            uintptr_t arg,
+                            thread_t** out_thread) {
     thread_t* thread = kmalloc(sizeof(thread_t));
 
     // Initialize the thread structure
@@ -56,8 +57,7 @@ kern_return_t thread_create(task_t* parent, uintptr_t entry_point, uintptr_t arg
 }
 
 kern_return_t thread_destroy(thread_t* thread) {
-    if (!thread)
-        return KERN_INVALID_ARGUMENT;
+    if (!thread) return KERN_INVALID_ARGUMENT;
 
     // Remove from the parent task's thread list
     if (thread->parent_task) {
@@ -87,8 +87,7 @@ kern_return_t thread_destroy(thread_t* thread) {
 }
 
 kern_return_t thread_blockon(thread_t* thread, ipc_port_t* port) {
-    if (!thread)
-        return KERN_INVALID_ARGUMENT;
+    if (!thread) return KERN_INVALID_ARGUMENT;
 
     // Lock the thread before modifying its state
     spinlock_acquire(&thread->lock);
@@ -100,8 +99,7 @@ kern_return_t thread_blockon(thread_t* thread, ipc_port_t* port) {
 }
 
 kern_return_t thread_unblock(thread_t* thread) {
-    if (!thread)
-        return KERN_INVALID_ARGUMENT;
+    if (!thread) return KERN_INVALID_ARGUMENT;
 
     // Lock the thread before modifying its state
     spinlock_acquire(&thread->lock);
