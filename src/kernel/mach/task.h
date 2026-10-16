@@ -9,11 +9,11 @@
 #include <kernel/memory/vm_map.h>
 #include <kernel/mach/port_space.h>
 
-/* Task Execution States */
-typedef uint32_t task_state_t;
-#define TASK_STATE_ACTIVE     0
-#define TASK_STATE_SUSPENDED  1
-#define TASK_STATE_TERMINATED 2
+typedef enum {
+    TASK_ACTIVE,
+    TASK_SUSPENDED,
+    TASK_TERMINATED
+} task_state_t;
 
 /* Forward declarations for kernel task-related structures */
 typedef struct thread thread_t;
