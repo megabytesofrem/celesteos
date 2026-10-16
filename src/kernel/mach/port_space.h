@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include <kernel/spinlock.h>
+#include <mach/kern_return.h>
 #include <mach/mach_types.h>
 
 #define MACH_PORT_RIGHT_NONE      0x00
@@ -47,26 +48,26 @@ typedef struct mach_port_space {
  *
  * Returns a pointer to the newly created Mach port space, or NULL if allocation fails.
  */
-mach_port_space_t* mach_port_space_create(void);
+kern_return_t mach_port_space_create(mach_port_space_t** out_space);
 
 /**
  * Destroy the given Mach port space and release its resources.
  */
-void mach_port_space_destroy(mach_port_space_t* space);
+kern_return_t mach_port_space_destroy(mach_port_space_t* space);
 
 /**
  * Insert an entry into the given Mach port space.
  *
- * Returns true if the entry was successfully inserted, false otherwise.
+ * Returns KERN_SUCCESS if the entry was successfully inserted, KERN_FAILURE otherwise.
  */
-bool mach_port_space_insert(mach_port_space_t* space, ipc_port_t* port, mach_port_name_t name, mach_port_right_t right);
+kern_return_t mach_port_space_insert(mach_port_space_t* space, ipc_port_t* port, mach_port_name_t name, mach_port_right_t right);
 
 /**
  * Look up an entry in the given Mach port space by its name.
  *
- * Returns true if the entry was found, false otherwise. 
+ * Returns KERN_SUCCESS if the entry was found, KERN_FAILURE otherwise. 
  * If found, the associated port and right are stored in the output parameters.
  */
-bool mach_port_space_lookup(mach_port_space_t* space, mach_port_name_t name, ipc_port_t** out_port, mach_port_right_t* out_right);
+kern_return_t mach_port_space_lookup(mach_port_space_t* space, mach_port_name_t name, ipc_port_t** out_port, mach_port_right_t* out_right);
 
 #endif  // CELESTEOS_MACH_PORT_SPACE_H

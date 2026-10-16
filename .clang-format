@@ -1,16 +1,19 @@
 ---
+
 BasedOnStyle: Google
 TabWidth: 4
 IndentWidth: 4
-ColumnLimit: 0
+ColumnLimit: 80
+
+# Force parameters to wrap to a new line if they don't fit on one
 AllowAllParametersOfDeclarationOnNextLine: false
 BinPackParameters: false
 
 # Always use spaces
 UseTab: Never
 
-# Don't try to align trailing macro backslashes across wide lines
-AlignEscapedNewlines: DontAlign
+# Align trailing macro backslashes to the right
+AlignEscapedNewlines: Right
 
 # Prevent clang-format from re-wrapping trailing comments inside macros
 ReflowComments: false
@@ -24,4 +27,6 @@ AlignTrailingComments:
 AlignConsecutiveMacros: true
 
 SortIncludes: true
+
+# Preserve the order of include blocks
 IncludeBlocks: Preserve
