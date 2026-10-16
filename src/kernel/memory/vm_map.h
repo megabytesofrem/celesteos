@@ -3,8 +3,9 @@
 
 #include <stdint.h>
 
-#include <kernel/spinlock.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/spinlock.h>
+#include <mach/kern_return.h>
 
 typedef uint32_t vm_prot_t;
 typedef uintptr_t vm_offset_t;
@@ -42,43 +43,43 @@ extern vm_map_t* kernel_vm_map;
 /**
  * Initialize the kernel map using static storage before the heap is available.
  */
-bool vm_map_initialize_kernel(page_table_t* page_table);
+kern_return_t vm_map_initialize_kernel(page_table_t* page_table);
 
 /**
  * Create and initialize a new virtual memory map.
  */
-vm_map_t* vm_map_create(page_table_t* page_table);
+kern_return_t vm_map_create(page_table_t* page_table, vm_map_t** out_map);
 
 /**
  * Destroy a virtual memory map and free its resources.
  */
-void vm_map_destroy(vm_map_t* map);
+kern_return_t vm_map_destroy(vm_map_t* map);
 
 /**
  * Insert a new memory region into the virtual memory map.
  */
-bool vm_map_insert(vm_map_t* map, vm_offset_t start, vm_offset_t end, vm_prot_t prot);
+kern_return_t vm_map_insert(vm_map_t* map, vm_offset_t start, vm_offset_t end, vm_prot_t prot);
 
 /**
  * Remove a memory region from the virtual memory map.
  */
-bool vm_map_remove(vm_map_t* map, vm_offset_t start, vm_offset_t end);
+kern_return_t vm_map_remove(vm_map_t* map, vm_offset_t start, vm_offset_t end);
 
 /**
  * Allocate a new memory region in the virtual memory map.
  */
-void* vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot);
+kern_return_t vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot, void** out_virt_addr);
 
 /**
  * Unmap and free one page allocated by vm_map_alloc.
  * The address must be page-aligned. Page-table structures are retained.
  */
-bool vm_map_free(vm_map_t* map, uint64_t virt_addr);
+kern_return_t vm_map_free(vm_map_t* map, uint64_t virt_addr);
 
 /**
  * Change the protection flags of a memory region in the virtual memory map.
  */
-bool vm_map_protect(vm_map_t* map, vm_offset_t start, vm_offset_t end, vm_prot_t prot);
+kern_return_t vm_map_protect(vm_map_t* map, vm_offset_t start, vm_offset_t end, vm_prot_t prot);
 
 /**
  * Lookup the memory region containing the specified virtual address.

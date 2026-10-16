@@ -27,8 +27,9 @@ static page_table_t* get_or_create_next_level(page_table_t* current,
         return (page_table_t*)(uintptr_t)(next_level_phys + higher_half_base);
     }
 
-    void* new_frame = pmm_alloc_page();
-    if (new_frame == NULL) {
+    void* new_frame;
+
+    if (pmm_alloc_page(&new_frame) != KERN_SUCCESS) {
         return NULL;
     }
 
@@ -37,18 +38,20 @@ static page_table_t* get_or_create_next_level(page_table_t* current,
         (page_table_t*)(uintptr_t)(new_frame_phys + higher_half_base);
     clear_page_table(new_table);
 
+    // Set page table entry for the new table
     pte_set_address(entry, new_frame_phys);
     pte_set_flags(entry, PAGE_PRESENT | PAGE_READ_WRITE | flags);
     return new_table;
 }
 
-bool vmm_initialize(uint64_t hhdm_base_offset) {
+kern_return_t vmm_initialize(uint64_t hhdm_base_offset) {
     uintptr_t active_cr3;
     __asm__ volatile("mov %%cr3, %0" : "=r"(active_cr3));
     higher_half_base = hhdm_base_offset;
     pml4_phys_addr = active_cr3 & 0x000FFFFFFFFFF000ULL;
     pml4 = (page_table_t*)(uintptr_t)(pml4_phys_addr + higher_half_base);
-    return true;
+
+    return KERN_SUCCESS;
 }
 
 page_table_t* vmm_get_pml4(void) { return pml4; }
@@ -86,12 +89,12 @@ uintptr_t vmm_get_physical(page_table_t* pml4, uint64_t virt) {
     return pte_get_address(pt_entry);
 }
 
-bool vmm_map(page_table_t* root,
-             uint64_t virt,
-             uint64_t phys,
-             uint64_t flags) {
+kern_return_t vmm_map(page_table_t* root,
+                      uint64_t virt,
+                      uint64_t phys,
+                      uint64_t flags) {
     if (root == NULL) {
-        return false;
+        return KERN_FAILURE;
     }
     size_t pml4_index = (size_t)((virt >> 39) & 0x1FF);
     size_t pdpt_index = (size_t)((virt >> 30) & 0x1FF);
@@ -100,15 +103,15 @@ bool vmm_map(page_table_t* root,
 
     page_table_t* pdpt = get_or_create_next_level(root, pml4_index, flags);
     if (pdpt == NULL) {
-        return false;
+        return KERN_FAILURE;
     }
     page_table_t* pd = get_or_create_next_level(pdpt, pdpt_index, flags);
     if (pd == NULL) {
-        return false;
+        return KERN_FAILURE;
     }
     page_table_t* pt = get_or_create_next_level(pd, pd_index, flags);
     if (pt == NULL) {
-        return false;
+        return KERN_FAILURE;
     }
 
     page_table_entry_t* entry = &pt->entries[pt_index];
@@ -117,12 +120,12 @@ bool vmm_map(page_table_t* root,
 
     // Flush the TLB for the newly mapped virtual address.
     vmm_flush_tlb(virt);
-    return true;
+    return KERN_SUCCESS;
 }
 
-void vmm_unmap(page_table_t* root, uint64_t virt) {
+kern_return_t vmm_unmap(page_table_t* root, uint64_t virt) {
     if (root == NULL) {
-        return;
+        return KERN_FAILURE;
     }
     size_t pml4_index = (size_t)((virt >> 39) & 0x1FF);
     size_t pdpt_index = (size_t)((virt >> 30) & 0x1FF);
@@ -131,36 +134,39 @@ void vmm_unmap(page_table_t* root, uint64_t virt) {
 
     page_table_entry_t* entry = &root->entries[pml4_index];
     if (!pte_is_present(entry)) {
-        return;
+        return KERN_FAILURE;
     }
     page_table_t* pdpt = (page_table_t*)(uintptr_t)(pte_get_address(entry) + higher_half_base);
 
     entry = &pdpt->entries[pdpt_index];
     if (!pte_is_present(entry)) {
-        return;
+        return KERN_FAILURE;
     }
     page_table_t* pd = (page_table_t*)(uintptr_t)(pte_get_address(entry) + higher_half_base);
 
     entry = &pd->entries[pd_index];
     if (!pte_is_present(entry)) {
-        return;
+        return KERN_FAILURE;
     }
     page_table_t* pt = (page_table_t*)(uintptr_t)(pte_get_address(entry) + higher_half_base);
 
     entry = &pt->entries[pt_index];
     if (!pte_is_present(entry)) {
-        return;
+        return KERN_FAILURE;
     }
     entry->value = 0;
 
     // Flush the TLB for the unmapped virtual address.
     vmm_flush_tlb(virt);
+    return KERN_SUCCESS;
 }
 
-void vmm_switch_pml4(page_table_t* new_pml4) {
+kern_return_t vmm_switch_pml4(page_table_t* new_pml4) {
     __asm__ volatile("mov %0, %%cr3" : : "r"(new_pml4));
+    return KERN_SUCCESS;
 }
 
-void vmm_flush_tlb(uint64_t virt) {
+kern_return_t vmm_flush_tlb(uint64_t virt) {
     __asm__ volatile("invlpg (%0)" : : "r"(virt) : "memory");
+    return KERN_SUCCESS;
 }

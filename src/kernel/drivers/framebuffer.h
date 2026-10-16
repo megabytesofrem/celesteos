@@ -3,9 +3,9 @@
 
 #include <limine.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 struct framebuffer_state {
     struct limine_framebuffer* fb;

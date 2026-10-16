@@ -19,8 +19,8 @@ static bool test_bit(size_t page) {
     return (bitmap[page / 8] & (uint8_t)(1U << (page % 8))) != 0;
 }
 
-bool pmm_initialize(struct limine_memmap_response* memmap,
-                    uint64_t hhdm_base_offset) {
+kern_return_t pmm_initialize(struct limine_memmap_response* memmap,
+                             uint64_t hhdm_base_offset) {
     uint64_t highest_address = 0;
     uint64_t aligned_bitmap_size;
     uint64_t bitmap_pages;
@@ -28,7 +28,7 @@ bool pmm_initialize(struct limine_memmap_response* memmap,
 
     if (memmap == NULL || memmap->entries == NULL ||
         memmap->entry_count == 0) {
-        return false;
+        return KERN_INVALID_ARGUMENT;
     }
 
     for (uint64_t i = 0; i < memmap->entry_count; ++i) {
@@ -36,7 +36,7 @@ bool pmm_initialize(struct limine_memmap_response* memmap,
         if (entry != NULL && entry->type == LIMINE_MEMMAP_USABLE) {
             uint64_t end_address = entry->base + entry->length;
             if (end_address < entry->base) {
-                return false;
+                return KERN_FAILURE;
             }
             if (end_address > highest_address) {
                 highest_address = end_address;
@@ -45,15 +45,15 @@ bool pmm_initialize(struct limine_memmap_response* memmap,
     }
 
     if (highest_address / PMM_PAGE_SIZE > SIZE_MAX) {
-        return false;
+        return KERN_FAILURE;
     }
     size_t new_total_pages = (size_t)(highest_address / PMM_PAGE_SIZE);
     if (new_total_pages > SIZE_MAX - 7) {
-        return false;
+        return KERN_FAILURE;
     }
     size_t new_bitmap_size = (new_total_pages + 7) / 8;
     if (new_bitmap_size > SIZE_MAX - (PMM_PAGE_SIZE - 1)) {
-        return false;
+        return KERN_FAILURE;
     }
 
     bitmap_pages = (new_bitmap_size + PMM_PAGE_SIZE - 1) / PMM_PAGE_SIZE;
@@ -70,7 +70,7 @@ bool pmm_initialize(struct limine_memmap_response* memmap,
         }
     }
     if (new_bitmap == NULL) {
-        return false;
+        return KERN_FAILURE;
     }
 
     for (size_t i = 0; i < new_bitmap_size; ++i) {
@@ -116,26 +116,28 @@ bool pmm_initialize(struct limine_memmap_response* memmap,
         ++used_pages;
     }
 
-    return true;
+    return KERN_SUCCESS;
 }
 
-void* pmm_alloc_page(void) {
+kern_return_t pmm_alloc_page(void** out_page) {
     for (size_t page = 0; page < total_pages; ++page) {
         if (!test_bit(page)) {
             set_bit(page);
             ++used_pages;
-            return (void*)(uintptr_t)(page * PMM_PAGE_SIZE);
+
+            *out_page = (void*)(uintptr_t)(page * PMM_PAGE_SIZE);
+            return KERN_SUCCESS;
         }
     }
-    return NULL;
+    return KERN_FAILURE;
 }
 
-void* pmm_alloc_pages(size_t count) {
+kern_return_t pmm_alloc_pages(size_t count, void** out_pages) {
     if (count == 0) {
-        return NULL;
+        return KERN_INVALID_ARGUMENT;
     }
     if (count == 1) {
-        return pmm_alloc_page();
+        return pmm_alloc_page(out_pages);
     }
 
     size_t free_run = 0;
@@ -152,24 +154,26 @@ void* pmm_alloc_pages(size_t count) {
                     set_bit(allocated);
                     ++used_pages;
                 }
-                return (void*)(uintptr_t)(start_page * PMM_PAGE_SIZE);
+                *out_pages = (void*)(uintptr_t)(start_page * PMM_PAGE_SIZE);
+                return KERN_SUCCESS;
             }
         } else {
             free_run = 0;
         }
     }
-    return NULL;
+    return KERN_FAILURE;
 }
 
-void pmm_free_page(void* phys_addr) {
+kern_return_t pmm_free_page(void* phys_addr) {
     size_t page = (size_t)((uintptr_t)phys_addr / PMM_PAGE_SIZE);
     if (page < total_pages && test_bit(page)) {
         clear_bit(page);
         --used_pages;
     }
+    return KERN_SUCCESS;
 }
 
-void pmm_free_pages(void* phys_addr, size_t count) {
+kern_return_t pmm_free_pages(void* phys_addr, size_t count) {
     uintptr_t base_addr = (uintptr_t)phys_addr;
     for (size_t i = 0; i < count; ++i) {
         if (i > (UINTPTR_MAX - base_addr) / PMM_PAGE_SIZE) {
@@ -177,6 +181,7 @@ void pmm_free_pages(void* phys_addr, size_t count) {
         }
         pmm_free_page((void*)(base_addr + i * PMM_PAGE_SIZE));
     }
+    return KERN_SUCCESS;
 }
 
 size_t pmm_get_total_pages(void) { return total_pages; }

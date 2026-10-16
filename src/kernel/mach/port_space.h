@@ -1,11 +1,12 @@
 #ifndef CELESTEOS_MACH_PORT_SPACE_H
 #define CELESTEOS_MACH_PORT_SPACE_H
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <kernel/spinlock.h>
+#include <mach/mach_types.h>
 
 #define MACH_PORT_RIGHT_NONE      0x00
 #define MACH_PORT_RIGHT_SEND      (1 << 0)
@@ -15,8 +16,6 @@
 
 /* Forward declaration */
 typedef struct ipc_port ipc_port_t;
-typedef uint32_t mach_port_right_t;
-typedef uint32_t mach_port_name_t;
 
 /**
  * A single entry in the Mach port table.

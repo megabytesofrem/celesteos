@@ -1,19 +1,19 @@
+#include <kernel/drivers/framebuffer.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/isr.h>
-#include <kernel/ports.h>
-#include <kernel/pic.h>
-#include <kernel/drivers/framebuffer.h>
-#include <kernel/memory/pmm.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/memory/vm_map.h>
-#include <kernel/memory/kmalloc.h>
-#include <kernel/task.h>
 #include <kernel/mach/loader.h>
+#include <kernel/memory/kmalloc.h>
+#include <kernel/memory/pmm.h>
+#include <kernel/memory/vm_map.h>
+#include <kernel/memory/vmm.h>
+#include <kernel/pic.h>
+#include <kernel/ports.h>
+#include <kernel/task.h>
 
-#include <string.h>
 #include <libkernel.h>
 #include <limine.h>
+#include <string.h>
 
 #include <stdint.h>
 
@@ -121,26 +121,26 @@ void kmain(void) {
 
     /* Memory Initialization */
 
-    if (!pmm_initialize(memmap_response, hhdm_base)) {
+    if (pmm_initialize(memmap_response, hhdm_base) != KERN_SUCCESS) {
         klog(KLOG_ERROR, "kmain: Failed to initialize the PMM!\n");
         HCF
     }
     klog(KLOG_INFO, "kmain: PMM initialized.\n");
 
-    if (!vmm_initialize(hhdm_base)) {
+    if (vmm_initialize(hhdm_base) != KERN_SUCCESS) {
         klog(KLOG_ERROR, "kmain: Failed to initialize the VMM!\n");
         HCF
     }
     klog(KLOG_INFO, "kmain: VMM initialized.\n");
 
     // Initialize the kernel virtual memory map
-    if (!vm_map_initialize_kernel(vmm_get_pml4())) {
+    if (vm_map_initialize_kernel(vmm_get_pml4()) != KERN_SUCCESS) {
         klog(KLOG_ERROR, "kmain: Failed to initialize kernel VM map!\n");
         HCF
     }
     klog(KLOG_INFO, "kmain: Kernel VM map initialized.\n");
 
-    if (!heap_initialize(kernel_vm_map)) {
+    if (heap_initialize(kernel_vm_map) != KERN_SUCCESS) {
         klog(KLOG_ERROR, "kmain: Failed to initialize the heap!\n");
         HCF
     }
@@ -169,7 +169,11 @@ void kmain(void) {
     }
 
     // Map 0x1000 to a newly allocated physical frame
-    void* phys_frame = pmm_alloc_page();
+    void* phys_frame;
+    if (pmm_alloc_page(&phys_frame) != KERN_SUCCESS) {
+        klog(KLOG_ERROR, "kmain: Failed to allocate a physical frame!\n");
+        HCF
+    }
     vmm_map(vmm_get_pml4(), 0x1000, (uintptr_t)phys_frame, PAGE_PRESENT | PAGE_USER | PAGE_READ_WRITE);
 
     /* User mode transition test */

@@ -1,7 +1,7 @@
 #include "task.h"
 
-#include <stdlib/string.h>
-#include <stdlib/libkernel.h>
+#include <string.h>
+#include <libkernel.h>
 
 #include "memory/pmm.h"
 
@@ -34,17 +34,19 @@ void tss_prepare_usermode(uintptr_t kernel_stack) {
 }
 
 bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t* root, uint64_t hhdm_base) {
-    void* stack_frames = pmm_alloc_pages(USER_STACK_PAGES);
-    if (stack_frames == NULL) {
+    void* stack_frames;
+
+    if (pmm_alloc_pages(USER_STACK_PAGES, &stack_frames) != KERN_SUCCESS) {
         klog(KLOG_ERROR, "task: Unable to allocate user stack.\n");
         return false;
     }
+
     memset((void*)((uintptr_t)stack_frames + hhdm_base), 0,
            USER_STACK_PAGES * VMM_PAGE_SIZE);
     for (size_t page = 0; page < USER_STACK_PAGES; ++page) {
-        if (!vmm_map(root, USER_STACK_BASE + page * VMM_PAGE_SIZE,
+        if (vmm_map(root, USER_STACK_BASE + page * VMM_PAGE_SIZE,
                      (uintptr_t)stack_frames + page * VMM_PAGE_SIZE,
-                     PAGE_USER | PAGE_READ_WRITE)) {
+                     PAGE_USER | PAGE_READ_WRITE) != KERN_SUCCESS) {
             for (size_t mapped = 0; mapped < page; ++mapped) {
                 vmm_unmap(root, USER_STACK_BASE + mapped * VMM_PAGE_SIZE);
             }

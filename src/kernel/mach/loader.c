@@ -1,8 +1,8 @@
 #include "loader.h"
 
+#include <libkernel.h>
 #include <stdbool.h>
 #include <string.h>
-#include <libkernel.h>
 
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
@@ -59,8 +59,8 @@ bool map_segment(page_table_t* root, uint64_t vmaddr, uint64_t vmsize, uint64_t 
     size_t page_count = page_align_up(offset + vmsize) / VMM_PAGE_SIZE;
 
     // Allocate backing physical pages
-    void* phys_pages = pmm_alloc_pages(page_count);
-    if (!phys_pages) {
+    void* phys_pages;
+    if (pmm_alloc_pages(page_count, &phys_pages) != KERN_SUCCESS) {
         klog(KLOG_ERROR, "macho-loader: Failed physical allocation for segment at 0x%p\n", vmaddr);
         return false;
     }
@@ -72,10 +72,10 @@ bool map_segment(page_table_t* root, uint64_t vmaddr, uint64_t vmsize, uint64_t 
 
     // Map physical frames into user virtual memory space
     for (size_t i = 0; i < page_count; ++i) {
-        if (!vmm_map(root,
-                     vm_start + (i * VMM_PAGE_SIZE),
-                     phys_addr + (i * VMM_PAGE_SIZE),
-                     PAGE_PRESENT | PAGE_USER | PAGE_READ_WRITE)) {
+        if (vmm_map(root,
+                    vm_start + (i * VMM_PAGE_SIZE),
+                    phys_addr + (i * VMM_PAGE_SIZE),
+                    PAGE_PRESENT | PAGE_USER | PAGE_READ_WRITE) != KERN_SUCCESS) {
             klog(KLOG_ERROR, "macho-loader: Failed to map page %x for segment at 0x%p\n", i, vmaddr);
             return false;
         }

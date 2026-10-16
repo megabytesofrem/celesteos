@@ -1,8 +1,8 @@
 #ifndef CELESTEOS_STD_LIBKERNEL_H
 #define CELESTEOS_STD_LIBKERNEL_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 enum log_level {
     KLOG_NONE,

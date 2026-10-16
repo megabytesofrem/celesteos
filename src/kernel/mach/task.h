@@ -1,13 +1,13 @@
 #ifndef CELESTEOS_MACH_TASK_H
 #define CELESTEOS_MACH_TASK_H
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
-#include <kernel/spinlock.h>
-#include <kernel/memory/vm_map.h>
 #include <kernel/mach/port_space.h>
+#include <kernel/memory/vm_map.h>
+#include <kernel/spinlock.h>
 
 typedef enum {
     TASK_ACTIVE,
@@ -48,7 +48,7 @@ typedef struct task {
 /**
  * Create a new Mach task (with an optional parent task).
  */
-task_t* task_create(task_t* parent_task);
+kern_return_t task_create(task_t* parent_task);
 
 /**
  * Destroy a Mach task, freeing its memory map and all associated resources.

@@ -23,4 +23,5 @@ AlignTrailingComments:
 # Align #define
 AlignConsecutiveMacros: true
 
-SortIncludes: Never
+SortIncludes: true
+IncludeBlocks: Preserve

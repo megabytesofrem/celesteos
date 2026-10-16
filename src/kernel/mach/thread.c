@@ -1,9 +1,11 @@
 #include "thread.h"
 
-#include <kernel/memory/kmalloc.h>
 #include <string.h>
 
-#include "task.h"
+#include <kernel/memory/kmalloc.h>
+#include <mach/kern_return.h>
+#include <mach/mach_types.h>
+#include <mach/task.h>
 
 static uintptr_t next_tid = 1;
 
@@ -11,7 +13,7 @@ static uintptr_t generate_tid() {
     return next_tid++;
 }
 
-thread_t* thread_create(task_t* parent, uintptr_t entry_point, uintptr_t arg) {
+kern_return_t thread_create(task_t* parent, uintptr_t entry_point, uintptr_t arg, thread_t** out_thread) {
     thread_t* thread = kmalloc(sizeof(thread_t));
 
     // Initialize the thread structure
@@ -22,7 +24,7 @@ thread_t* thread_create(task_t* parent, uintptr_t entry_point, uintptr_t arg) {
     thread->kstack_base = (uintptr_t)kmalloc(KERNEL_STACK_SIZE);
     if (!thread->kstack_base) {
         kfree(thread);
-        return NULL;
+        return KERN_NO_MEMORY;
     }
     thread->kstack_top = thread->kstack_base + KERNEL_STACK_SIZE;
 
@@ -49,11 +51,13 @@ thread_t* thread_create(task_t* parent, uintptr_t entry_point, uintptr_t arg) {
     thread->parent_task = parent;
     thread->state = THREAD_STOPPED;
 
-    return thread;
+    *out_thread = thread;
+    return KERN_SUCCESS;
 }
 
-void thread_destroy(thread_t* thread) {
-    if (!thread) return;
+kern_return_t thread_destroy(thread_t* thread) {
+    if (!thread)
+        return KERN_INVALID_ARGUMENT;
 
     // Remove from the parent task's thread list
     if (thread->parent_task) {
@@ -79,10 +83,12 @@ void thread_destroy(thread_t* thread) {
 
     // Free the thread structure
     kfree(thread);
+    return KERN_SUCCESS;
 }
 
-void thread_blockon(thread_t* thread, ipc_port_t* port) {
-    if (!thread) return;
+kern_return_t thread_blockon(thread_t* thread, ipc_port_t* port) {
+    if (!thread)
+        return KERN_INVALID_ARGUMENT;
 
     // Lock the thread before modifying its state
     spinlock_acquire(&thread->lock);
@@ -90,10 +96,12 @@ void thread_blockon(thread_t* thread, ipc_port_t* port) {
     thread->state = THREAD_WAITING;
     // Unlock the thread after modifying its state
     spinlock_release(&thread->lock);
+    return KERN_SUCCESS;
 }
 
-void thread_unblock(thread_t* thread) {
-    if (!thread) return;
+kern_return_t thread_unblock(thread_t* thread) {
+    if (!thread)
+        return KERN_INVALID_ARGUMENT;
 
     // Lock the thread before modifying its state
     spinlock_acquire(&thread->lock);
@@ -101,4 +109,5 @@ void thread_unblock(thread_t* thread) {
     thread->state = THREAD_RUNNING;
     // Unlock the thread after modifying its state
     spinlock_release(&thread->lock);
+    return KERN_SUCCESS;
 }

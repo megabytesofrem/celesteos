@@ -16,7 +16,7 @@ typedef struct BlockHeader {
 /**
  * Initialize the heap with a given kernel virtual memory map.
  */
-bool heap_initialize(vm_map_t* kernel_vm_map);
+kern_return_t heap_initialize(vm_map_t* kernel_vm_map);
 
 /**
  * Expand the initialized heap with virtually contiguous pages.

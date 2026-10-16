@@ -1,8 +1,11 @@
 #ifndef CELESTEOS_MACH_MESSAGE_H
 #define CELESTEOS_MACH_MESSAGE_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
+
+#include <mach/kern_return.h>
+#include <mach/mach_types.h>
 
 /* 
  * Sources referenced:
@@ -11,9 +14,6 @@
  * 
  * With assistance from Gemini.
  */
-
-typedef uint32_t mach_port_name_t;
-typedef uint32_t mach_port_right_t;
 
 #define MACH_PORT_NULL 0
 #define MACH_PORT_DEAD ((mach_port_name_t)~0)

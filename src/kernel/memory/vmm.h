@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <mach/kern_return.h>
+
 #define VMM_PAGE_SIZE 0x1000 /* 4KiB */
 
 typedef enum page_flags {
@@ -30,10 +32,11 @@ typedef struct page_table_entry_t {
 /**
  * Set the physical address for a page table entry.
  */
-static inline void pte_set_address(page_table_entry_t* entry,
-                                   uint64_t phys_addr) {
+static inline kern_return_t pte_set_address(page_table_entry_t* entry,
+                                            uint64_t phys_addr) {
     entry->value = (entry->value & ~0x000FFFFFFFFFF000ULL) |
                    (phys_addr & 0x000FFFFFFFFFF000ULL);
+    return KERN_SUCCESS;
 }
 
 /**
@@ -47,17 +50,19 @@ static inline uint64_t pte_get_address(
 /**
  * Set the flags for a page table entry.
  */
-static inline void pte_set_flags(page_table_entry_t* entry,
-                                 uint64_t flags) {
+static inline kern_return_t pte_set_flags(page_table_entry_t* entry,
+                                          uint64_t flags) {
     entry->value |= flags;
+    return KERN_SUCCESS;
 }
 
 /**
  * Clear the specified flags for a page table entry.
  */
-static inline void pte_clear_flags(page_table_entry_t* entry,
-                                   uint64_t flags) {
+static inline kern_return_t pte_clear_flags(page_table_entry_t* entry,
+                                            uint64_t flags) {
     entry->value &= ~flags;
+    return KERN_SUCCESS;
 }
 
 /**
@@ -99,21 +104,21 @@ typedef struct page_table_t {
 /**
  * Initialize the virtual memory manager using the active bootloader page table.
  */
-bool vmm_initialize(uint64_t hhdm_base_offset);
+kern_return_t vmm_initialize(uint64_t hhdm_base_offset);
 
 /**
  * Map a virtual address to a physical address, creating the necessary levels
  * of the page table hierarchy if they do not already exist.
  */
-bool vmm_map(page_table_t* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
+kern_return_t vmm_map(page_table_t* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
 
 /**
  * Unmap a virtual address, removing its mapping from the page table hierarchy.
  */
-void vmm_unmap(page_table_t* pml4, uint64_t virt);
+kern_return_t vmm_unmap(page_table_t* pml4, uint64_t virt);
 
-void vmm_switch_pml4(page_table_t* new_pml4);
-void vmm_flush_tlb(uint64_t virt);
+kern_return_t vmm_switch_pml4(page_table_t* new_pml4);
+kern_return_t vmm_flush_tlb(uint64_t virt);
 
 page_table_t* vmm_get_pml4(void);
 uint64_t vmm_get_pml4_physical(void);

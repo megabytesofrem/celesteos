@@ -13,15 +13,15 @@ static uintptr_t heap_curr_virt = 0xFFFF900000000000ULL;
 /* Maximum heap size limit (the highest virtual address the heap can grow to) */
 static const uintptr_t heap_limit = 0xFFFF908000000000ULL;
 
-bool heap_initialize(vm_map_t* kernel_vm_map) {
+kern_return_t heap_initialize(vm_map_t* kernel_vm_map) {
     if (!kernel_vm_map || heap_start) {
-        return false;
+        return KERN_FAILURE;
     }
 
     // Ask the kernels vm_map structure to allocate and back the initial heap page.
-    void* initial_heap_page = vm_map_alloc(kernel_vm_map, heap_curr_virt, VM_PROT_READ | VM_PROT_WRITE);
-    if (!initial_heap_page) {
-        return false;
+    void* initial_heap_page;
+    if (vm_map_alloc(kernel_vm_map, heap_curr_virt, VM_PROT_READ | VM_PROT_WRITE, &initial_heap_page) != KERN_SUCCESS) {
+        return KERN_FAILURE;
     }
 
     // Initialize the heap start with the allocated initial heap page.
@@ -31,7 +31,7 @@ bool heap_initialize(vm_map_t* kernel_vm_map) {
     heap_start->next = NULL;
     heap_map = kernel_vm_map;
     heap_curr_virt += VMM_PAGE_SIZE;
-    return true;
+    return KERN_SUCCESS;
 }
 
 BlockHeader* heap_expand(size_t min_size) {
@@ -74,13 +74,14 @@ BlockHeader* heap_expand(size_t min_size) {
     // Allocate each page sequentially from vm_map
     for (size_t i = 0; i < pages_needed; i++) {
         uintptr_t address = heap_curr_virt + i * VMM_PAGE_SIZE;
-        void* page = vm_map_alloc(heap_map, address, VM_PROT_READ | VM_PROT_WRITE);
-        if (!page) {
+        void* page;
+
+        if (vm_map_alloc(heap_map, address, VM_PROT_READ | VM_PROT_WRITE, &page) != KERN_SUCCESS) {
             // Roll back on allocation failure
             bool rolled_back = true;
             while (i > 0) {
                 --i;
-                if (!vm_map_free(heap_map, heap_curr_virt + i * VMM_PAGE_SIZE)) {
+                if (vm_map_free(heap_map, heap_curr_virt + i * VMM_PAGE_SIZE) != KERN_SUCCESS) {
                     rolled_back = false;
                 }
             }

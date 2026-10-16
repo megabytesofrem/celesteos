@@ -68,7 +68,7 @@ extern void irq13();
 extern void irq14();
 extern void irq15();
 
-void isr_install(void) {
+kern_return_t isr_install(void) {
     __asm__ volatile("cli" : : : "memory");
     idt_set_entry(0, isr0, 0x8f);
     idt_set_entry(1, isr1, 0x8f);
@@ -125,6 +125,8 @@ void isr_install(void) {
     pic_remap(0x20, 0x28);
     idt_load();
     __asm__ volatile("sti" : : : "memory");
+
+    return KERN_SUCCESS;
 }
 
 void irq_handler(struct cpu_registers* regs) {
