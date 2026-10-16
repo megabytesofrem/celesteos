@@ -16,6 +16,9 @@
 
 #include <stdint.h>
 
+// Boot logo
+#include <kernel/drivers/boot_logo.h>
+
 // Mach-O test payload
 #include <kernel/mach/macho_test.h>
 
@@ -112,9 +115,8 @@ void kmain(void) {
 
     framebuffer_init(&global_framebuffer, fb);
 
-    // /* FIXME: INTENTIONAL PAGE FAULT, REMOVE AFTER TESTING  */
-    // uint64_t* test = (uint64_t*)0xCAFEBABE;
-    // *test = 0xCAFECAFE;
+    // Display the boot logo on the framebuffer
+    framebuffer_draw_raw_image(&global_framebuffer, 0, 0, logo_header_data, logo_width, logo_height);
 
     /* Memory Initialization */
 

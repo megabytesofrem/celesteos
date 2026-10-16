@@ -90,12 +90,12 @@ $(TARGET_ELF): $(OBJS)
 	$(LD) $(LDFLAGS) $(OBJS) $(LIBGCC) -o $@
 
 # Limine Bootloader target
-limine_bootloader:
+limine:
 	@mkdir -p $(LIMINE_DIR)
 	LIMINE_DIR="$(LIMINE_DIR)" $(BASH) scripts/build_limine.sh
 
 # Build ISO target
-iso: $(TARGET_ELF) limine_bootloader
+iso: $(TARGET_ELF) limine
 	@mkdir -p $(ISO_DIR)/boot
 	cp $(TARGET_ELF) $(ISO_DIR)/boot/kernel.elf
 	cp $(LIMINE_DIR)/limine-bios.sys $(ISO_DIR)/

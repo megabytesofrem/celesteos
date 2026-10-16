@@ -64,6 +64,41 @@ void framebuffer_draw_char(struct framebuffer_state* fb, char c, size_t x, size_
     }
 }
 
+void framebuffer_draw_raw_image(struct framebuffer_state* fb, size_t x, size_t y, const char* image_data, size_t img_width, size_t img_height) {
+    const char* current_data = image_data;
+
+    for (size_t row = 0; row < img_height; row++) {
+        for (size_t column = 0; column < img_width; column++) {
+            uint8_t pixel[3];
+
+            uint8_t first = (uint8_t)current_data[0] - 33;
+            uint8_t second = (uint8_t)current_data[1] - 33;
+            uint8_t third = (uint8_t)current_data[2] - 33;
+            uint8_t fourth = (uint8_t)current_data[3] - 33;
+
+            pixel[0] = (uint8_t)((first << 2) | (second >> 4));
+            pixel[1] = (uint8_t)(((second & 0x0F) << 4) | (third >> 2));
+            pixel[2] = (uint8_t)(((third & 0x03) << 6) | fourth);
+            current_data += 4;
+
+            uint8_t r = pixel[0];
+            uint8_t g = pixel[1];
+            uint8_t b = pixel[2];
+
+            // Pack into 32-bit XRGB color for Limine
+            uint32_t color = ((uint32_t)(r) << 16) |
+                             ((uint32_t)(g) << 8) |
+                             (uint32_t)(b);
+
+            framebuffer_draw_pixel(fb, x + column, y + row, color);
+        }
+    }
+
+    // Update the cursor to after the drawn image
+    fb->cursor_x = 0;
+    fb->cursor_y = y + img_height + 1;
+}
+
 void framebuffer_putchar(struct framebuffer_state* fb, char c, uint32_t fg_color, uint32_t bg_color) {
     if (c == '\n') {
         fb->cursor_x = 0;
@@ -101,4 +136,19 @@ void framebuffer_print(struct framebuffer_state* fb, const char* str, uint32_t f
     while (*str) {
         framebuffer_putchar(fb, *str++, fg_color, bg_color);
     }
+}
+
+void framebuffer_scroll(struct framebuffer_state* fb) {
+    // Copy screen lines up by FONT_HEIGHT rows using memcpy
+    size_t bytes_per_line = fb->fb->pitch;
+    size_t total_move_bytes = (fb->height - FONT_HEIGHT) * bytes_per_line;
+
+    uint8_t* byte_buffer = (uint8_t*)(fb->pixel_data);
+    memcpy(byte_buffer, byte_buffer + (FONT_HEIGHT * bytes_per_line), total_move_bytes);
+
+    // Clear the newly exposed bottom row
+    uint32_t* bottom_row = fb->pixel_data + ((fb->height - FONT_HEIGHT) * fb->pitch_pixels);
+    memset(bottom_row, 0, FONT_HEIGHT * bytes_per_line);
+
+    fb->cursor_y -= FONT_HEIGHT;
 }

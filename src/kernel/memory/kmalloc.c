@@ -24,7 +24,7 @@ bool initialize_heap(page_table_t* kernel_pml4) {
     if (!vmm_map(kernel_pml4,
                  heap_curr_virt,
                  (uint64_t)(uintptr_t)phys_page,
-                 PAGE_FLAG_PRESENT | PAGE_FLAG_READ_WRITE)) {
+                 PAGE_PRESENT | PAGE_READ_WRITE)) {
         pmm_free_page(phys_page);
         return false;
     }
