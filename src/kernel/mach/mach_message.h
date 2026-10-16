@@ -65,11 +65,11 @@ typedef uint32_t mach_port_right_t;
 #define MACH_MSG_SUCCESS 0x00000000
 
 typedef struct {
-    uint32_t msgh_bits;        /* flags */
-    uint32_t msgh_size;        /* total size of the message */
-    uint32_t msgh_remote_port; /* destination port right */
-    uint32_t msgh_local_port;  /* reply port right */
-    uint32_t msgh_id;          /* message identifier */
+    uint32_t msgh_bits;                /* flags */
+    uint32_t msgh_size;                /* total size of the message */
+    mach_port_name_t msgh_remote_port; /* destination port right */
+    mach_port_name_t msgh_local_port;  /* reply port right */
+    uint32_t msgh_id;                  /* message identifier */
 } mach_msg_header_t;
 
 typedef uint32_t mach_msg_type_name_t;
@@ -111,13 +111,63 @@ typedef uint32_t mach_msg_size_t;
 typedef uint32_t mach_msg_option_t;
 typedef uint32_t mach_msg_timeout_t;
 
+/**
+ * Send and/or receive a Mach message.
+ *
+ * @param msg The message header to send or receive.
+ * @param option The message options.
+ * @param send_size The size of the message to send.
+ * @param rcv_size The size of the buffer to receive the message.
+ * @param rcv_name The name of the receive port.
+ * @param timeout The send/receive timeout.
+ * @param notify The notification port for send-once rights.
+ * @return The result of the send/receive operation.
+ */
 mach_msg_return_t mach_msg(
     mach_msg_header_t* msg,
     mach_msg_option_t option,
     mach_msg_size_t send_size,
     mach_msg_size_t rcv_size,
-    uint32_t rcv_name,
+    mach_port_name_t rcv_name,
     mach_msg_timeout_t timeout,
-    uint32_t notify);
+    mach_port_name_t notify);
+
+/**
+ * Send a Mach message.
+ * 
+ * Resolves `msg->msgh_remote_port` in the current tasks space, copies the payload into a `mach_kmsg_t`
+ * and calls `ipc_port_enqueue_kmsg` to enqueue the message to the destination port.
+ * 
+ * @param msg The message header to send.
+ * @param option The send options.
+ * @param send_size The size of the message to send.
+ * @param timeout The send timeout.
+ * @return The result of the send operation.
+ */
+mach_msg_return_t mach_msg_send(
+    mach_msg_header_t* msg,
+    mach_msg_option_t option,
+    mach_msg_size_t send_size,
+    mach_msg_timeout_t timeout);
+
+/**
+ * Receive a Mach message.
+ * 
+ * Resolves `rcv_name` in the current task's space, calls `ipc_port_dequeue_kmsg` to dequeue a message from the receive port, 
+ * and copies the payload into the provided message buffer (or blocks the calling thread until a message is available).
+ *
+ * @param msg The message header to receive into.
+ * @param option The receive options.
+ * @param rcv_size The size of the buffer to receive the message.
+ * @param rcv_name The name of the receive port.
+ * @param timeout The receive timeout.
+ * @return The result of the receive operation.
+ */
+mach_msg_return_t mach_msg_receive(
+    mach_msg_header_t* msg,
+    mach_msg_option_t option,
+    mach_msg_size_t rcv_size,
+    mach_port_name_t rcv_name,
+    mach_msg_timeout_t timeout);
 
 #endif  // CELESTEOS_MACH_MESSAGE_H
