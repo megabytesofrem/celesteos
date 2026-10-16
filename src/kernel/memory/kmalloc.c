@@ -4,16 +4,13 @@
 
 #include "pmm.h"
 
-typedef struct BlockHeader {
-    size_t size;
-    bool is_free;
-    struct BlockHeader* next;
-} BlockHeader;
-
+/* Start address of the heap */
 static BlockHeader* heap_start;
+
+/* Current virtual address for the heap */
 static uintptr_t heap_curr_virt = 0xFFFF900000000000ULL;
 
-bool initialize_heap(vm_map_t* kernel_vm_map) {
+bool heap_initialize(vm_map_t* kernel_vm_map) {
     if (!kernel_vm_map) {
         return false;
     }
@@ -32,6 +29,55 @@ bool initialize_heap(vm_map_t* kernel_vm_map) {
     return true;
 }
 
+BlockHeader* heap_expand(size_t min_size) {
+    // Calculate how many pages are needed to satisfy the (size + header)
+    size_t total_size = min_size + sizeof(BlockHeader);
+    size_t pages_needed = (total_size + VMM_PAGE_SIZE - 1) / VMM_PAGE_SIZE;
+    size_t bytes_needed = pages_needed * VMM_PAGE_SIZE;
+
+    uintptr_t new_heap_virt = heap_curr_virt;
+
+    // Allocate each page sequentially from vm_map
+    for (size_t i = 0; i < pages_needed; i++) {
+        void* page = vm_map_alloc(kernel_vm_map, new_heap_virt, VM_PROT_READ | VM_PROT_WRITE);
+        if (!page) {
+            // If any page allocation fails, return NULL to indicate failure.
+            return NULL;
+        }
+
+        // Move to the next virtual address for the heap.
+        new_heap_virt += VMM_PAGE_SIZE;
+    }
+
+    // Initialize a new free block header at the start of the newly allocated heap space.
+    BlockHeader* new_block = (BlockHeader*)new_heap_virt;
+    new_block->size = bytes_needed - sizeof(BlockHeader);
+    new_block->is_free = true;
+    new_block->next = NULL;
+
+    // Append the new block to the end of the current heap list.
+    BlockHeader* current = heap_start;
+    while (current->next != NULL) {
+        current = current->next;
+    }
+    current->next = new_block;
+
+    return new_block;
+}
+
+void inner_alloc(BlockHeader* block_hdr, size_t size) {
+    /* Split block if larger than needed */
+    if (block_hdr->size >= size + sizeof(BlockHeader) + 16) {
+        BlockHeader* new_block = (BlockHeader*)((uintptr_t)block_hdr + sizeof(BlockHeader) + size);
+        new_block->size = block_hdr->size - size - sizeof(BlockHeader);
+        new_block->is_free = true;
+        new_block->next = block_hdr->next;
+
+        block_hdr->size = size;
+        block_hdr->next = new_block;
+    }
+}
+
 void* kmalloc(size_t size) {
     if (size == 0 ||
         size > SIZE_MAX - 7 - sizeof(BlockHeader) - 16) {
@@ -45,14 +91,7 @@ void* kmalloc(size_t size) {
             // Check if the current block can be split into two blocks.
             if (current->size >= size + sizeof(BlockHeader) + 16) {
                 // Split the current block into two blocks if there is room
-                BlockHeader* new_block = (BlockHeader*)((uintptr_t)current + sizeof(BlockHeader) + size);
-                new_block->size =
-                    current->size - size - sizeof(BlockHeader);
-                new_block->is_free = true;
-                new_block->next = current->next;
-
-                current->size = size;
-                current->next = new_block;
+                inner_alloc(current, size);
             }
 
             // Mark the current block as allocated and return its address.
@@ -62,8 +101,18 @@ void* kmalloc(size_t size) {
         current = current->next;
     }
 
-    // No suitable free block was found, return NULL.
-    return NULL;
+    // No free block found, try to expand the heap.
+    BlockHeader* expanded_block = heap_expand(size);
+    if (!expanded_block) {
+        // We are truly out of memory.
+        return NULL;
+    }
+
+    // Allocate memory from the newly expanded heap block.
+    inner_alloc(expanded_block, size);
+    expanded_block->is_free = false;
+
+    return (void*)((uintptr_t)expanded_block + sizeof(BlockHeader));
 }
 
 void kfree(void* ptr) {

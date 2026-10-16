@@ -138,8 +138,9 @@ void kmain(void) {
         klog(KLOG_ERROR, "kmain: Failed to initialize kernel VM map!\n");
         HCF
     }
+    klog(KLOG_INFO, "kmain: Kernel VM map initialized.\n");
 
-    if (!initialize_heap(kernel_map)) {
+    if (!heap_initialize(kernel_vm_map)) {
         klog(KLOG_ERROR, "kmain: Failed to initialize the heap!\n");
         HCF
     }
@@ -157,16 +158,6 @@ void kmain(void) {
 
     kfree((void*)heap_test);
     klog(KLOG_INFO, "kmain: Heap initialized and allocation verified.\n");
-
-    // Allocate a test page from the PMM to verify initialization
-    void* test_page = pmm_alloc_page();
-    if (test_page == NULL) {
-        klog(KLOG_ERROR, "kmain: Failed to allocate the test page!\n");
-        HCF
-    }
-
-    klog(KLOG_INFO, "kmain: Test page allocated successfully.\n");
-    klog(KLOG_INFO, "       Test page address: 0x%p\n", test_page);
 
     /* Mach-O test parsing */
     macho_info macho_info;

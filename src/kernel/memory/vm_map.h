@@ -37,7 +37,7 @@ typedef struct vm_map {
 } vm_map_t;
 
 /* Global pointer to the higher-half kernel address space map */
-extern vm_map_t* kernel_map;
+extern vm_map_t* kernel_vm_map;
 
 /**
  * Initialize the kernel map using static storage before the heap is available.

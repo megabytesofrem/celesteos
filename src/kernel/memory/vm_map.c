@@ -3,13 +3,13 @@
 #include <kernel/memory/kmalloc.h>
 #include <kernel/memory/pmm.h>
 
-vm_map_t* kernel_map;
+vm_map_t* kernel_vm_map;
 
 static vm_map_t bootstrap_kernel_map;
 static vm_map_entry_t bootstrap_kernel_entries[VM_MAP_MAX_ENTRIES];
 
 bool vm_map_initialize_kernel(page_table_t* page_table) {
-    if (!page_table || kernel_map) {
+    if (!page_table || kernel_vm_map) {
         return false;
     }
 
@@ -18,7 +18,7 @@ bool vm_map_initialize_kernel(page_table_t* page_table) {
     bootstrap_kernel_map.entries = bootstrap_kernel_entries;
     bootstrap_kernel_map.entry_count = 0;
     bootstrap_kernel_map.total_size = 0;
-    kernel_map = &bootstrap_kernel_map;
+    kernel_vm_map = &bootstrap_kernel_map;
     return true;
 }
 
@@ -45,7 +45,7 @@ vm_map_t* vm_map_create(page_table_t* pml4) {
 }
 
 void vm_map_destroy(vm_map_t* map) {
-    if (!map || map == kernel_map) {
+    if (!map || map == kernel_vm_map) {
         return;
     }
 
@@ -150,7 +150,7 @@ void* vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot) {
         pte_flags |= PAGE_READ_WRITE;
     if (!(prot & VM_PROT_WRITE))
         pte_flags |= PAGE_NO_EXECUTE;
-    if (map != kernel_map)
+    if (map != kernel_vm_map)
         pte_flags |= PAGE_USER;
 
     // Map the virtual address to the physical page in the page table

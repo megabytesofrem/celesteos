@@ -209,7 +209,7 @@ bool macho_parse(const uint8_t* data, struct macho_info* out_info) {
                 // Handle other load commands as needed
 
                 const char* lcstr = macho_describe_lc(lc->cmd);
-                klog(KLOG_INFO, "macho-loader: Unhandled load command: 0x%x (%s)\n", lc->cmd, lcstr);
+                klog(KLOG_WARN, "macho-loader: Unhandled load command: 0x%x (%s)\n", lc->cmd, lcstr);
                 break;
             }
         }

@@ -97,7 +97,7 @@ void klog(enum log_level level, const char* format, ...) {
 
     switch (level) {
         case KLOG_INFO:
-            kputs("[INFO] ", 0xb5b5b3, 0x00000000, true);
+            kputs("[INFO] ", 0xa3a3a3, 0x00000000, true);
             break;
         case KLOG_WARN:
             kputs("[WARN] ", 0xfff952, 0x00000000, true);
