@@ -8,9 +8,6 @@ static __attribute__((aligned(16))) idt_entry_t idt[256];
 
 static idt_pointer_t idt_ptr;
 
-/**
- * Initialize the IDT and load it onto the CPU.
- */
 void idt_initialize(void) {
     _Static_assert(sizeof(idt_entry_t) == 16, "idt_entry_t must be exactly 16 bytes!");
     _Static_assert(sizeof(idt) == 4096, "idt array must be exactly 4096 bytes!");
@@ -40,9 +37,6 @@ void idt_initialize(void) {
     idt_load();
 }
 
-/**
- * Set the IDT entry to an assembly interrupt stub for a specific vector.
- */
 void idt_set_entry(int entry, idt_handler_t handler, int type_attr) {
     uintptr_t handler_address = (uintptr_t)handler;
 
@@ -61,10 +55,6 @@ void idt_set_entry(int entry, idt_handler_t handler, int type_attr) {
     idt[entry] = entry_struct;
 }
 
-/**
- * Set the IDT entry to an assembly interrupt stub for a specific vector with a given index
- * in the Interrupt Stack Table (IST).
- */
 void idt_set_entry_ist(int entry, idt_handler_t handler, int type_attr, int ist_index) {
     uintptr_t addr = (uintptr_t)handler;
 
@@ -78,9 +68,6 @@ void idt_set_entry_ist(int entry, idt_handler_t handler, int type_attr, int ist_
         .zero = 0x0};
 }
 
-/**
- * Load the IDT onto the CPU using the lidt instruction.
- */
 void idt_load(void) {
     /* Fill the IDT descriptor */
     struct idt_pointer_t ptr;

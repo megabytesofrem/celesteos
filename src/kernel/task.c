@@ -17,19 +17,6 @@ static uint8_t pf_stack[16384] __attribute__((aligned(16)));
 /* Number of pages to allocate for the user stack */
 #define USER_STACK_PAGES 4
 
-/**
- * Switch from kernel mode to user mode (ring 3) using the TSS and iretq.
- * 
- * This function does the following:
- * - Load the user data segment selector into the data segment registers (DS, ES, FS, GS)
- * - Push the user stack pointer, RFLAGS, code segment selector, and entry point onto the stack
- * - Execute iretq to switch to user mode
- */
-extern void tss_switch_ring3(uintptr_t entry_point, uintptr_t user_stack);
-
-/**
- * Initialize the Task State Segment (TSS).
- */
 void tss_initialize(void) {
     memset(&kernel_tss, 0, sizeof(kernel_tss));
     kernel_tss.io_map_base = sizeof(tss_t);
@@ -42,19 +29,10 @@ void tss_initialize(void) {
     kernel_tss.ist[1] = (uintptr_t)pf_stack + sizeof(pf_stack);
 }
 
-/**
- * Prepare the TSS for user mode by setting the kernel stack pointer (RSP0, ring 0).
- */
 void tss_prepare_usermode(uintptr_t kernel_stack) {
     kernel_tss.rsp0 = kernel_stack;
 }
 
-/**
- * Jump to user mode (ring 3) using the TSS and iretq.
- *
- * This function allocates and maps the user stack, sets the kernel stack pointer
- * in the TSS, and then switches to user mode.
- */
 bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t* root, uint64_t hhdm_base) {
     void* stack_frames = pmm_alloc_pages(USER_STACK_PAGES);
     if (stack_frames == NULL) {

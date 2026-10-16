@@ -9,12 +9,31 @@
 
 #define PMM_PAGE_SIZE 4096U
 
-bool pmm_initialize(struct limine_memmap_response *memmap,
+/**
+ * Initialize the physical memory manager with the given memory map.
+ */
+bool pmm_initialize(struct limine_memmap_response* memmap,
                     uint64_t hhdm_base_offset);
-void *pmm_alloc_page(void);
-void *pmm_alloc_pages(size_t count);
-void pmm_free_page(void *page);
-void pmm_free_pages(void *pages, size_t count);
+
+/**
+ * Allocate a single page of physical memory.
+ */
+void* pmm_alloc_page(void);
+
+/**
+ * Allocate multiple contiguous pages of physical memory.
+ */
+void* pmm_alloc_pages(size_t count);
+
+/**
+ * Free a single page of physical memory.
+ */
+void pmm_free_page(void* page);
+
+/**
+ * Free multiple contiguous pages of physical memory.
+ */
+void pmm_free_pages(void* pages, size_t count);
 
 size_t pmm_get_total_pages(void);
 size_t pmm_get_used_pages(void);

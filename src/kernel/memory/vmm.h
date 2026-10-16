@@ -96,14 +96,27 @@ typedef struct page_table_t {
     page_table_entry_t entries[512];
 } page_table_t __attribute__((aligned(4096)));
 
+/**
+ * Initialize the virtual memory manager.
+ */
 bool vmm_initialize(uint64_t hhdm_base_offset);
+
+/**
+ * Map a virtual address to a physical address, creating the necessary levels
+ * of the page table hierarchy if they do not already exist.
+ */
+bool vmm_map(page_table_t* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
+
+/**
+ * Unmap a virtual address, removing its mapping from the page table hierarchy.
+ */
+void vmm_unmap(page_table_t* pml4, uint64_t virt);
+
+void vmm_switch_pml4(page_table_t* new_pml4);
+void vmm_flush_tlb(uint64_t virt);
+
 page_table_t* vmm_get_pml4(void);
 uint64_t vmm_get_pml4_physical(void);
 uintptr_t vmm_get_physical(page_table_t* pml4, uint64_t virt);
-
-bool vmm_map(page_table_t* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
-void vmm_unmap(page_table_t* pml4, uint64_t virt);
-void vmm_switch_pml4(page_table_t* new_pml4);
-void vmm_flush_tlb(uint64_t virt);
 
 #endif  // CELESTEOS_VMM_H

@@ -32,10 +32,22 @@ _Static_assert(offsetof(idt_pointer_t, base) == 2,
 
 typedef void (*idt_handler_t)(void);
 
+/**
+ * Initialize the Interrupt Descriptor Table (IDT).
+ */
 void idt_initialize(void);
 
+/**
+ * Set an entry in the IDT to point to a specific interrupt handler.
+ */
 void idt_set_entry(int entry, idt_handler_t handler, int type_attr);
+
+/**
+ * Set an entry in the IDT to point to a specific interrupt handler with a
+ * given Interrupt Stack Table (IST) index.
+ */
 void idt_set_entry_ist(int entry, idt_handler_t handler, int type_attr, int ist_index);
+
 void idt_load(void);
 
 #endif  // CELESTEOS_IDT_H

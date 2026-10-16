@@ -11,15 +11,25 @@ enum log_level {
     KLOG_ERROR,
 };
 
+/**
+ * Kernel formatted print function.
+ */
 void printk(const char* format,
             uint32_t fg_color,
             uint32_t bg_color,
             ...);
+
+/**
+ * Kernel puts function.
+ */
 void kputs(const char* str,
            uint32_t fg_color,
            uint32_t bg_color,
            bool bold);
 
+/**
+ * Kernel logging function.
+ */
 void klog(enum log_level level, const char* format, ...);
 
 #endif  // CELESTEOS_STD_LIBKERNEL_H

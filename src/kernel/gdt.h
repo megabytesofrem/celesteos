@@ -45,6 +45,11 @@ _Static_assert(offsetof(gdt_pointer_t, base) == 2,
 _Static_assert(offsetof(gdt_t, tss_low) == 0x28,
                "TSS descriptor must match selector 0x28");
 
+/**
+ * Initialize the Global Descriptor Table (GDT).
+ * 
+ * This function sets up the GDT with the necessary segment descriptors and loads it into the GDTR.
+ */
 void gdt_initialize();
 gdt_entry_t gdt_entry_null();
 gdt_entry_t gdt_entry_create(uint8_t access, uint8_t granularity);

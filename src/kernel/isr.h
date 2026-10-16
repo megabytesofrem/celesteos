@@ -34,8 +34,20 @@ _Static_assert(offsetof(struct cpu_registers, int_no) == 128,
 _Static_assert(sizeof(struct cpu_registers) == 184,
                "Interrupt frame must match the assembly stack layout");
 
+/**
+ * Install the interrupt service routines (ISRs) for handling CPU exceptions 
+ * and hardware interrupts.
+ */
 void isr_install(void);
+
+/**
+ * Handle an interrupt by processing the stored CPU register state.
+ */
 void isr_handler(struct cpu_registers* regs);
+
+/**
+ * Handle a hardware interrupt (IRQ) by processing the stored CPU register state.
+ */
 void irq_handler(struct cpu_registers* regs);
 
 #endif  // CELESTEOS_ISR_H

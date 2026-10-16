@@ -42,12 +42,6 @@ static page_table_t* get_or_create_next_level(page_table_t* current,
     return new_table;
 }
 
-/**
- * Initialize the virtual memory manager.
- * 
- * @param hhdm_base_offset The offset for the higher half direct mapping.
- * @return true if the virtual memory manager was successfully initialized, false otherwise.
- */
 bool vmm_initialize(uint64_t hhdm_base_offset) {
     void* pml4_frame = pmm_alloc_page();
     if (pml4_frame == NULL) {
@@ -96,16 +90,6 @@ uintptr_t vmm_get_physical(page_table_t* pml4, uint64_t virt) {
     return page_table_entry_get_address(pt_entry);
 }
 
-/**
- * Map a virtual address to a physical address, creating the necessary levels
- * of the page table hierarchy if they do not already exist.
- * 
- * @param root The root page table (PML4) to start the mapping from.
- * @param virt The virtual address to map.
- * @param phys The physical address to map to.
- * @param flags The flags to set for the page table entry.
- * @return true if the mapping was successful, false otherwise.
- */
 bool vmm_map(page_table_t* root,
              uint64_t virt,
              uint64_t phys,
@@ -140,12 +124,6 @@ bool vmm_map(page_table_t* root,
     return true;
 }
 
-/**
- * Unmap a virtual address, removing its mapping from the page table hierarchy.
- * 
- * @param root The root page table (PML4) to start the unmapping from.
- * @param virt The virtual address to unmap.
- */
 void vmm_unmap(page_table_t* root, uint64_t virt) {
     if (root == NULL) {
         return;

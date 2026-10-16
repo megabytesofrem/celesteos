@@ -19,13 +19,6 @@ static bool test_bit(size_t page) {
     return (bitmap[page / 8] & (uint8_t)(1U << (page % 8))) != 0;
 }
 
-/**
- * Initialize the physical memory manager with the given memory map.
- * 
- * @param memmap The memory map provided by the bootloader.
- * @param hhdm_base_offset The offset for the higher half direct mapping.
- * @return true if the physical memory manager was successfully initialized, false otherwise.
- */
 bool pmm_initialize(struct limine_memmap_response* memmap,
                     uint64_t hhdm_base_offset) {
     uint64_t highest_address = 0;
@@ -126,11 +119,6 @@ bool pmm_initialize(struct limine_memmap_response* memmap,
     return true;
 }
 
-/**
- * Allocate a single physical memory page.
- *
- * @return A pointer to the allocated physical page, or NULL if no free page is available.
- */
 void* pmm_alloc_page(void) {
     for (size_t page = 0; page < total_pages; ++page) {
         if (!test_bit(page)) {
@@ -142,12 +130,6 @@ void* pmm_alloc_page(void) {
     return NULL;
 }
 
-/**
- * Allocate multiple contiguous physical memory pages.
- *
- * @param count The number of contiguous pages to allocate.
- * @return A pointer to the first allocated physical page, or NULL if no sufficient free pages are available.
- */
 void* pmm_alloc_pages(size_t count) {
     if (count == 0) {
         return NULL;
@@ -179,11 +161,6 @@ void* pmm_alloc_pages(size_t count) {
     return NULL;
 }
 
-/**
- * Free a single physical memory page.
- *
- * @param phys_addr The physical address of the page to free.
- */
 void pmm_free_page(void* phys_addr) {
     size_t page = (size_t)((uintptr_t)phys_addr / PMM_PAGE_SIZE);
     if (page < total_pages && test_bit(page)) {
@@ -192,12 +169,6 @@ void pmm_free_page(void* phys_addr) {
     }
 }
 
-/**
- * Free multiple contiguous physical memory pages.
- *
- * @param phys_addr The physical address of the first page to free.
- * @param count The number of contiguous pages to free.
- */
 void pmm_free_pages(void* phys_addr, size_t count) {
     uintptr_t base_addr = (uintptr_t)phys_addr;
     for (size_t i = 0; i < count; ++i) {
