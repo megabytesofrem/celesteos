@@ -1,17 +1,20 @@
 #include "kmalloc.h"
 
 #include <stdint.h>
+#include <stdlib/libkernel.h>
 
-#include "pmm.h"
-
-/* Start address of the heap */
+/* Start address of the heap (linked list of memory blocks) */
 static BlockHeader* heap_start;
+static vm_map_t* heap_map;
 
-/* Current virtual address for the heap */
+/* First unmapped heap address; reserve one PML4 slot for heap growth. */
 static uintptr_t heap_curr_virt = 0xFFFF900000000000ULL;
 
+/* Maximum heap size limit (the highest virtual address the heap can grow to) */
+static const uintptr_t heap_limit = 0xFFFF908000000000ULL;
+
 bool heap_initialize(vm_map_t* kernel_vm_map) {
-    if (!kernel_vm_map) {
+    if (!kernel_vm_map || heap_start) {
         return false;
     }
 
@@ -26,64 +29,115 @@ bool heap_initialize(vm_map_t* kernel_vm_map) {
     heap_start->size = VMM_PAGE_SIZE - sizeof(BlockHeader); /* initial block size - header size */
     heap_start->is_free = true;
     heap_start->next = NULL;
+    heap_map = kernel_vm_map;
+    heap_curr_virt += VMM_PAGE_SIZE;
     return true;
 }
 
 BlockHeader* heap_expand(size_t min_size) {
-    // Calculate how many pages are needed to satisfy the (size + header)
+    if (!heap_start || !heap_map || min_size == 0 ||
+        min_size > SIZE_MAX - 7 - sizeof(BlockHeader) - (VMM_PAGE_SIZE - 1)) {
+        klog(KLOG_ERROR, "heap: Cannot expand an uninitialized heap or satisfy an invalid size.\n");
+        return NULL;
+    }
+    min_size = (min_size + 7) & ~(size_t)7;
+
+    // Find the last block in the heap linked list, to expand after it.
+    BlockHeader* tail = heap_start;
+    while (tail->next) {
+        tail = tail->next;
+    }
+
+    // Calculate the total size needed for the new block, including the header.
     size_t total_size = min_size + sizeof(BlockHeader);
+    if (tail->is_free) {
+        if (tail->size >= min_size) {
+            return tail;
+        }
+        total_size = min_size - tail->size;
+    }
+
+    // Calculate the number of pages needed to satisfy the total size.
     size_t pages_needed = (total_size + VMM_PAGE_SIZE - 1) / VMM_PAGE_SIZE;
+
+    // Calculate the total number of bytes needed for the new pages.
     size_t bytes_needed = pages_needed * VMM_PAGE_SIZE;
 
-    uintptr_t new_heap_virt = heap_curr_virt;
+    // Safety check: Ensure that the heap has enough space and the VM map has enough entries for the new pages.
+    if (heap_curr_virt >= heap_limit ||
+        bytes_needed > heap_limit - heap_curr_virt ||
+        pages_needed > VM_MAP_MAX_ENTRIES - heap_map->entry_count) {
+        klog(KLOG_ERROR, "heap: Heap address range or VM map capacity exhausted.\n");
+        return NULL;
+    }
 
     // Allocate each page sequentially from vm_map
     for (size_t i = 0; i < pages_needed; i++) {
-        void* page = vm_map_alloc(kernel_vm_map, new_heap_virt, VM_PROT_READ | VM_PROT_WRITE);
+        uintptr_t address = heap_curr_virt + i * VMM_PAGE_SIZE;
+        void* page = vm_map_alloc(heap_map, address, VM_PROT_READ | VM_PROT_WRITE);
         if (!page) {
-            // If any page allocation fails, return NULL to indicate failure.
+            // Roll back on allocation failure
+            bool rolled_back = true;
+            while (i > 0) {
+                --i;
+                if (!vm_map_free(heap_map, heap_curr_virt + i * VMM_PAGE_SIZE)) {
+                    rolled_back = false;
+                }
+            }
+            if (rolled_back) {
+                klog(KLOG_ERROR, "heap: Failed to map expansion pages; growth rolled back.\n");
+            } else {
+                klog(KLOG_ERROR, "heap: Failed to roll back all expansion pages.\n");
+            }
             return NULL;
         }
-
-        // Move to the next virtual address for the heap.
-        new_heap_virt += VMM_PAGE_SIZE;
     }
 
-    // Initialize a new free block header at the start of the newly allocated heap space.
-    BlockHeader* new_block = (BlockHeader*)new_heap_virt;
-    new_block->size = bytes_needed - sizeof(BlockHeader);
-    new_block->is_free = true;
-    new_block->next = NULL;
+    BlockHeader* new_block;
 
-    // Append the new block to the end of the current heap list.
-    BlockHeader* current = heap_start;
-    while (current->next != NULL) {
-        current = current->next;
+    // If the last block is free, try to extend it; otherwise, create a new block.
+    if (tail->is_free) {
+        tail->size += bytes_needed;
+        new_block = tail;
+    } else {
+        // Allocate a new block at the current heap virtual address.
+        new_block = (BlockHeader*)heap_curr_virt;
+        new_block->size = bytes_needed - sizeof(BlockHeader);
+        new_block->is_free = true;
+        new_block->next = NULL;
+        tail->next = new_block;
     }
-    current->next = new_block;
 
+    heap_curr_virt += bytes_needed;
     return new_block;
 }
 
 void inner_alloc(BlockHeader* block_hdr, size_t size) {
-    /* Split block if larger than needed */
-    if (block_hdr->size >= size + sizeof(BlockHeader) + 16) {
-        BlockHeader* new_block = (BlockHeader*)((uintptr_t)block_hdr + sizeof(BlockHeader) + size);
-        new_block->size = block_hdr->size - size - sizeof(BlockHeader);
-        new_block->is_free = true;
-        new_block->next = block_hdr->next;
+    // Split the block into an allocated part and a free part if it's larger than needed.
+    BlockHeader* new_block = (BlockHeader*)((uintptr_t)block_hdr + sizeof(BlockHeader) + size);
 
-        block_hdr->size = size;
-        block_hdr->next = new_block;
-    }
+    size_t block_offset_sz = block_hdr->size - size - sizeof(BlockHeader);
+    new_block->size = block_offset_sz; /* remaining size for the new free block */
+    new_block->is_free = true;         /* mark the new block as free block */
+    new_block->next = block_hdr->next; /* keep the next pointer of the original block */
+
+    // Update the original block to reflect the new size after splitting.
+    block_hdr->size = size;
+    block_hdr->next = new_block;
 }
 
 void* kmalloc(size_t size) {
-    if (size == 0 ||
-        size > SIZE_MAX - 7 - sizeof(BlockHeader) - 16) {
+    size_t max_size = SIZE_MAX - 7 - sizeof(BlockHeader) - 16;
+    size_t aligned_size;
+
+    if (size == 0 || size > max_size) {
         return NULL;
     }
-    size = (size + 7) & ~(size_t)7;
+
+    // Align the number of bytes (the size) to an 8-byte boundary
+    aligned_size = (size + 7) & ~(size_t)7;
+
+    size = aligned_size;
 
     BlockHeader* current = heap_start;
     while (current != NULL) {
@@ -103,8 +157,9 @@ void* kmalloc(size_t size) {
 
     // No free block found, try to expand the heap.
     BlockHeader* expanded_block = heap_expand(size);
+
+    // Check if we have run out of memory for allocations
     if (!expanded_block) {
-        // We are truly out of memory.
         return NULL;
     }
 

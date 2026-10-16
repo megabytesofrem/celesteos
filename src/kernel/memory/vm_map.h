@@ -70,6 +70,12 @@ bool vm_map_remove(vm_map_t* map, vm_offset_t start, vm_offset_t end);
 void* vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot);
 
 /**
+ * Unmap and free one page allocated by vm_map_alloc.
+ * The address must be page-aligned. Page-table structures are retained.
+ */
+bool vm_map_free(vm_map_t* map, uint64_t virt_addr);
+
+/**
  * Change the protection flags of a memory region in the virtual memory map.
  */
 bool vm_map_protect(vm_map_t* map, vm_offset_t start, vm_offset_t end, vm_prot_t prot);

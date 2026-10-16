@@ -19,7 +19,10 @@ typedef struct BlockHeader {
 bool heap_initialize(vm_map_t* kernel_vm_map);
 
 /**
- * Expand the heap by allocating additional pages from kernel_vm_map.
+ * Expand the initialized heap with virtually contiguous pages.
+ * Returns a free block with at least min_size bytes, or NULL on failure.
+ * Failed growth leaves existing heap blocks and the heap end unchanged.
+ * Calls to heap operations must be serialized by the caller.
  * 
  * @param min_size The minimum size of the new heap block to allocate.
  */

@@ -2,6 +2,7 @@
 
 #include <kernel/memory/kmalloc.h>
 #include <kernel/memory/pmm.h>
+#include <stdlib/libkernel.h>
 
 vm_map_t* kernel_vm_map;
 
@@ -59,8 +60,14 @@ void vm_map_destroy(vm_map_t* map) {
 }
 
 bool vm_map_insert(vm_map_t* map, vm_offset_t start, vm_offset_t end, vm_prot_t prot) {
-    if (!map) {
+    if (!map || !map->entries || start >= end) {
         return false;
+    }
+
+    for (size_t i = 0; i < map->entry_count; ++i) {
+        if (start < map->entries[i].end && end > map->entries[i].start) {
+            return false;
+        }
     }
 
     // Check if there is space for a new entry
@@ -126,11 +133,14 @@ bool vm_map_protect(vm_map_t* map, vm_offset_t start, vm_offset_t end, vm_prot_t
 }
 
 void* vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot) {
-    if (!map) {
+    if (!map || !map->page_table) {
         return NULL;
     }
 
     uint64_t page_aligned_addr = virt_addr & ~((uint64_t)VMM_PAGE_SIZE - 1);
+    if (page_aligned_addr > UINT64_MAX - VMM_PAGE_SIZE) {
+        return NULL;
+    }
 
     // Insert the new page into the vm_map
     if (!vm_map_insert(map, page_aligned_addr, page_aligned_addr + VMM_PAGE_SIZE, prot)) {
@@ -163,6 +173,27 @@ void* vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot) {
 
     // Return the page-aligned virtual address of the newly allocated memory region
     return (void*)(uintptr_t)page_aligned_addr;
+}
+
+bool vm_map_free(vm_map_t* map, uint64_t virt_addr) {
+    if (!map || !map->page_table || (virt_addr & (VMM_PAGE_SIZE - 1)) ||
+        virt_addr > UINT64_MAX - VMM_PAGE_SIZE) {
+        klog(KLOG_ERROR, "vm-map: Invalid page release request.\n");
+        return false;
+    }
+
+    vm_map_entry_t* entry = vm_map_lookup(map, virt_addr);
+    uintptr_t physical = vmm_get_physical(map->page_table, virt_addr);
+    if (!entry || entry->start != virt_addr ||
+        entry->end != virt_addr + VMM_PAGE_SIZE || !physical) {
+        klog(KLOG_ERROR, "vm-map: Page release requires an allocated single-page region.\n");
+        return false;
+    }
+
+    vmm_unmap(map->page_table, virt_addr);
+    vm_map_remove(map, virt_addr, virt_addr + VMM_PAGE_SIZE);
+    pmm_free_page((void*)physical);
+    return true;
 }
 
 vm_map_entry_t* vm_map_lookup(vm_map_t* map, uint64_t addr) {
