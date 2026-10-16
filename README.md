@@ -1,4 +1,6 @@
-# CelesteOS
+<img src="./resources/readme_logo.png">
+<hr>
+
 Hobby OS based around the Mach microkernel, aiming for binary compatibility with macOS.
 
 ## Building
