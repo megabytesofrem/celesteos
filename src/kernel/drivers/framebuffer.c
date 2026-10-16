@@ -1,6 +1,6 @@
 #include "framebuffer.h"
 
-#include <stdlib/string.h>
+#include <string.h>
 
 #include "ter_u16b.h"
 #include "ter_u16n.h"

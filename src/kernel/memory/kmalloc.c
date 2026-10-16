@@ -1,7 +1,7 @@
 #include "kmalloc.h"
 
 #include <stdint.h>
-#include <stdlib/libkernel.h>
+#include <libkernel.h>
 
 /* Start address of the heap (linked list of memory blocks) */
 static BlockHeader* heap_start;

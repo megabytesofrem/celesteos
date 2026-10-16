@@ -1,9 +1,8 @@
 #include "loader.h"
 
 #include <stdbool.h>
-
-#include <stdlib/string.h>
-#include <stdlib/libkernel.h>
+#include <string.h>
+#include <libkernel.h>
 
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>

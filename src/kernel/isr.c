@@ -4,7 +4,7 @@
 #include "pic.h"
 #include "isr_stubs.h"
 
-#include <stdlib/libkernel.h>
+#include <libkernel.h>
 
 /* Macro to print the value of a CPU register */
 #ifndef PRINT_REGISTER

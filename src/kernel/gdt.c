@@ -1,7 +1,7 @@
 #include "gdt.h"
 #include "task.h"
 
-#include <stdlib/string.h>
+#include <string.h>
 
 static gdt_t gdt;
 static gdt_pointer_t gdt_ptr;

@@ -11,7 +11,7 @@
 #include <kernel/task.h>
 #include <kernel/mach/loader.h>
 
-#include <stdlib/string.h>
+#include <string.h>
 #include <libkernel.h>
 #include <limine.h>
 
