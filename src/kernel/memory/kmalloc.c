@@ -163,8 +163,12 @@ void* kmalloc(size_t size) {
         return NULL;
     }
 
-    // Allocate memory from the newly expanded heap block.
-    inner_alloc(expanded_block, size);
+    // Check if there is enough left over space for a new free block after allocation.
+    if (expanded_block->size >= size + sizeof(BlockHeader) + 16) {
+        // Split the expanded block into an allocated part and a free part
+        inner_alloc(expanded_block, size);
+    }
+
     expanded_block->is_free = false;
 
     return (void*)((uintptr_t)expanded_block + sizeof(BlockHeader));
