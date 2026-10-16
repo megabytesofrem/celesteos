@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define VMM_PAGE_SIZE 4096U
+#define VMM_PAGE_SIZE 0x1000 /* 4KiB */
 
 typedef enum page_flags {
     PAGE_PRESENT = 1ULL << 0,

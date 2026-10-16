@@ -9,6 +9,9 @@
 
 #include "port.h"
 
+#define KERNEL_PAGE_SIZE  0x1000                 /* 4KiB */
+#define KERNEL_STACK_SIZE (KERNEL_PAGE_SIZE * 4) /* 16KiB */
+
 /* Forward declarations for kernel thread-related structures */
 typedef struct task task_t;
 struct mach_kmsg;
@@ -16,6 +19,7 @@ struct mach_port_space;
 
 typedef enum {
     THREAD_RUNNING,
+    THREAD_STOPPED, /* stopped and not scheduled */
     THREAD_WAITING, /* waiting for IPC */
     THREAD_DEAD     /* terminated */
 } thread_state_t;
@@ -42,7 +46,7 @@ typedef struct thread {
     thread_state_t state; /* current scheduler state */
 
     /* CPU execution context */
-    cpu_context_t context;
+    cpu_context_t* context;
     uintptr_t kstack_base; /* base address of the kernel stack */
     uintptr_t kstack_top;  /* top address of the kernel stack */
 
@@ -60,7 +64,7 @@ typedef struct thread {
  * 
  * Allocates thread_t, initializes its context and kernel stack, and links it to the parent task.
  */
-thread_t* thread_create(task_t* parent, uintptr_t entry_point);
+thread_t* thread_create(task_t* parent, uintptr_t entry_point, uintptr_t arg);
 
 /**
  * Destroy a thread and free its resources.

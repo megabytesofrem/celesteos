@@ -7,7 +7,7 @@
 
 #include "../../limine.h"
 
-#define PMM_PAGE_SIZE 4096U
+#define PMM_PAGE_SIZE 0x1000 /* 4KiB */
 
 /**
  * Initialize the physical memory manager with the given memory map.
