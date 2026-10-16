@@ -13,22 +13,18 @@ typedef struct BlockHeader {
 static BlockHeader* heap_start;
 static uintptr_t heap_curr_virt = 0xFFFF900000000000ULL;
 
-bool initialize_heap(page_table_t* kernel_pml4) {
-    // Grab initial page for the heap
-    void* phys_page = pmm_alloc_page();
-    if (phys_page == NULL) {
+bool initialize_heap(vm_map_t* kernel_vm_map) {
+    if (!kernel_vm_map) {
         return false;
     }
 
-    // Map the initial heap page into the virtual address space
-    if (!vmm_map(kernel_pml4,
-                 heap_curr_virt,
-                 (uint64_t)(uintptr_t)phys_page,
-                 PAGE_PRESENT | PAGE_READ_WRITE)) {
-        pmm_free_page(phys_page);
+    // Ask the kernels vm_map structure to allocate and back the initial heap page.
+    void* initial_heap_page = vm_map_alloc(kernel_vm_map, heap_curr_virt, VM_PROT_READ | VM_PROT_WRITE);
+    if (!initial_heap_page) {
         return false;
     }
 
+    // Initialize the heap start with the allocated initial heap page.
     heap_start = (BlockHeader*)heap_curr_virt;
     heap_start->size = VMM_PAGE_SIZE - sizeof(BlockHeader); /* initial block size - header size */
     heap_start->is_free = true;

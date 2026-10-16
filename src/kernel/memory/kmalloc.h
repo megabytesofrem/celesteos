@@ -5,11 +5,12 @@
 #include <stddef.h>
 
 #include "vmm.h"
+#include "vm_map.h"
 
 /**
- * Initialize the heap with a given kernel page table.
+ * Initialize the heap with a given kernel virtual memory map.
  */
-bool initialize_heap(page_table_t* kernel_pml4);
+bool initialize_heap(vm_map_t* kernel_vm_map);
 
 /**
  * Kernel malloc function.

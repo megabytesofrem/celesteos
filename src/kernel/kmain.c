@@ -6,6 +6,7 @@
 #include <kernel/drivers/framebuffer.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/memory/vm_map.h>
 #include <kernel/memory/kmalloc.h>
 #include <kernel/task.h>
 #include <kernel/mach/loader.h>
@@ -132,11 +133,13 @@ void kmain(void) {
     }
     klog(KLOG_INFO, "kmain: VMM initialized.\n");
 
-    // Keep Limine's existing kernel, stack, and HHDM mappings active.
-    uintptr_t active_cr3;
-    __asm__ volatile("mov %%cr3, %0" : "=r"(active_cr3));
-    page_table_t* active_pml4 = (page_table_t*)(uintptr_t)((active_cr3 & 0x000FFFFFFFFFF000ULL) + hhdm_base);
-    if (!initialize_heap(active_pml4)) {
+    // Initialize the kernel virtual memory map
+    if (!vm_map_initialize_kernel(vmm_get_pml4())) {
+        klog(KLOG_ERROR, "kmain: Failed to initialize kernel VM map!\n");
+        HCF
+    }
+
+    if (!initialize_heap(kernel_map)) {
         klog(KLOG_ERROR, "kmain: Failed to initialize the heap!\n");
         HCF
     }
@@ -169,17 +172,17 @@ void kmain(void) {
     macho_info macho_info;
 
     klog(KLOG_INFO, "kmain: Try to parse Mach-O test payload...\n");
-    if (!macho_load(test_macho, active_pml4, hhdm_base, &macho_info)) {
+    if (!macho_load(test_macho, vmm_get_pml4(), hhdm_base, &macho_info)) {
         klog(KLOG_ERROR, "kmain: Failed to load Mach-O test payload!\n");
         HCF
     }
 
     // Map 0x1000 to a newly allocated physical frame
     void* phys_frame = pmm_alloc_page();
-    vmm_map(active_pml4, 0x1000, (uintptr_t)phys_frame, PAGE_PRESENT | PAGE_USER | PAGE_READ_WRITE);
+    vmm_map(vmm_get_pml4(), 0x1000, (uintptr_t)phys_frame, PAGE_PRESENT | PAGE_USER | PAGE_READ_WRITE);
 
     /* User mode transition test */
-    if (!tss_jump_to_usermode(macho_info.entrypoint, active_pml4, hhdm_base)) {
+    if (!tss_jump_to_usermode(macho_info.entrypoint, vmm_get_pml4(), hhdm_base)) {
         HCF
     }
 

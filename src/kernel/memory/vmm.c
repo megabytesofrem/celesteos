@@ -22,8 +22,8 @@ static page_table_t* get_or_create_next_level(page_table_t* current,
                                               size_t index,
                                               uint64_t flags) {
     page_table_entry_t* entry = &current->entries[index];
-    if (page_table_entry_is_present(entry)) {
-        uint64_t next_level_phys = page_table_entry_get_address(entry);
+    if (pte_is_present(entry)) {
+        uint64_t next_level_phys = pte_get_address(entry);
         return (page_table_t*)(uintptr_t)(next_level_phys + higher_half_base);
     }
 
@@ -37,21 +37,17 @@ static page_table_t* get_or_create_next_level(page_table_t* current,
         (page_table_t*)(uintptr_t)(new_frame_phys + higher_half_base);
     clear_page_table(new_table);
 
-    page_table_entry_set_address(entry, new_frame_phys);
-    page_table_entry_set_flags(entry, PAGE_PRESENT | PAGE_READ_WRITE | flags);
+    pte_set_address(entry, new_frame_phys);
+    pte_set_flags(entry, PAGE_PRESENT | PAGE_READ_WRITE | flags);
     return new_table;
 }
 
 bool vmm_initialize(uint64_t hhdm_base_offset) {
-    void* pml4_frame = pmm_alloc_page();
-    if (pml4_frame == NULL) {
-        return false;
-    }
-
+    uintptr_t active_cr3;
+    __asm__ volatile("mov %%cr3, %0" : "=r"(active_cr3));
     higher_half_base = hhdm_base_offset;
-    pml4_phys_addr = (uint64_t)(uintptr_t)pml4_frame;
+    pml4_phys_addr = active_cr3 & 0x000FFFFFFFFFF000ULL;
     pml4 = (page_table_t*)(uintptr_t)(pml4_phys_addr + higher_half_base);
-    clear_page_table(pml4);
     return true;
 }
 
@@ -69,25 +65,25 @@ uintptr_t vmm_get_physical(page_table_t* pml4, uint64_t virt) {
     size_t pt_index = (size_t)((virt >> 12) & 0x1FF);
 
     page_table_entry_t* pml4_entry = &pml4->entries[pml4_index];
-    if (!page_table_entry_is_present(pml4_entry)) {
+    if (!pte_is_present(pml4_entry)) {
         return 0;
     }
-    page_table_t* pdpt = (page_table_t*)(uintptr_t)(page_table_entry_get_address(pml4_entry) + higher_half_base);
+    page_table_t* pdpt = (page_table_t*)(uintptr_t)(pte_get_address(pml4_entry) + higher_half_base);
     page_table_entry_t* pdpt_entry = &pdpt->entries[pdpt_index];
-    if (!page_table_entry_is_present(pdpt_entry)) {
+    if (!pte_is_present(pdpt_entry)) {
         return 0;
     }
-    page_table_t* pd = (page_table_t*)(uintptr_t)(page_table_entry_get_address(pdpt_entry) + higher_half_base);
+    page_table_t* pd = (page_table_t*)(uintptr_t)(pte_get_address(pdpt_entry) + higher_half_base);
     page_table_entry_t* pd_entry = &pd->entries[pd_index];
-    if (!page_table_entry_is_present(pd_entry)) {
+    if (!pte_is_present(pd_entry)) {
         return 0;
     }
-    page_table_t* pt = (page_table_t*)(uintptr_t)(page_table_entry_get_address(pd_entry) + higher_half_base);
+    page_table_t* pt = (page_table_t*)(uintptr_t)(pte_get_address(pd_entry) + higher_half_base);
     page_table_entry_t* pt_entry = &pt->entries[pt_index];
-    if (!page_table_entry_is_present(pt_entry)) {
+    if (!pte_is_present(pt_entry)) {
         return 0;
     }
-    return page_table_entry_get_address(pt_entry);
+    return pte_get_address(pt_entry);
 }
 
 bool vmm_map(page_table_t* root,
@@ -116,8 +112,8 @@ bool vmm_map(page_table_t* root,
     }
 
     page_table_entry_t* entry = &pt->entries[pt_index];
-    page_table_entry_set_address(entry, phys);
-    page_table_entry_set_flags(entry, PAGE_PRESENT | PAGE_READ_WRITE | flags);
+    pte_set_address(entry, phys);
+    pte_set_flags(entry, PAGE_PRESENT | PAGE_READ_WRITE | flags);
 
     // Flush the TLB for the newly mapped virtual address.
     vmm_flush_tlb(virt);
@@ -134,25 +130,25 @@ void vmm_unmap(page_table_t* root, uint64_t virt) {
     size_t pt_index = (size_t)((virt >> 12) & 0x1FF);
 
     page_table_entry_t* entry = &root->entries[pml4_index];
-    if (!page_table_entry_is_present(entry)) {
+    if (!pte_is_present(entry)) {
         return;
     }
-    page_table_t* pdpt = (page_table_t*)(uintptr_t)(page_table_entry_get_address(entry) + higher_half_base);
+    page_table_t* pdpt = (page_table_t*)(uintptr_t)(pte_get_address(entry) + higher_half_base);
 
     entry = &pdpt->entries[pdpt_index];
-    if (!page_table_entry_is_present(entry)) {
+    if (!pte_is_present(entry)) {
         return;
     }
-    page_table_t* pd = (page_table_t*)(uintptr_t)(page_table_entry_get_address(entry) + higher_half_base);
+    page_table_t* pd = (page_table_t*)(uintptr_t)(pte_get_address(entry) + higher_half_base);
 
     entry = &pd->entries[pd_index];
-    if (!page_table_entry_is_present(entry)) {
+    if (!pte_is_present(entry)) {
         return;
     }
-    page_table_t* pt = (page_table_t*)(uintptr_t)(page_table_entry_get_address(entry) + higher_half_base);
+    page_table_t* pt = (page_table_t*)(uintptr_t)(pte_get_address(entry) + higher_half_base);
 
     entry = &pt->entries[pt_index];
-    if (!page_table_entry_is_present(entry)) {
+    if (!pte_is_present(entry)) {
         return;
     }
     entry->value = 0;
