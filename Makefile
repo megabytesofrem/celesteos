@@ -48,7 +48,7 @@ C_SRCS := src/kernel/kmain.c \
           src/kernel/isr.c \
           src/kernel/pic.c \
           src/kernel/memory/pmm.c \
-          src/kernel/memory/vmm.c \
+          src/kernel/memory/pmap.c \
           src/kernel/memory/vm_map.c \
           src/kernel/memory/kmalloc.c \
           src/stdlib/string.c \

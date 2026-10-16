@@ -142,13 +142,13 @@ kern_return_t vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot, vo
         return KERN_FAILURE;
     }
 
-    uint64_t page_aligned_addr = virt_addr & ~((uint64_t)VMM_PAGE_SIZE - 1);
-    if (page_aligned_addr > UINT64_MAX - VMM_PAGE_SIZE) {
+    uint64_t page_aligned_addr = virt_addr & ~((uint64_t)PMAP_PAGE_SIZE - 1);
+    if (page_aligned_addr > UINT64_MAX - PMAP_PAGE_SIZE) {
         return KERN_FAILURE;
     }
 
     // Insert the new page into the vm_map
-    if (vm_map_insert(map, page_aligned_addr, page_aligned_addr + VMM_PAGE_SIZE, prot) != KERN_SUCCESS) {
+    if (vm_map_insert(map, page_aligned_addr, page_aligned_addr + PMAP_PAGE_SIZE, prot) != KERN_SUCCESS) {
         return KERN_FAILURE;
     }
 
@@ -156,7 +156,7 @@ kern_return_t vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot, vo
     void* phys_page;
 
     if (pmm_alloc_page(&phys_page) != KERN_SUCCESS) {
-        vm_map_remove(map, page_aligned_addr, page_aligned_addr + VMM_PAGE_SIZE);
+        vm_map_remove(map, page_aligned_addr, page_aligned_addr + PMAP_PAGE_SIZE);
         return KERN_FAILURE;
     }
 
@@ -170,9 +170,9 @@ kern_return_t vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot, vo
         pte_flags |= PAGE_USER;
 
     // Map the virtual address to the physical page in the page table
-    if (vmm_map(map->page_table, page_aligned_addr, (uint64_t)phys_page, pte_flags) != KERN_SUCCESS) {
+    if (pmap_map(map->page_table, page_aligned_addr, (uint64_t)phys_page, pte_flags) != KERN_SUCCESS) {
         // Failed to map the page, clean up
-        vm_map_remove(map, page_aligned_addr, page_aligned_addr + VMM_PAGE_SIZE);
+        vm_map_remove(map, page_aligned_addr, page_aligned_addr + PMAP_PAGE_SIZE);
         pmm_free_page(phys_page);
         return KERN_FAILURE;
     }
@@ -185,22 +185,22 @@ kern_return_t vm_map_alloc(vm_map_t* map, uint64_t virt_addr, vm_prot_t prot, vo
 }
 
 kern_return_t vm_map_free(vm_map_t* map, uint64_t virt_addr) {
-    if (!map || !map->page_table || (virt_addr & (VMM_PAGE_SIZE - 1)) ||
-        virt_addr > UINT64_MAX - VMM_PAGE_SIZE) {
+    if (!map || !map->page_table || (virt_addr & (PMAP_PAGE_SIZE - 1)) ||
+        virt_addr > UINT64_MAX - PMAP_PAGE_SIZE) {
         klog(KLOG_ERROR, "vm-map: Invalid page release request.\n");
         return KERN_FAILURE;
     }
 
     vm_map_entry_t* entry = vm_map_lookup(map, virt_addr);
-    uintptr_t physical = vmm_get_physical(map->page_table, virt_addr);
+    uintptr_t physical = pmap_get_physical(map->page_table, virt_addr);
     if (!entry || entry->start != virt_addr ||
-        entry->end != virt_addr + VMM_PAGE_SIZE || !physical) {
+        entry->end != virt_addr + PMAP_PAGE_SIZE || !physical) {
         klog(KLOG_ERROR, "vm-map: Page release requires an allocated single-page region.\n");
         return KERN_FAILURE;
     }
 
-    vmm_unmap(map->page_table, virt_addr);
-    vm_map_remove(map, virt_addr, virt_addr + VMM_PAGE_SIZE);
+    pmap_unmap(map->page_table, virt_addr);
+    vm_map_remove(map, virt_addr, virt_addr + PMAP_PAGE_SIZE);
     pmm_free_page((void*)physical);
     return KERN_SUCCESS;
 }

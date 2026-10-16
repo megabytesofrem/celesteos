@@ -1,13 +1,11 @@
-#ifndef CELESTEOS_VMM_H
-#define CELESTEOS_VMM_H
+#ifndef CELESTEOS_PMAP_H
+#define CELESTEOS_PMAP_H
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#include <mach/kern_return.h>
-
-#define VMM_PAGE_SIZE 0x1000 /* 4KiB */
+#define PMAP_PAGE_SIZE 0x1000 /* 4KiB */
 
 typedef enum page_flags {
     PAGE_PRESENT = 1ULL << 0,
@@ -32,11 +30,11 @@ typedef struct page_table_entry_t {
 /**
  * Set the physical address for a page table entry.
  */
-static inline kern_return_t pte_set_address(page_table_entry_t* entry,
-                                            uint64_t phys_addr) {
+static inline int pte_set_address(page_table_entry_t* entry,
+                                  uint64_t phys_addr) {
     entry->value = (entry->value & ~0x000FFFFFFFFFF000ULL) |
                    (phys_addr & 0x000FFFFFFFFFF000ULL);
-    return KERN_SUCCESS;
+    return 0;
 }
 
 /**
@@ -50,19 +48,19 @@ static inline uint64_t pte_get_address(
 /**
  * Set the flags for a page table entry.
  */
-static inline kern_return_t pte_set_flags(page_table_entry_t* entry,
-                                          uint64_t flags) {
+static inline int pte_set_flags(page_table_entry_t* entry,
+                                uint64_t flags) {
     entry->value |= flags;
-    return KERN_SUCCESS;
+    return 0;
 }
 
 /**
  * Clear the specified flags for a page table entry.
  */
-static inline kern_return_t pte_clear_flags(page_table_entry_t* entry,
-                                            uint64_t flags) {
+static inline int pte_clear_flags(page_table_entry_t* entry,
+                                  uint64_t flags) {
     entry->value &= ~flags;
-    return KERN_SUCCESS;
+    return 0;
 }
 
 /**
@@ -102,26 +100,35 @@ typedef struct page_table_t {
 } page_table_t __attribute__((aligned(4096)));
 
 /**
- * Initialize the virtual memory manager using the active bootloader page table.
+ * Initialize the page map using the active bootloader page table.
  */
-kern_return_t vmm_initialize(uint64_t hhdm_base_offset);
+int pmap_initialize(uint64_t hhdm_base_offset);
 
 /**
- * Map a virtual address to a physical address, creating the necessary levels
+ * Map a virtual address to a physical address in the page map, creating the necessary levels
  * of the page table hierarchy if they do not already exist.
  */
-kern_return_t vmm_map(page_table_t* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
+int pmap_map(page_table_t* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
 
 /**
  * Unmap a virtual address, removing its mapping from the page table hierarchy.
  */
-kern_return_t vmm_unmap(page_table_t* pml4, uint64_t virt);
+int pmap_unmap(page_table_t* pml4, uint64_t virt);
 
-kern_return_t vmm_switch_pml4(page_table_t* new_pml4);
-kern_return_t vmm_flush_tlb(uint64_t virt);
+/**
+ * Switch the current page table to the specified new PML4.
+ * 
+ * CR3 holds the physical address of the PML4 table.
+ */
+int pmap_switch_pml4(page_table_t* new_pml4);
 
-page_table_t* vmm_get_pml4(void);
-uint64_t vmm_get_pml4_physical(void);
-uintptr_t vmm_get_physical(page_table_t* pml4, uint64_t virt);
+/**
+ * Flush the Translation Lookaside Buffer (TLB) for the specified virtual address.
+ */
+int pmap_flush_tlb(uint64_t virt);
 
-#endif  // CELESTEOS_VMM_H
+page_table_t* pmap_get_pml4(void);
+uint64_t pmap_get_pml4_physical(void);
+uintptr_t pmap_get_physical(page_table_t* pml4, uint64_t virt);
+
+#endif  // CELESTEOS_PMAP_H

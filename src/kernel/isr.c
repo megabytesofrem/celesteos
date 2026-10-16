@@ -1,8 +1,8 @@
 #include "isr.h"
 #include "idt.h"
-#include "ports.h"
-#include "pic.h"
 #include "isr_stubs.h"
+#include "pic.h"
+#include "ports.h"
 
 #include <libkernel.h>
 
@@ -68,7 +68,7 @@ extern void irq13();
 extern void irq14();
 extern void irq15();
 
-kern_return_t isr_install(void) {
+void isr_install(void) {
     __asm__ volatile("cli" : : : "memory");
     idt_set_entry(0, isr0, 0x8f);
     idt_set_entry(1, isr1, 0x8f);
@@ -126,7 +126,7 @@ kern_return_t isr_install(void) {
     idt_load();
     __asm__ volatile("sti" : : : "memory");
 
-    return KERN_SUCCESS;
+    return;
 }
 
 void irq_handler(struct cpu_registers* regs) {

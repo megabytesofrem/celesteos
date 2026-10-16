@@ -1,22 +1,22 @@
 #ifndef CELESTEOS_MACHO_H
 #define CELESTEOS_MACHO_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-#include <kernel/memory/vmm.h>
+#include <kernel/memory/pmap.h>
 
 #define MH_MAGIC_64 0xfeedfacf /* The 64-bit Mach-O magic number */
 #define MH_CIGAM_64 0xcffaedfe /* MH_MAGIC_64 but byte-swapped */
 
 /* Load command types */
-#define LC_SEGMENT 0x1
-#define LC_SYMTAB 0x2
-#define LC_DYSYMTAB 0xb
-#define LC_SEGMENT_64 0x19
-#define LC_LOAD_DYLINKER 0xe
+#define LC_SEGMENT         0x1
+#define LC_SYMTAB          0x2
+#define LC_DYSYMTAB        0xb
+#define LC_SEGMENT_64      0x19
+#define LC_LOAD_DYLINKER   0xe
 #define LC_FUNCTION_STARTS 0x26
-#define LC_DATA_IN_CODE 0x29
+#define LC_DATA_IN_CODE    0x29
 
 /* Entry point command (LC_MAIN) */
 #define LC_MAIN 0x80000028

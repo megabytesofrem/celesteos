@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <kernel/memory/vmm.h>
+#include <kernel/memory/pmap.h>
 #include <kernel/spinlock.h>
 #include <mach/kern_return.h>
 

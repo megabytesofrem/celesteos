@@ -1,7 +1,7 @@
 #include "kmalloc.h"
 
-#include <stdint.h>
 #include <libkernel.h>
+#include <stdint.h>
 
 /* Start address of the heap (linked list of memory blocks) */
 static BlockHeader* heap_start;
@@ -13,30 +13,30 @@ static uintptr_t heap_curr_virt = 0xFFFF900000000000ULL;
 /* Maximum heap size limit (the highest virtual address the heap can grow to) */
 static const uintptr_t heap_limit = 0xFFFF908000000000ULL;
 
-kern_return_t heap_initialize(vm_map_t* kernel_vm_map) {
+int heap_initialize(vm_map_t* kernel_vm_map) {
     if (!kernel_vm_map || heap_start) {
-        return KERN_FAILURE;
+        return -1;
     }
 
     // Ask the kernels vm_map structure to allocate and back the initial heap page.
     void* initial_heap_page;
-    if (vm_map_alloc(kernel_vm_map, heap_curr_virt, VM_PROT_READ | VM_PROT_WRITE, &initial_heap_page) != KERN_SUCCESS) {
-        return KERN_FAILURE;
+    if (vm_map_alloc(kernel_vm_map, heap_curr_virt, VM_PROT_READ | VM_PROT_WRITE, &initial_heap_page) != 0) {
+        return -1;
     }
 
     // Initialize the heap start with the allocated initial heap page.
     heap_start = (BlockHeader*)heap_curr_virt;
-    heap_start->size = VMM_PAGE_SIZE - sizeof(BlockHeader); /* initial block size - header size */
+    heap_start->size = PMAP_PAGE_SIZE - sizeof(BlockHeader); /* initial block size - header size */
     heap_start->is_free = true;
     heap_start->next = NULL;
     heap_map = kernel_vm_map;
-    heap_curr_virt += VMM_PAGE_SIZE;
-    return KERN_SUCCESS;
+    heap_curr_virt += PMAP_PAGE_SIZE;
+    return 0;
 }
 
 BlockHeader* heap_expand(size_t min_size) {
     if (!heap_start || !heap_map || min_size == 0 ||
-        min_size > SIZE_MAX - 7 - sizeof(BlockHeader) - (VMM_PAGE_SIZE - 1)) {
+        min_size > SIZE_MAX - 7 - sizeof(BlockHeader) - (PMAP_PAGE_SIZE - 1)) {
         klog(KLOG_ERROR, "heap: Cannot expand an uninitialized heap or satisfy an invalid size.\n");
         return NULL;
     }
@@ -58,10 +58,10 @@ BlockHeader* heap_expand(size_t min_size) {
     }
 
     // Calculate the number of pages needed to satisfy the total size.
-    size_t pages_needed = (total_size + VMM_PAGE_SIZE - 1) / VMM_PAGE_SIZE;
+    size_t pages_needed = (total_size + PMAP_PAGE_SIZE - 1) / PMAP_PAGE_SIZE;
 
     // Calculate the total number of bytes needed for the new pages.
-    size_t bytes_needed = pages_needed * VMM_PAGE_SIZE;
+    size_t bytes_needed = pages_needed * PMAP_PAGE_SIZE;
 
     // Safety check: Ensure that the heap has enough space and the VM map has enough entries for the new pages.
     if (heap_curr_virt >= heap_limit ||
@@ -73,15 +73,15 @@ BlockHeader* heap_expand(size_t min_size) {
 
     // Allocate each page sequentially from vm_map
     for (size_t i = 0; i < pages_needed; i++) {
-        uintptr_t address = heap_curr_virt + i * VMM_PAGE_SIZE;
+        uintptr_t address = heap_curr_virt + i * PMAP_PAGE_SIZE;
         void* page;
 
-        if (vm_map_alloc(heap_map, address, VM_PROT_READ | VM_PROT_WRITE, &page) != KERN_SUCCESS) {
+        if (vm_map_alloc(heap_map, address, VM_PROT_READ | VM_PROT_WRITE, &page) != 0) {
             // Roll back on allocation failure
             bool rolled_back = true;
             while (i > 0) {
                 --i;
-                if (vm_map_free(heap_map, heap_curr_virt + i * VMM_PAGE_SIZE) != KERN_SUCCESS) {
+                if (vm_map_free(heap_map, heap_curr_virt + i * PMAP_PAGE_SIZE) != 0) {
                     rolled_back = false;
                 }
             }

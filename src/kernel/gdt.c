@@ -1,7 +1,6 @@
 #include "gdt.h"
 #include "task.h"
 
-#include <mach/kern_return.h>
 #include <string.h>
 
 static gdt_t gdt;
@@ -23,7 +22,7 @@ gdt_entry_t gdt_entry_create(uint8_t access, uint8_t granularity) {
     return entry;
 }
 
-kern_return_t gdt_initialize() {
+void gdt_initialize() {
     gdt.null_descriptor = gdt_entry_null();         /* null descriptor */
     gdt.kernel_code = gdt_entry_create(0x9A, 0x20); /* kernel code segment, ring 0, executable, long mode */
     gdt.kernel_data = gdt_entry_create(0x92, 0x00); /* kernel data segment, ring 0, writable */
@@ -56,5 +55,5 @@ kern_return_t gdt_initialize() {
     // Load TSS
     load_tss(0x28);  // TSS segment selector (offset 0x28 in GDT)
 
-    return KERN_SUCCESS;
+    return;
 }

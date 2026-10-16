@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "memory/vmm.h"
+#include <kernel/memory/pmap.h>
 
 /**
  * 64-bit Task State Segment (TSS) structure for x86_64 architecture.

@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <kernel/memory/pmap.h>
 #include <kernel/memory/pmm.h>
-#include <kernel/memory/vmm.h>
 
 /**
  * __TEXT is readable (PAGE_PRESENT) and executable (PAGE_EXECUTE), but not writable.
@@ -39,11 +39,11 @@ const char* macho_describe_lc(uint32_t lc) {
 }
 
 static inline size_t page_align_up(size_t size) {
-    return (size + VMM_PAGE_SIZE - 1) & ~((size_t)VMM_PAGE_SIZE - 1);
+    return (size + PMAP_PAGE_SIZE - 1) & ~((size_t)PMAP_PAGE_SIZE - 1);
 }
 
 static inline size_t page_align_down(uintptr_t addr) {
-    return addr & ~((uintptr_t)VMM_PAGE_SIZE - 1);
+    return addr & ~((uintptr_t)PMAP_PAGE_SIZE - 1);
 }
 
 bool map_segment(page_table_t* root, uint64_t vmaddr, uint64_t vmsize, uint64_t hhdm_base) {
@@ -51,16 +51,16 @@ bool map_segment(page_table_t* root, uint64_t vmaddr, uint64_t vmsize, uint64_t 
 
     uintptr_t vm_start = page_align_down(vmaddr);
     size_t offset = vmaddr - vm_start;
-    if (vmsize > SIZE_MAX - offset - (VMM_PAGE_SIZE - 1) ||
+    if (vmsize > SIZE_MAX - offset - (PMAP_PAGE_SIZE - 1) ||
         vmaddr > UINT64_MAX - vmsize) {
         klog(KLOG_ERROR, "macho-loader: Segment address range overflows.\n");
         return false;
     }
-    size_t page_count = page_align_up(offset + vmsize) / VMM_PAGE_SIZE;
+    size_t page_count = page_align_up(offset + vmsize) / PMAP_PAGE_SIZE;
 
     // Allocate backing physical pages
     void* phys_pages;
-    if (pmm_alloc_pages(page_count, &phys_pages) != KERN_SUCCESS) {
+    if (pmm_alloc_pages(page_count, &phys_pages) != 0) {
         klog(KLOG_ERROR, "macho-loader: Failed physical allocation for segment at 0x%p\n", vmaddr);
         return false;
     }
@@ -68,14 +68,14 @@ bool map_segment(page_table_t* root, uint64_t vmaddr, uint64_t vmsize, uint64_t 
     uintptr_t phys_addr = (uintptr_t)phys_pages;
 
     // Zero out memory via HHDM (automatically zeroes uninitialized BSS space)
-    memset((void*)(phys_addr + hhdm_base), 0, page_count * VMM_PAGE_SIZE);
+    memset((void*)(phys_addr + hhdm_base), 0, page_count * PMAP_PAGE_SIZE);
 
     // Map physical frames into user virtual memory space
     for (size_t i = 0; i < page_count; ++i) {
-        if (vmm_map(root,
-                    vm_start + (i * VMM_PAGE_SIZE),
-                    phys_addr + (i * VMM_PAGE_SIZE),
-                    PAGE_PRESENT | PAGE_USER | PAGE_READ_WRITE) != KERN_SUCCESS) {
+        if (pmap_map(root,
+                     vm_start + (i * PMAP_PAGE_SIZE),
+                     phys_addr + (i * PMAP_PAGE_SIZE),
+                     PAGE_PRESENT | PAGE_USER | PAGE_READ_WRITE) != 0) {
             klog(KLOG_ERROR, "macho-loader: Failed to map page %x for segment at 0x%p\n", i, vmaddr);
             return false;
         }
@@ -89,15 +89,15 @@ bool copy_segment_payload(page_table_t* root, uint64_t vmaddr, const uint8_t* pa
     size_t copied = 0;
     while (copied < filesz) {
         uintptr_t curr_user_addr = vmaddr + copied;
-        uintptr_t phys_addr = vmm_get_physical(root, curr_user_addr);
+        uintptr_t phys_addr = pmap_get_physical(root, curr_user_addr);
 
         if (!phys_addr) {
             klog(KLOG_ERROR, "macho-loader: Failed to resolve physical frame for 0x%p\n", curr_user_addr);
             return false;
         }
 
-        size_t page_offset = curr_user_addr & (VMM_PAGE_SIZE - 1);
-        size_t chunk_size = VMM_PAGE_SIZE - page_offset;
+        size_t page_offset = curr_user_addr & (PMAP_PAGE_SIZE - 1);
+        size_t chunk_size = PMAP_PAGE_SIZE - page_offset;
         if (chunk_size > (filesz - copied)) {
             chunk_size = filesz - copied;
         }
@@ -233,7 +233,7 @@ bool macho_load(const uint8_t* data, page_table_t* root, uint64_t hhdm_base, str
         return false;
     }
 
-    // Resolve physical addresses via VMM and copy payload bytes using HHDM
+    // Resolve physical addresses via the page map and copy payload bytes using HHDM.
     if (!copy_segment_payload(root, out_info->text_vmaddr, data, out_info->text_fileoff, out_info->text_filesize, hhdm_base) ||
         !copy_segment_payload(root, out_info->data_vmaddr, data, out_info->data_fileoff, out_info->data_filesize, hhdm_base)) {
         return false;

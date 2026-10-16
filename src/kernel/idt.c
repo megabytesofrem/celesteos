@@ -1,8 +1,6 @@
 #include "idt.h"
 #include "isr_stubs.h"
 
-#include <mach/kern_return.h>
-
 /**
  * The Interrupt Descriptor Table (IDT).
  */
@@ -10,7 +8,7 @@ static __attribute__((aligned(16))) idt_entry_t idt[256];
 
 static idt_pointer_t idt_ptr;
 
-kern_return_t idt_initialize(void) {
+void idt_initialize(void) {
     _Static_assert(sizeof(idt_entry_t) == 16, "idt_entry_t must be exactly 16 bytes!");
     _Static_assert(sizeof(idt) == 4096, "idt array must be exactly 4096 bytes!");
 
@@ -37,10 +35,9 @@ kern_return_t idt_initialize(void) {
 
     // Set up the IDT pointer
     idt_load();
-    return KERN_SUCCESS;
 }
 
-kern_return_t idt_set_entry(int entry, idt_handler_t handler, int type_attr) {
+void idt_set_entry(int entry, idt_handler_t handler, int type_attr) {
     uintptr_t handler_address = (uintptr_t)handler;
 
     // Create the entry in the IDT
@@ -56,10 +53,9 @@ kern_return_t idt_set_entry(int entry, idt_handler_t handler, int type_attr) {
 
     // Set the entry in the IDT
     idt[entry] = entry_struct;
-    return KERN_SUCCESS;
 }
 
-kern_return_t idt_set_entry_ist(int entry, idt_handler_t handler, int type_attr, int ist_index) {
+void idt_set_entry_ist(int entry, idt_handler_t handler, int type_attr, int ist_index) {
     uintptr_t addr = (uintptr_t)handler;
 
     idt[entry] = (idt_entry_t){
@@ -70,10 +66,9 @@ kern_return_t idt_set_entry_ist(int entry, idt_handler_t handler, int type_attr,
         .offset_middle = (uint16_t)((addr >> 16) & 0xFFFF),
         .offset_high = (uint32_t)((addr >> 32) & 0xFFFFFFFF),
         .zero = 0x0};
-    return KERN_SUCCESS;
 }
 
-kern_return_t idt_load(void) {
+void idt_load(void) {
     /* Fill the IDT descriptor */
     struct idt_pointer_t ptr;
 
@@ -82,5 +77,4 @@ kern_return_t idt_load(void) {
 
     /* Load the IDT */
     __asm__ volatile("lidtq %0" : : "m"(ptr) : "memory");
-    return KERN_SUCCESS;
 }

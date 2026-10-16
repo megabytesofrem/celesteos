@@ -4,8 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <mach/kern_return.h>
-
 /*
  * CPU register state saved during an interrupt.
  */
@@ -40,7 +38,7 @@ _Static_assert(sizeof(struct cpu_registers) == 184,
  * Install the interrupt service routines (ISRs) for handling CPU exceptions 
  * and hardware interrupts.
  */
-kern_return_t isr_install(void);
+void isr_install(void);
 
 /**
  * Handle an interrupt by processing the stored CPU register state.

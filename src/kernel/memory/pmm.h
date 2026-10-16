@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <mach/kern_return.h>
 #include "../../limine.h"
 
 #define PMM_PAGE_SIZE 0x1000 /* 4KiB */
@@ -13,28 +12,28 @@
 /**
  * Initialize the physical memory manager with the given memory map.
  */
-kern_return_t pmm_initialize(struct limine_memmap_response* memmap,
-                             uint64_t hhdm_base_offset);
+void pmm_initialize(struct limine_memmap_response* memmap,
+                    uint64_t hhdm_base_offset);
 
 /**
  * Allocate a single page of physical memory.
  */
-kern_return_t pmm_alloc_page(void** out_page);
+int pmm_alloc_page(void** out_page);
 
 /**
  * Allocate multiple contiguous pages of physical memory.
  */
-kern_return_t pmm_alloc_pages(size_t count, void** out_pages);
+int pmm_alloc_pages(size_t count, void** out_pages);
 
 /**
  * Free a single page of physical memory.
  */
-kern_return_t pmm_free_page(void* page);
+int pmm_free_page(void* page);
 
 /**
  * Free multiple contiguous pages of physical memory.
  */
-kern_return_t pmm_free_pages(void* pages, size_t count);
+int pmm_free_pages(void* pages, size_t count);
 
 size_t pmm_get_total_pages(void);
 size_t pmm_get_used_pages(void);

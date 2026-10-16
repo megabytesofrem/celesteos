@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "vmm.h"
+#include "pmap.h"
 #include "vm_map.h"
 
 typedef struct BlockHeader {
@@ -16,7 +16,7 @@ typedef struct BlockHeader {
 /**
  * Initialize the heap with a given kernel virtual memory map.
  */
-kern_return_t heap_initialize(vm_map_t* kernel_vm_map);
+int heap_initialize(vm_map_t* kernel_vm_map);
 
 /**
  * Expand the initialized heap with virtually contiguous pages.
