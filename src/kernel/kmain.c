@@ -131,7 +131,7 @@ void load_initrd(uint64_t hhdm_base, page_table_t *user_pml4, struct macho_info 
     }
 
     struct limine_file *initrd_module = module_request.response->modules[0];
-    klog(KLOG_INFO, "kmain: initrd module found at %p (size: %u bytes)\n", initrd_module->address,
+    klog(KLOG_INFO, "kmain: initrd module found at 0x%p (size: %u bytes)\n", initrd_module->address,
          initrd_module->size);
 
     initrd_tar_archive_t initrd_tar = { .base = initrd_module->address,
@@ -160,7 +160,7 @@ void load_initrd(uint64_t hhdm_base, page_table_t *user_pml4, struct macho_info 
         halt_forever();
     }
 
-    klog(KLOG_INFO, "kmain: launchd file found at %p (size: %u bytes)\n", launchd_file.data,
+    klog(KLOG_INFO, "kmain: launchd file found at 0x%p (size: %u bytes)\n", launchd_file.data,
          launchd_file.size);
 
     /* Load the Mach-O binary for launchd from initrd */
@@ -178,6 +178,14 @@ void load_initrd(uint64_t hhdm_base, page_table_t *user_pml4, struct macho_info 
 
     if (out_macho != NULL) {
         *out_macho = launchd_info;
+    }
+
+    // Jump to the entry point of launchd
+    if (tss_jump_to_usermode(launchd_info.entrypoint, launchd_info.stack_pointer, user_pml4,
+                             hhdm_base) != 0) {
+        klog(KLOG_ERROR, "kmain: Failed privilege drop to user mode (rip=0x%p, rsp=0x%p)!\n",
+             (void *)launchd_info.entrypoint, (void *)launchd_info.stack_pointer);
+        halt_forever();
     }
 }
 
@@ -248,9 +256,6 @@ void kmain(void) {
 
     struct macho_info launchd_info;
     load_initrd(hhdm_base, user_pml4, &launchd_info);
-
-    // Jump to the entry point of launchd
-    tss_jump_to_usermode(launchd_info.entrypoint, user_pml4, hhdm_base);
 
     halt_forever();
 }

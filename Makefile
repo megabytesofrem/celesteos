@@ -113,9 +113,10 @@ iso: $(TARGET_ELF) limine
 qemu: iso
 	$(QEMU) -cdrom $(TARGET_ISO) \
 		-m 512M \
+		-gdb tcp:127.0.0.1:1234 \
 		-debugcon stdio \
-		-no-reboot \
-		-d int \
+		-no-reboot -no-shutdown \
+		-d int,cpu_reset \
 		-D qemu.log
 
 # Clean build artifacts

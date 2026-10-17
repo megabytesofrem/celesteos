@@ -224,9 +224,10 @@ kern_return_t macho_load(const uint8_t *data, page_table_t *root, uint64_t hhdm_
     klog(KLOG_INFO, "macho-loader: Resolved binary entrypoint at 0x%p\n",
          (void *)out_info->entrypoint);
 
-    // 3. Allocate Ring 3 user stack
+    // Allocate Ring 3 user stack
     out_info->stack_pointer = user_stack_allocate(root, hhdm_base);
     if (out_info->stack_pointer == 0) {
+        klog(KLOG_ERROR, "macho-loader: Failed to allocate user stack!\n");
         return KERN_FAILURE;
     }
 

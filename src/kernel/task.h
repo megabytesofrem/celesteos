@@ -50,7 +50,8 @@ void tss_prepare_usermode(uintptr_t kernel_stack);
  * This function allocates and maps the user stack, sets the kernel stack pointer
  * in the TSS, and then switches to user mode.
  */
-bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t *root, uint64_t hhdm_base);
+int tss_jump_to_usermode(uintptr_t entry_point, uintptr_t user_stack_top, page_table_t *root,
+                         uint64_t hhdm_base);
 
 /**
  * Switch from kernel mode to user mode (ring 3) using the TSS and iretq.

@@ -31,40 +31,29 @@ void tss_initialize(void) {
 
 void tss_prepare_usermode(uintptr_t kernel_stack) { kernel_tss.rsp0 = kernel_stack; }
 
-bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t *root, uint64_t hhdm_base) {
-    void *stack_frames;
-
-    if (pmm_alloc_pages(USER_STACK_PAGES, &stack_frames) != 0) {
-        klog(KLOG_ERROR, "task: Unable to allocate user stack.\n");
-        return false;
+int tss_jump_to_usermode(uintptr_t entry_point, uintptr_t user_stack_top, page_table_t *root,
+                         uint64_t hhdm_base) {
+    if (!entry_point || !user_stack_top || !root) {
+        klog(KLOG_ERROR, "task: Invalid user mode jump arguments!\n");
+        return -1;
     }
 
-    memset((void *)((uintptr_t)stack_frames + hhdm_base), 0, USER_STACK_PAGES * PMAP_PAGE_SIZE);
-    for (size_t page = 0; page < USER_STACK_PAGES; ++page) {
-        if (pmap_map(root, USER_STACK_BASE + page * PMAP_PAGE_SIZE,
-                     (uintptr_t)stack_frames + page * PMAP_PAGE_SIZE,
-                     PAGE_USER | PAGE_READ_WRITE) != 0) {
-            for (size_t mapped = 0; mapped < page; ++mapped) {
-                pmap_unmap(root, USER_STACK_BASE + mapped * PMAP_PAGE_SIZE);
-            }
-            pmm_free_pages(stack_frames, USER_STACK_PAGES);
-            klog(KLOG_ERROR, "task: Unable to map user stack.\n");
-            return false;
-        }
-    }
-    uintptr_t stack_top = USER_STACK_BASE + USER_STACK_PAGES * PMAP_PAGE_SIZE;
     uintptr_t kstack_top = (uintptr_t)kstack + sizeof(kstack);
-
-    // Set kernel stack pointer top in the TSS, so Ring 3 can switch to the correct stack on
-    // interrupts.
     tss_prepare_usermode(kstack_top);
 
+    // Switch CR3 to the user page table
     if (pmap_switch_pml4(root) != 0) {
-        klog(KLOG_ERROR, "task: Unable to switch to the user page table.\n");
-        return false;
+        klog(KLOG_ERROR, "task: Failed to switch to user page table!\n");
+        return -1;
     }
 
-    // Switch to user mode!
-    tss_switch_ring3(entry_point, stack_top);
+    klog(KLOG_INFO, "task: Dropping to ring 3 (rip=0x%p, rsp=0x%p).\n", (void *)entry_point,
+         (void *)user_stack_top);
+
+    // Everything is set up for the transition to user mode.
+    // Drop privilege level to ring 3 and jump to the user mode entry point!
+
+    tss_switch_ring3(entry_point, user_stack_top);
+
     __builtin_unreachable();
 }

@@ -19,6 +19,21 @@ make all
 make qemu
 ```
 
+QEMU exposes a remote GDB server on `127.0.0.1:1234` and starts with the CPU paused.
+Connect from another terminal:
+
+```sh
+gdb build/celesteos.elf
+```
+
+```gdb
+target remote 127.0.0.1:1234
+stepi
+```
+
+Use `stepi` to execute one instruction at a time. Execution remains paused between
+steps; `continue` resumes normal execution.
+
 ## Building user-space
 celesteOS relies on a user-space replicating a native Mac OS X filesystem layout.
 ```

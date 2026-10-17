@@ -11,17 +11,31 @@ global tss_switch_ring3
 tss_switch_ring3:
     cli             ; clear interrupts during switch
 
-    mov ax, 0x1B    ; load user data segment selector into ax
-    mov ds, ax      ; set data segment registers for user mode
+    mov ax, 0x23    ; User data segment selector (DS, ES, FS, GS)
+    mov ds, ax      ; Set data segment registers for user mode
     mov es, ax
     mov fs, ax
     mov gs, ax
 
-    push 0x1B       ; push user data segment selector onto stack (SS)
-    push rsi        ; push user stack pointer onto stack (RSP)
-    push 0x202      ; push RFLAGS with interrupts enabled (IF = 1)
-    push 0x23       ; push user code segment selector onto stack (CS)
-    push rdi       ; push entry point (RIP) for user mode
+    push 0x23       ; Push user data segment selector onto stack (SS)
+    push rsi        ; Push user stack pointer onto stack (RSP)
+    push 0x202      ; Push RFLAGS with interrupts enabled (IF = 1)
+    push 0x1B       ; Push user code segment selector onto stack (CS)
+    push rdi        ; Push entry point (RIP) for user mode
+
+    ; Clear registers
+    xor rax, rax
+    xor rbx, rbx
+    xor rcx, rcx
+    xor rdx, rdx
+    xor r8, r8
+    xor r9, r9
+    xor r10, r10
+    xor r11, r11
+    xor r12, r12
+    xor r13, r13
+    xor r14, r14
+    xor r15, r15
 
     ; CPU is now in user mode
     iretq           ; return to user mode
