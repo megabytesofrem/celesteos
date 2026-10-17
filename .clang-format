@@ -2,7 +2,7 @@
 BasedOnStyle: LLVM
 TabWidth: 4
 IndentWidth: 4
-ColumnLimit: 110
+ColumnLimit: 100
 
 # Force wrapping of list elements and parameters
 BinPackArguments: false
@@ -11,13 +11,16 @@ AllowAllParametersOfDeclarationOnNextLine: false
 
 # Strict rules against collapsing structural objects
 AllowShortBlocksOnASingleLine: Never
-AllowShortEnumsDeclarationsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortLambdasOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
 
 # Formatting for struct instances and types
 BreakBeforeBraces: Custom
+Cpp11BracedListStyle: true          # Modified: Enables modern layout engine for {}
+AlignAfterOpenBracket: BlockIndent  # Added: Forces closing } onto its own line matching the start indent
+BracedInitializerIndentWidth: 4     # Added: Matches your IndentWidth inside the struct block
 BraceWrapping:
   AfterStruct: true
   AfterClass: true
@@ -30,7 +33,9 @@ ReflowComments: false
 AlignTrailingComments:
   Kind: Always
   OverEmptyLines: 0
+AlignConsecutiveAssignments: false
 AlignConsecutiveMacros: true
 
 SortIncludes: true
 IncludeBlocks: Preserve
+---

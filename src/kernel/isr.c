@@ -8,12 +8,10 @@
 
 /* Macro to print the value of a CPU register */
 #ifndef PRINT_REGISTER
-#define PRINT_REGISTER(name) \
-    printk("    " #name "=0x%p\n", 0xFFFFFFFF, 0x0000, \
-           (void*)(uintptr_t)regs->name)
+#define PRINT_REGISTER(name) printk("    " #name "=0x%p\n", 0xFFFFFFFF, 0x0000, (void *)(uintptr_t)regs->name)
 #endif
 
-const char* exception_messages[] = {
+const char *exception_messages[] = {
     "Division By Zero",
     "Debug",
     "Non Maskable Interrupt",
@@ -45,10 +43,13 @@ const char* exception_messages[] = {
     "Reserved",
     "VMM Communication Exception",
     "Security Exception",
-    "Reserved"};
+    "Reserved"
+};
 
-_Static_assert(sizeof(exception_messages) / sizeof(exception_messages[0]) == 32,
-               "Exception messages must cover vectors 0-31");
+_Static_assert(
+    sizeof(exception_messages) / sizeof(exception_messages[0]) == 32,
+    "Exception messages must cover vectors 0-31"
+);
 
 /* IRQs are defined in Assembly */
 extern void irq0();
@@ -129,19 +130,22 @@ void isr_install(void) {
     return;
 }
 
-void irq_handler(struct cpu_registers* regs) {
+void irq_handler(struct cpu_registers *regs) {
     pic_send_eoi((uint8_t)(regs->int_no - 32));
 }
 
-void isr_handler(struct cpu_registers* regs) {
-    const char* message =
-        regs->int_no < sizeof(exception_messages) / sizeof(exception_messages[0])
-            ? exception_messages[regs->int_no]
-            : "Unknown Exception";
+void isr_handler(struct cpu_registers *regs) {
+    const char *message = regs->int_no < sizeof(exception_messages) / sizeof(exception_messages[0])
+                              ? exception_messages[regs->int_no]
+                              : "Unknown Exception";
 
-    klog(KLOG_ERROR, "exception: %s (%u), err code: 0x%p\n",
-         message, (unsigned int)regs->int_no,
-         (void*)(uintptr_t)regs->err_code);
+    klog(
+        KLOG_ERROR,
+        "exception: %s (%u), err code: 0x%p\n",
+        message,
+        (unsigned int)regs->int_no,
+        (void *)(uintptr_t)regs->err_code
+    );
 
     printk("=*=*= EXCEPTION =*=*=\n", 0xFFFFFFFF, 0x0000);
 

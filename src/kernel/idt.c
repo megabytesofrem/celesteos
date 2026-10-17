@@ -65,7 +65,8 @@ void idt_set_entry_ist(int entry, idt_handler_t handler, int type_attr, int ist_
         .type_attr = type_attr,  /* e.g., 0x8E for Present, Ring 0 */
         .offset_middle = (uint16_t)((addr >> 16) & 0xFFFF),
         .offset_high = (uint32_t)((addr >> 32) & 0xFFFFFFFF),
-        .zero = 0x0};
+        .zero = 0x0
+    };
 }
 
 void idt_load(void) {

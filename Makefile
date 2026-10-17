@@ -43,6 +43,7 @@ LDFLAGS := -T linker.ld -nostdlib -static
 
 # Source Files
 C_SRCS := src/kernel/kmain.c \
+          src/kernel/cpuid.c \
           src/kernel/gdt.c \
           src/kernel/idt.c \
           src/kernel/isr.c \

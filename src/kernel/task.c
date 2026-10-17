@@ -33,20 +33,22 @@ void tss_prepare_usermode(uintptr_t kernel_stack) {
     kernel_tss.rsp0 = kernel_stack;
 }
 
-bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t* root, uint64_t hhdm_base) {
-    void* stack_frames;
+bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t *root, uint64_t hhdm_base) {
+    void *stack_frames;
 
     if (pmm_alloc_pages(USER_STACK_PAGES, &stack_frames) != 0) {
         klog(KLOG_ERROR, "task: Unable to allocate user stack.\n");
         return false;
     }
 
-    memset((void*)((uintptr_t)stack_frames + hhdm_base), 0,
-           USER_STACK_PAGES * PMAP_PAGE_SIZE);
+    memset((void *)((uintptr_t)stack_frames + hhdm_base), 0, USER_STACK_PAGES * PMAP_PAGE_SIZE);
     for (size_t page = 0; page < USER_STACK_PAGES; ++page) {
-        if (pmap_map(root, USER_STACK_BASE + page * PMAP_PAGE_SIZE,
-                     (uintptr_t)stack_frames + page * PMAP_PAGE_SIZE,
-                     PAGE_USER | PAGE_READ_WRITE) != 0) {
+        if (pmap_map(
+                root,
+                USER_STACK_BASE + page * PMAP_PAGE_SIZE,
+                (uintptr_t)stack_frames + page * PMAP_PAGE_SIZE,
+                PAGE_USER | PAGE_READ_WRITE
+            ) != 0) {
             for (size_t mapped = 0; mapped < page; ++mapped) {
                 pmap_unmap(root, USER_STACK_BASE + mapped * PMAP_PAGE_SIZE);
             }
