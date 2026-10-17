@@ -12,31 +12,29 @@ typedef uintptr_t vm_offset_t;
 
 #define VM_MAP_MAX_ENTRIES 1024
 
-#define VM_PROT_READ  (1 << 0) /* READ permission */
+#define VM_PROT_READ (1 << 0)  /* READ permission */
 #define VM_PROT_WRITE (1 << 1) /* WRITE permission */
-#define VM_PROT_EXEC  (1 << 2) /* EXECUTE permission */
+#define VM_PROT_EXEC (1 << 2)  /* EXECUTE permission */
 
-#define VM_PROT_READ_EXEC (VM_PROT_READ | VM_PROT_EXEC) /* READ and EXECUTE permissions */
-#define VM_PROT_ALL       (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXEC) /* ALL permissions */
+#define VM_PROT_READ_EXEC (VM_PROT_READ | VM_PROT_EXEC)           /* READ and EXECUTE permissions */
+#define VM_PROT_ALL (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXEC) /* ALL permissions */
 
-typedef struct vm_map_entry
-{
-    struct vm_map_entry *next;
-    struct vm_map_entry *prev;
+typedef struct vm_map_entry {
+	struct vm_map_entry *next;
+	struct vm_map_entry *prev;
 
-    vm_offset_t start; /* start address of the memory region */
-    vm_offset_t end;   /* end address of the memory region */
-    vm_prot_t prot;    /* protection flags for the memory region */
+	vm_offset_t start; /* start address of the memory region */
+	vm_offset_t end;   /* end address of the memory region */
+	vm_prot_t prot;    /* protection flags for the memory region */
 } vm_map_entry_t;
 
-typedef struct vm_map
-{
-    spinlock_t lock;          /* spinlock to protect the virtual memory map */
-    page_table_t *page_table; /* pointer to the page table for this virtual memory map */
+typedef struct vm_map {
+	spinlock_t lock;          /* spinlock to protect the virtual memory map */
+	page_table_t *page_table; /* pointer to the page table for this virtual memory map */
 
-    vm_map_entry_t *entries; /* pointer to the list of virtual memory map entries */
-    size_t entry_count;      /* number of entries in the virtual memory map */
-    size_t total_size;       /* total size of all memory regions in the virtual memory map */
+	vm_map_entry_t *entries; /* pointer to the list of virtual memory map entries */
+	size_t entry_count;      /* number of entries in the virtual memory map */
+	size_t total_size;       /* total size of all memory regions in the virtual memory map */
 } vm_map_t;
 
 /* Global pointer to the higher-half kernel address space map */
@@ -85,7 +83,7 @@ kern_return_t vm_map_protect(vm_map_t *map, vm_offset_t start, vm_offset_t end, 
 
 /**
  * Lookup the memory region containing the specified virtual address.
- * 
+ *
  * Returns NULL if lookup fails (i.e., no memory region contains the specified address).
  */
 vm_map_entry_t *vm_map_lookup(vm_map_t *map, uint64_t addr);

@@ -7,11 +7,10 @@
 #include "pmap.h"
 #include "vm_map.h"
 
-typedef struct BlockHeader
-{
-    size_t size;
-    bool is_free;
-    struct BlockHeader *next;
+typedef struct BlockHeader {
+	size_t size;
+	bool is_free;
+	struct BlockHeader *next;
 } BlockHeader;
 
 /**
@@ -24,14 +23,14 @@ int heap_initialize(vm_map_t *kernel_vm_map);
  * Returns a free block with at least min_size bytes, or NULL on failure.
  * Failed growth leaves existing heap blocks and the heap end unchanged.
  * Calls to heap operations must be serialized by the caller.
- * 
+ *
  * @param min_size The minimum size of the new heap block to allocate.
  */
 BlockHeader *heap_expand(size_t min_size);
 
 /**
  * Kernel malloc function.
- * 
+ *
  * @param size The number of bytes to allocate from the heap.
  */
 void *kmalloc(size_t size);

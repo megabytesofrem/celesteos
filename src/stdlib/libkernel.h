@@ -5,10 +5,10 @@
 #include <stdint.h>
 
 enum log_level {
-    KLOG_NONE,
-    KLOG_INFO,
-    KLOG_WARN,
-    KLOG_ERROR,
+	KLOG_NONE,
+	KLOG_INFO,
+	KLOG_WARN,
+	KLOG_ERROR,
 };
 
 /**

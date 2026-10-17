@@ -110,7 +110,7 @@ enum {
 
 /**
  * Issue a single request to CPUID to determine processor features.
- * 
+ *
  * The results are stored in the provided pointers for eax and edx.
  */
 void cpuid(int code, uint32_t *eax, uint32_t *edx);

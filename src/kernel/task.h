@@ -9,21 +9,20 @@
 
 /**
  * 64-bit Task State Segment (TSS) structure for x86_64 architecture.
- * 
+ *
  * On 64 bit, this stores kernel stack pointers for different privilege levels (rings) and
  * interrupt stack table pointers.
  */
-typedef struct __attribute__((packed)) tss_t
-{
-    uint32_t reserved0;
-    uint64_t rsp0; /* kernel stack pointer */
-    uint64_t rsp1; /* ring 1 stack pointer? */
-    uint64_t rsp2; /* ring 2 stack pointer? */
-    uint64_t reserved1;
-    uint64_t ist[7]; /* interrupt stack table pointers */
-    uint64_t reserved2;
-    uint16_t reserved3;
-    uint16_t io_map_base;
+typedef struct __attribute__((packed)) tss_t {
+	uint32_t reserved0;
+	uint64_t rsp0; /* kernel stack pointer */
+	uint64_t rsp1; /* ring 1 stack pointer? */
+	uint64_t rsp2; /* ring 2 stack pointer? */
+	uint64_t reserved1;
+	uint64_t ist[7]; /* interrupt stack table pointers */
+	uint64_t reserved2;
+	uint16_t reserved3;
+	uint16_t io_map_base;
 } tss_t;
 
 extern tss_t kernel_tss;
@@ -35,7 +34,8 @@ _Static_assert(offsetof(tss_t, io_map_base) == 102, "TSS I/O map base must be at
 
 /**
  * Initialize the Task State Segment (TSS) for the kernel, and setup the
- * kernel stack pointers and interrupt stack table (IST) entries for catching #DF and #PF exceptions.
+ * kernel stack pointers and interrupt stack table (IST) entries for catching #DF and #PF
+ * exceptions.
  */
 void tss_initialize(void);
 
@@ -54,7 +54,7 @@ bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t *root, uint64_t hh
 
 /**
  * Switch from kernel mode to user mode (ring 3) using the TSS and iretq.
- * 
+ *
  * This function does the following:
  * - Load the user data segment selector into the data segment registers (DS, ES, FS, GS)
  * - Push the user stack pointer, RFLAGS, code segment selector, and entry point onto the stack

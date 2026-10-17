@@ -19,8 +19,8 @@ size_t strcmp(const char *str1, const char *str2);
 /**
  * Compares at most `num` characters of two strings `str1` and `str2` lexicographically.
  *
- * Returns zero if the strings are equal up to `num` characters, a negative value if `str1` is less than `str2`,
- * and a positive value if `str1` is greater than `str2`.
+ * Returns zero if the strings are equal up to `num` characters, a negative value if `str1` is less
+ * than `str2`, and a positive value if `str1` is greater than `str2`.
  */
 size_t strncmp(const char *str1, const char *str2, size_t num);
 
@@ -46,7 +46,8 @@ char *strcpy(char *dest, const char *src);
 char *strncpy(char *dest, const char *src, size_t num);
 
 /**
- * Fills the first `num` bytes of the memory area pointed to by `ptr` with the constant byte `value`.
+ * Fills the first `num` bytes of the memory area pointed to by `ptr` with the constant byte
+ * `value`.
  *
  * Returns a pointer to the memory area `ptr`.
  */
