@@ -38,7 +38,10 @@ typedef struct ipc_port {
 /**
  * Allocate a new Mach IPC port.
  */
-kern_return_t ipc_port_alloc(mach_port_space_t* space, uint32_t flags, mach_port_name_t* out_name, ipc_port_t** out_port);
+kern_return_t ipc_port_alloc(mach_port_space_t* space,
+                             uint32_t flags,
+                             mach_port_name_t* out_name,
+                             ipc_port_t** out_port);
 
 /**
  * Increment the reference count of the given Mach IPC port.

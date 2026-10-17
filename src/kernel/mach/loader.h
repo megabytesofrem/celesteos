@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include <kernel/memory/pmap.h>
+#include <mach/kern_return.h>
 
 #define MH_MAGIC_64 0xfeedfacf /* The 64-bit Mach-O magic number */
 #define MH_CIGAM_64 0xcffaedfe /* MH_MAGIC_64 but byte-swapped */
@@ -24,7 +25,8 @@
 /**
  * A 64-bit Mach-O header.
  */
-typedef struct __attribute__((packed)) mach_header_64 {
+typedef struct __attribute__((packed)) mach_header_64
+{
     uint32_t magic;
     uint32_t cputype;
     uint32_t cpusubtype;
@@ -38,7 +40,8 @@ typedef struct __attribute__((packed)) mach_header_64 {
 /**
  * A Mach-O load command.
  */
-typedef struct __attribute__((packed)) load_command {
+typedef struct __attribute__((packed)) load_command
+{
     uint32_t cmd;
     uint32_t cmdsize;
 } load_command;
@@ -46,7 +49,8 @@ typedef struct __attribute__((packed)) load_command {
 /**
  * A 64-bit Mach-O segment command. 
  */
-typedef struct __attribute__((packed)) segment_command_64 {
+typedef struct __attribute__((packed)) segment_command_64
+{
     uint32_t cmd;      /* LC_SEGMENT_64 */
     uint32_t cmdsize;  /* total size of this command */
     char segname[16];  /* segment name, e.g., "__TEXT" */
@@ -60,7 +64,8 @@ typedef struct __attribute__((packed)) segment_command_64 {
     uint32_t flags;    /* segment flags */
 } segment_command_64;
 
-typedef struct __attribute__((packed)) symtab_command {
+typedef struct __attribute__((packed)) symtab_command
+{
     uint32_t cmd;     /* LC_SYMTAB */
     uint32_t cmdsize; /* total size of this command */
     uint32_t symoff;  /* file offset of the symbol table */
@@ -69,7 +74,8 @@ typedef struct __attribute__((packed)) symtab_command {
     uint32_t strsize; /* size of the string table */
 } symtab_command;
 
-struct nlist_64 {
+struct nlist_64
+{
     uint32_t n_strx;  /* index into the string table */
     uint8_t n_type;   /* type of the symbol */
     uint8_t n_sect;   /* section number */
@@ -80,7 +86,8 @@ struct nlist_64 {
 /**
  * A Mach-O entry point command (LC_MAIN).
  */
-typedef struct __attribute__((packed)) entry_point_command {
+typedef struct __attribute__((packed)) entry_point_command
+{
     uint32_t cmd;       /* LC_MAIN */
     uint32_t cmdsize;   /* total size of this command */
     uint64_t entryoff;  /* offset of main() from start of __TEXT segment */
@@ -91,8 +98,12 @@ typedef struct __attribute__((packed)) entry_point_command {
  * Contains information about a loaded Mach-O binary, including its entry point, 
  * and addresses and offsets for the __TEXT and __DATA segments.
  */
-typedef struct __attribute__((packed)) macho_info {
-    uint64_t entrypoint;  /* entry point of the Mach-O binary */
+typedef struct __attribute__((packed)) macho_info
+{
+    uint64_t entrypoint;    /* entry point of the Mach-O binary */
+    uint64_t stack_pointer; /* initial stack pointer for the Mach-O binary */
+
+    /* Segment information */
     uint64_t text_vmaddr; /* virtual memory address of the __TEXT segment */
     uint64_t text_vmsize; /* size of the __TEXT segment */
     uint64_t data_vmaddr; /* virtual memory address of the __DATA segment */
@@ -104,12 +115,19 @@ typedef struct __attribute__((packed)) macho_info {
     uint64_t data_filesize; /* size of the __DATA segment */
 } macho_info;
 
-const char* macho_describe_lc(uint32_t lc);
+const char *macho_describe_lc(uint32_t lc);
 
-bool map_segment(page_table_t* root, uint64_t vmaddr, uint64_t size, uint64_t hhdm_base);
-bool copy_segment_payload(page_table_t* root, uint64_t vmaddr, const uint8_t* payload, uint64_t fileoff, uint64_t filesz, uint64_t hhdm_base);
+kern_return_t
+map_segment(page_table_t *root, uint64_t vmaddr, uint64_t vmsize, uint32_t initprot, uint64_t hhdm_base);
 
-bool macho_parse(const uint8_t* data, struct macho_info* out_info);
-bool macho_load(const uint8_t* data, page_table_t* root, uint64_t hhdm_base, struct macho_info* out_info);
+kern_return_t copy_segment_payload(page_table_t *root,
+                                   uint64_t vmaddr,
+                                   const uint8_t *payload,
+                                   uint64_t fileoff,
+                                   uint64_t filesz,
+                                   uint64_t hhdm_base);
 
-#endif  // CELESTEOS_MACHO_H
+kern_return_t
+macho_load(const uint8_t *data, page_table_t *root, uint64_t hhdm_base, struct macho_info *out_info);
+
+#endif // CELESTEOS_MACHO_H

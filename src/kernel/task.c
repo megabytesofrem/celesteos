@@ -61,6 +61,11 @@ bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t* root, uint64_t hh
     // Set kernel stack pointer top in the TSS, so Ring 3 can switch to the correct stack on interrupts.
     tss_prepare_usermode(kstack_top);
 
+    if (pmap_switch_pml4(root) != 0) {
+        klog(KLOG_ERROR, "task: Unable to switch to the user page table.\n");
+        return false;
+    }
+
     // Switch to user mode!
     tss_switch_ring3(entry_point, stack_top);
     __builtin_unreachable();

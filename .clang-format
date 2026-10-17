@@ -1,32 +1,36 @@
 ---
-
-BasedOnStyle: Google
+BasedOnStyle: LLVM
 TabWidth: 4
 IndentWidth: 4
-ColumnLimit: 100
+ColumnLimit: 110
 
-# Force parameters to wrap to a new line if they don't fit on one
-AllowAllParametersOfDeclarationOnNextLine: false
+# Force wrapping of list elements and parameters
+BinPackArguments: false
 BinPackParameters: false
+AllowAllParametersOfDeclarationOnNextLine: false
 
-# Always use spaces
+# Strict rules against collapsing structural objects
+AllowShortBlocksOnASingleLine: Never
+AllowShortEnumsDeclarationsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortLambdasOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+
+# Formatting for struct instances and types
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterStruct: true
+  AfterClass: true
+  SplitEmptyRecords: true
+
+# Clean spacing & clean macro alignment
 UseTab: Never
-
-# Align trailing macro backslashes to the right
 AlignEscapedNewlines: Right
-
-# Prevent clang-format from re-wrapping trailing comments inside macros
 ReflowComments: false
-
-# Keep inline macro comments aligned cleanly without forcing huge gaps
 AlignTrailingComments:
   Kind: Always
   OverEmptyLines: 0
-
-# Align #define
 AlignConsecutiveMacros: true
 
 SortIncludes: true
-
-# Preserve the order of include blocks
 IncludeBlocks: Preserve

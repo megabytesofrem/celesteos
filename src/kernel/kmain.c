@@ -9,6 +9,7 @@
 #include <kernel/memory/vm_map.h>
 #include <kernel/pic.h>
 #include <kernel/ports.h>
+#include <kernel/tar.h>
 #include <kernel/task.h>
 
 #include <libkernel.h>
@@ -19,9 +20,6 @@
 // Boot logo
 #include <kernel/drivers/boot_logo.h>
 
-// Mach-O test payload
-#include <kernel/mach/macho_test.h>
-
 static void halt_forever(void) {
     for (;;) {
         __asm__ volatile("hlt");
@@ -29,39 +27,45 @@ static void halt_forever(void) {
 }
 
 /* Limine requests */
-__attribute__((used, section(".limine_requests"))) static volatile uint64_t
-    limine_base_revision[] = LIMINE_BASE_REVISION(2);
+__attribute__((used, section(".limine_requests"))) static volatile uint64_t limine_base_revision[] =
+    LIMINE_BASE_REVISION(2);
 
 // Limine Requests Start Marker
-__attribute__((used,
-               section(".limine_requests_start"))) static volatile uint64_t
-    limine_requests_start[] = LIMINE_REQUESTS_START_MARKER;
+__attribute__((used, section(".limine_requests_start"))) static volatile uint64_t limine_requests_start[] =
+    LIMINE_REQUESTS_START_MARKER;
 
 // Limine Requests
-__attribute__((
-    used,
-    section(".limine_requests"))) static volatile struct limine_hhdm_request
-    hhdm_request = {.id = LIMINE_HHDM_REQUEST_ID,
-                    .revision = 0,
-                    .response = NULL};
+__attribute__((used, section(".limine_requests"))) static volatile struct limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST_ID,
+    .revision = 0,
+    .response = NULL,
+};
+
+__attribute__((used,
+               section(".limine_requests"))) static volatile struct limine_memmap_request memmap_request = {
+    .id = LIMINE_MEMMAP_REQUEST_ID,
+    .revision = 0,
+    .response = NULL,
+};
+
+__attribute__((used,
+               section(".limine_requests"))) static volatile struct limine_module_request module_request = {
+    .id = LIMINE_MODULE_REQUEST_ID,
+    .revision = 0,
+    .response = NULL,
+};
 
 __attribute__((
     used,
-    section(".limine_requests"))) static volatile struct limine_memmap_request
-    memmap_request = {.id = LIMINE_MEMMAP_REQUEST_ID,
-                      .revision = 0,
-                      .response = NULL};
+    section(".limine_requests"))) static volatile struct limine_framebuffer_request framebuffer_request = {
+    .id = LIMINE_FRAMEBUFFER_REQUEST_ID,
+    .revision = 0,
+    .response = NULL,
+};
 
-__attribute__((
-    used,
-    section(
-        ".limine_requests"))) static volatile struct limine_framebuffer_request
-    framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST_ID,
-                           .revision = 0,
-                           .response = NULL};
 // Limine Requests End Marker
-__attribute__((used, section(".limine_requests_end"))) static volatile uint64_t
-    limine_requests_end[] = LIMINE_REQUESTS_END_MARKER;
+__attribute__((used, section(".limine_requests_end"))) static volatile uint64_t limine_requests_end[] =
+    LIMINE_REQUESTS_END_MARKER;
 
 /**
  * Kernel main entry point.
@@ -79,10 +83,9 @@ void kmain(void) {
     }
 
     uint64_t hhdm_base = hhdm_request.response->offset;
-    struct limine_memmap_response* memmap_response = memmap_request.response;
+    struct limine_memmap_response *memmap_response = memmap_request.response;
 
     /* CPU Initialization */
-
     // Initialize the Global Descriptor Table (GDT)
     gdt_initialize();
 
@@ -92,27 +95,23 @@ void kmain(void) {
     // Install ISRs
     isr_install();
 
-    /* Drivers Initialization */
-
-    if (framebuffer_request.response == NULL ||
-        framebuffer_request.response->framebuffer_count == 0 ||
+    /* Framebuffer Initialization */
+    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count == 0 ||
         framebuffer_request.response->framebuffers == NULL ||
         framebuffer_request.response->framebuffers[0] == NULL) {
         klog(KLOG_ERROR, "kmain: Limine framebuffer not available!\n");
         halt_forever();
     }
 
-    struct limine_framebuffer* fb = framebuffer_request.response->framebuffers[0];
-    if (fb->address == NULL || fb->bpp != 32 || fb->width < 8 ||
-        fb->height < 16) {
+    struct limine_framebuffer *fb = framebuffer_request.response->framebuffers[0];
+    if (fb->address == NULL || fb->bpp != 32 || fb->width < 8 || fb->height < 16) {
         klog(KLOG_ERROR, "kmain: Unsupported framebuffer format or dimensions!\n");
         halt_forever();
     }
 
     framebuffer_init(&global_framebuffer, fb);
 
-    framebuffer_draw_raw_image(&global_framebuffer, 0, 0, logo_header_data,
-                               logo_width, logo_height);
+    framebuffer_draw_raw_image(&global_framebuffer, 0, 0, logo_header_data, logo_width, logo_height);
 
     /* Memory Initialization */
 
@@ -135,45 +134,58 @@ void kmain(void) {
         klog(KLOG_ERROR, "kmain: Failed to initialize the heap!\n");
         halt_forever();
     }
-    volatile uint64_t* heap_test =
-        (volatile uint64_t*)kmalloc(sizeof(uint64_t));
+    volatile uint64_t *heap_test = (volatile uint64_t *)kmalloc(sizeof(uint64_t));
     if (heap_test == NULL) {
         klog(KLOG_ERROR, "kmain: Failed to allocate from the heap!\n");
         halt_forever();
     }
-    *heap_test = 0xCE1E57EULL;
-    if (*heap_test != 0xCE1E57EULL) {
-        klog(KLOG_ERROR, "kmain: Heap read/write test failed!\n");
+
+    /* INITRD */
+    klog(KLOG_INFO, "kmain: Initializing INITRD...\n");
+    if (module_request.response == NULL || module_request.response->module_count < 1) {
+        klog(KLOG_ERROR, "kmain: No INITRD modules found!\n");
         halt_forever();
     }
 
-    kfree((void*)heap_test);
-    klog(KLOG_INFO, "kmain: Heap initialized and allocation verified.\n");
+    struct limine_file *initrd_module = module_request.response->modules[0];
+    klog(KLOG_INFO,
+         "kmain: INITRD module found at %p (size: %u bytes)\n",
+         initrd_module->address,
+         initrd_module->size);
 
-    /* Mach-O debugging */
-    macho_info macho_info;
+    tar_archive_t initrd = {.base = initrd_module->address, .size = initrd_module->size};
 
-    klog(KLOG_INFO, "kmain: Try to parse Mach-O test payload...\n");
-    if (!macho_load(test_macho, pmap_get_pml4(), hhdm_base, &macho_info)) {
-        klog(KLOG_ERROR, "kmain: Failed to load Mach-O test payload!\n");
+    /* Read our stub launchd binary from the INITRD */
+    tar_file_t launchd_file;
+    if (tar_lookup_file(&initrd, "/usr/libexec/launchd", &launchd_file) != 0) {
+        klog(KLOG_ERROR, "kmain: Failed to find /usr/libexec/launchd in the INITRD!\n");
         halt_forever();
     }
 
-    void* phys_frame;
-    if (pmm_alloc_page(&phys_frame) != 0) {
-        klog(KLOG_ERROR, "kmain: Failed to allocate a physical frame!\n");
-        halt_forever();
-    }
-    if (pmap_map(pmap_get_pml4(), 0x1000, (uintptr_t)phys_frame,
-                 PAGE_PRESENT | PAGE_USER | PAGE_READ_WRITE) != 0) {
-        klog(KLOG_ERROR, "kmain: Failed to map the test frame!\n");
-        pmm_free_page(phys_frame);
+    klog(KLOG_INFO,
+         "kmain: launchd file found at %p (size: %u bytes)\n",
+         launchd_file.base,
+         launchd_file.size);
+
+    /* Load the Mach-O binary for launchd from the INITRD */
+    page_table_t *user_pml4 = pmap_create_user_pml4(hhdm_base);
+
+    struct macho_info launchd_info;
+    if (macho_load(launchd_file.base, user_pml4, hhdm_base, &launchd_info) != KERN_SUCCESS) {
+        klog(KLOG_ERROR, "kmain: Failed to load launchd Mach-O binary!\n");
         halt_forever();
     }
 
-    if (!tss_jump_to_usermode(macho_info.entrypoint, pmap_get_pml4(), hhdm_base)) {
-        halt_forever();
-    }
+    klog(KLOG_INFO,
+         "kmain: /usr/libexec/launchd loaded successfully. Entry point at 0x%p\n",
+         (void *)launchd_info.entrypoint);
+
+    klog(KLOG_INFO,
+         "kmain: Launching /usr/libexec/launchd at entry point 0x%p\n",
+         (void *)launchd_info.entrypoint);
+
+    // Jump to the entry point of launchd
+    tss_jump_to_usermode(launchd_info.entrypoint, user_pml4, hhdm_base);
 
     halt_forever();
 }

@@ -6,6 +6,7 @@ set -euo pipefail
 # Set LIMINE_DIR to use a different build directory.
 # The binary branch supplies boot files; make builds the host installer.
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd -- "$ROOT/.." && pwd)"
 LIMINE_DIR="${LIMINE_DIR:-$ROOT/build/limine}"
 LIMINE_BRANCH=v11.x-binary
 
@@ -33,4 +34,12 @@ for file in limine limine-bios.sys limine-bios-cd.bin; do
         exit 1
     fi
 done
+
+# Build and stage the initrd where limine.conf expects its module.
+"$BASH" "$ROOT/build_initrd.sh"
+ISO_BOOT_DIR="$PROJECT_ROOT/build/iso_root/boot"
+mkdir -p "$ISO_BOOT_DIR"
+cp "$ROOT/build/initrd.tar" "$ISO_BOOT_DIR/initrd.tar"
+
 printf 'Limine boot files and host installer are in %s\n' "$LIMINE_DIR"
+printf 'Initrd is staged in %s\n' "$ISO_BOOT_DIR"
