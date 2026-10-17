@@ -19,8 +19,34 @@ make all
 make qemu
 ```
 
+## Building user-space
+celesteOS relies on a user-space replicating a native Mac OS X filesystem layout.
+```
+├── Applications
+├── Library
+├── private
+│   ├── etc
+│   ├── tmp
+│   └── var
+├── System
+│   └── Library
+│       ├── CoreServices
+│       ├── Extensions
+│       ├── Frameworks
+│       └── LaunchDaemons
+├── usr
+│   ├── bin
+│   ├── lib
+│   └── libexec
+│       └── launchd
+└── Volumes
+```
+
+To build the user-space ramdisk, run `scripts/build_initrd.sh`. 
+
+All binaries **must** be x86_64 native Mac OS X binaries compiled with `clang` for `x86_64-apple-darwin`. ELF is not supported, so you cannot compile a binary for celesteOS using standard ELF toolchains.
+
+A wrapper script is provided to cross-compile binaries: `scripts/build_macho.sh <source_file> <output_file>`.
+
 ## Checklist
-- [x] Framebuffer driver (provided by Limine)
-- [x] Physical and virtual memory manager
-- [x] Core IDT and GDT functions
-- [x] Remapping the PIC and setting up Interrupt Service Routines
+Moved to [NOTES.md](NOTES.md)
