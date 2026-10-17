@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-size_t strlen(const char* str) {
+size_t strlen(const char *str) {
     size_t length = 0;
     while (str[length] != '\0') {
         ++length;
@@ -10,15 +10,15 @@ size_t strlen(const char* str) {
     return length;
 }
 
-size_t strcmp(const char* str1, const char* str2) {
+size_t strcmp(const char *str1, const char *str2) {
     while (*str1 && (*str1 == *str2)) {
         ++str1;
         ++str2;
     }
-    return *(unsigned char*)str1 - *(unsigned char*)str2;
+    return *(unsigned char *)str1 - *(unsigned char *)str2;
 }
 
-size_t strncmp(const char* str1, const char* str2, size_t num) {
+size_t strncmp(const char *str1, const char *str2, size_t num) {
     while (num && *str1 && (*str1 == *str2)) {
         ++str1;
         ++str2;
@@ -32,11 +32,11 @@ size_t strncmp(const char* str1, const char* str2, size_t num) {
     if (num == 0) {
         return 0;
     }
-    return *(unsigned char*)str1 - *(unsigned char*)str2;
+    return *(unsigned char *)str1 - *(unsigned char *)str2;
 }
 
-char* strcat(char* dest, const char* src) {
-    char* original_dest = dest;
+char *strcat(char *dest, const char *src) {
+    char *original_dest = dest;
     while (*dest != '\0') {
         ++dest;
     }
@@ -49,8 +49,8 @@ char* strcat(char* dest, const char* src) {
     return original_dest;
 }
 
-char* strcpy(char* dest, const char* src) {
-    char* original_dest = dest;
+char *strcpy(char *dest, const char *src) {
+    char *original_dest = dest;
     while (*src) {
         *dest++ = *src++;
     }
@@ -58,8 +58,8 @@ char* strcpy(char* dest, const char* src) {
     return original_dest;
 }
 
-char* strncpy(char* dest, const char* src, size_t num) {
-    char* original_dest = dest;
+char *strncpy(char *dest, const char *src, size_t num) {
+    char *original_dest = dest;
     while (num && *src) {
         *dest++ = *src++;
         --num;
@@ -71,26 +71,26 @@ char* strncpy(char* dest, const char* src, size_t num) {
     return original_dest;
 }
 
-void* memset(void* ptr, int value, size_t num) {
-    unsigned char* p = (unsigned char*)ptr;
+void *memset(void *ptr, int value, size_t num) {
+    unsigned char *p = (unsigned char *)ptr;
     while (num--) {
         *p++ = (unsigned char)value;
     }
     return ptr;
 }
 
-void* memcpy(void* dest, const void* src, size_t num) {
-    unsigned char* d = (unsigned char*)dest;
-    const unsigned char* s = (const unsigned char*)src;
+void *memcpy(void *dest, const void *src, size_t num) {
+    unsigned char *d = (unsigned char *)dest;
+    const unsigned char *s = (const unsigned char *)src;
     while (num--) {
         *d++ = *s++;
     }
     return dest;
 }
 
-void* memmove(void* dest, const void* src, size_t num) {
-    unsigned char* d = (unsigned char*)dest;
-    const unsigned char* s = (const unsigned char*)src;
+void *memmove(void *dest, const void *src, size_t num) {
+    unsigned char *d = (unsigned char *)dest;
+    const unsigned char *s = (const unsigned char *)src;
 
     if ((uintptr_t)d < (uintptr_t)s) {
         for (size_t i = 0; i < num; ++i) {
@@ -105,7 +105,7 @@ void* memmove(void* dest, const void* src, size_t num) {
     return dest;
 }
 
-void itoa(int value, char* str, int base) {
+void itoa(int value, char *str, int base) {
     int i;
     int sign;
 
@@ -137,7 +137,7 @@ void itoa(int value, char* str, int base) {
     }
 }
 
-void utoa(unsigned int value, char* str, int base) {
+void utoa(unsigned int value, char *str, int base) {
     int i = 0;
 
     do {
@@ -158,7 +158,7 @@ void utoa(unsigned int value, char* str, int base) {
     }
 }
 
-void ftoa(double value, char* str, int precision) {
+void ftoa(double value, char *str, int precision) {
     // Handle negative numbers
     if (value < 0) {
         *str++ = '-';

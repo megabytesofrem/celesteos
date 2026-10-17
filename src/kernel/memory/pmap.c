@@ -182,7 +182,8 @@ uintptr_t pmap_get_physical(page_table_t *pml4, uint64_t virt) {
     if (!pte_is_present(pml4_entry)) {
         return 0;
     }
-    page_table_t *pdpt = (page_table_t *)(uintptr_t)(pte_get_address(pml4_entry) + higher_half_base);
+    page_table_t *pdpt =
+        (page_table_t *)(uintptr_t)(pte_get_address(pml4_entry) + higher_half_base);
     page_table_entry_t *pdpt_entry = &pdpt->entries[pdpt_index];
     if (!pte_is_present(pdpt_entry)) {
         return 0;

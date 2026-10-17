@@ -8,7 +8,8 @@
 
 /* Macro to print the value of a CPU register */
 #ifndef PRINT_REGISTER
-#define PRINT_REGISTER(name) printk("    " #name "=0x%p\n", 0xFFFFFFFF, 0x0000, (void *)(uintptr_t)regs->name)
+#define PRINT_REGISTER(name)                                                                       \
+    printk("    " #name "=0x%p\n", 0xFFFFFFFF, 0x0000, (void *)(uintptr_t)regs->name)
 #endif
 
 const char *exception_messages[] = {

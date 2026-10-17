@@ -9,13 +9,13 @@
 
 static uintptr_t next_tid = 1;
 
-static uintptr_t generate_tid() { return next_tid++; }
+static uintptr_t generate_tid() {
+    return next_tid++;
+}
 
-kern_return_t thread_create(task_t* parent,
-                            uintptr_t entry_point,
-                            uintptr_t arg,
-                            thread_t** out_thread) {
-    thread_t* thread = kmalloc(sizeof(thread_t));
+kern_return_t
+thread_create(task_t *parent, uintptr_t entry_point, uintptr_t arg, thread_t **out_thread) {
+    thread_t *thread = kmalloc(sizeof(thread_t));
 
     // Initialize the thread structure
     spinlock_init(&thread->lock);
@@ -34,7 +34,7 @@ kern_return_t thread_create(task_t* parent,
 
     // Reserve space for the initial CPU context on the stack
     stack_ptr -= sizeof(cpu_context_t);
-    cpu_context_t* cpu_ctx = (cpu_context_t*)stack_ptr;
+    cpu_context_t *cpu_ctx = (cpu_context_t *)stack_ptr;
     memset(cpu_ctx, 0, sizeof(cpu_context_t));
 
     // Populate initial CPU context
@@ -56,13 +56,14 @@ kern_return_t thread_create(task_t* parent,
     return KERN_SUCCESS;
 }
 
-kern_return_t thread_destroy(thread_t* thread) {
-    if (!thread) return KERN_INVALID_ARGUMENT;
+kern_return_t thread_destroy(thread_t *thread) {
+    if (!thread)
+        return KERN_INVALID_ARGUMENT;
 
     // Remove from the parent task's thread list
     if (thread->parent_task) {
         // Traverse the thread list of the parent task to remove the current thread
-        struct thread** current = &thread->parent_task->thread_list;
+        struct thread **current = &thread->parent_task->thread_list;
         while (*current) {
             // Check if the current thread in the list is the one to be removed
             if (*current == thread) {
@@ -78,7 +79,7 @@ kern_return_t thread_destroy(thread_t* thread) {
 
     // Free the kernel stack
     if (thread->kstack_base) {
-        kfree((void*)thread->kstack_base);
+        kfree((void *)thread->kstack_base);
     }
 
     // Free the thread structure
@@ -86,8 +87,9 @@ kern_return_t thread_destroy(thread_t* thread) {
     return KERN_SUCCESS;
 }
 
-kern_return_t thread_blockon(thread_t* thread, ipc_port_t* port) {
-    if (!thread) return KERN_INVALID_ARGUMENT;
+kern_return_t thread_blockon(thread_t *thread, ipc_port_t *port) {
+    if (!thread)
+        return KERN_INVALID_ARGUMENT;
 
     // Lock the thread before modifying its state
     spinlock_acquire(&thread->lock);
@@ -98,8 +100,9 @@ kern_return_t thread_blockon(thread_t* thread, ipc_port_t* port) {
     return KERN_SUCCESS;
 }
 
-kern_return_t thread_unblock(thread_t* thread) {
-    if (!thread) return KERN_INVALID_ARGUMENT;
+kern_return_t thread_unblock(thread_t *thread) {
+    if (!thread)
+        return KERN_INVALID_ARGUMENT;
 
     // Lock the thread before modifying its state
     spinlock_acquire(&thread->lock);

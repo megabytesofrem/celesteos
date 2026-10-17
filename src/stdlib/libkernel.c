@@ -1,15 +1,12 @@
 #include "libkernel.h"
 
-#include <kernel/ports.h>
 #include <drivers/framebuffer.h>
+#include <kernel/ports.h>
 
-#include <stdarg.h>
 #include "string.h"
+#include <stdarg.h>
 
-void _kprintc(char c,
-              uint32_t fg_color,
-              uint32_t bg_color,
-              bool bold) {
+void _kprintc(char c, uint32_t fg_color, uint32_t bg_color, bool bold) {
     outb(0xE9, c);
 
     if (framebuffer_is_initialized(&global_framebuffer)) {
@@ -18,16 +15,13 @@ void _kprintc(char c,
     }
 }
 
-void kputs(const char* str, uint32_t fg_color, uint32_t bg_color, bool bold) {
+void kputs(const char *str, uint32_t fg_color, uint32_t bg_color, bool bold) {
     while (*str) {
         _kprintc(*str++, fg_color, bg_color, bold);
     }
 }
 
-static void vkprint(const char* format,
-                    uint32_t fg_color,
-                    uint32_t bg_color,
-                    va_list args) {
+static void vkprint(const char *format, uint32_t fg_color, uint32_t bg_color, va_list args) {
     int i = 0;
 
     while (format[i]) {
@@ -39,7 +33,7 @@ static void vkprint(const char* format,
                 _kprintc(c, fg_color, bg_color, false);
             } else if (format[i] == 's') {
                 // %s: format a string
-                const char* s = va_arg(args, const char*);
+                const char *s = va_arg(args, const char *);
                 kputs(s, fg_color, bg_color, false);
             } else if (format[i] == 'd') {
                 // %d: format an integer as a decimal number
@@ -51,7 +45,7 @@ static void vkprint(const char* format,
                 // %f: format a floating-point number
                 double f = va_arg(args, double);
                 char buffer[32];
-                ftoa(f, buffer, 6);  // Assuming ftoa is implemented
+                ftoa(f, buffer, 6); // Assuming ftoa is implemented
                 kputs(buffer, fg_color, bg_color, false);
             } else if (format[i] == 'x') {
                 // %x: format an integer as a hexadecimal number
@@ -61,11 +55,11 @@ static void vkprint(const char* format,
                 kputs(buffer, fg_color, bg_color, false);
             } else if (format[i] == 'p') {
                 // %p: format a pointer as a hexadecimal address
-                uintptr_t address = (uintptr_t)(va_arg(args, void*));
-                for (int shift = sizeof(uintptr_t) * 8 - 4; shift >= 0;
-                     shift -= 4) {
-                    _kprintc("0123456789abcdef"[(address >> shift) & 0xF],
-                             fg_color, bg_color, false);
+                uintptr_t address = (uintptr_t)(va_arg(args, void *));
+                for (int shift = sizeof(uintptr_t) * 8 - 4; shift >= 0; shift -= 4) {
+                    _kprintc(
+                        "0123456789abcdef"[(address >> shift) & 0xF], fg_color, bg_color, false
+                    );
                 }
             } else if (format[i] == 'u') {
                 // %u: format an unsigned integer as a decimal number
@@ -84,30 +78,30 @@ static void vkprint(const char* format,
     }
 }
 
-void printk(const char* format, uint32_t fg_color, uint32_t bg_color, ...) {
+void printk(const char *format, uint32_t fg_color, uint32_t bg_color, ...) {
     va_list args;
     va_start(args, bg_color);
     vkprint(format, fg_color, bg_color, args);
     va_end(args);
 }
 
-void klog(enum log_level level, const char* format, ...) {
+void klog(enum log_level level, const char *format, ...) {
     va_list args;
     va_start(args, format);
 
     switch (level) {
-        case KLOG_INFO:
-            kputs("[INFO] ", 0xa3a3a3, 0x00000000, true);
-            break;
-        case KLOG_WARN:
-            kputs("[WARN] ", 0xfff952, 0x00000000, true);
-            break;
-        case KLOG_ERROR:
-            kputs("[ERROR] ", 0xe33b3b, 0x00000000, true);
-            break;
-        default:
-            kputs("[UNKNOWN] ", 0xb5b5b3, 0x00000000, true);  // Unknown
-            break;
+    case KLOG_INFO:
+        kputs("[INFO] ", 0xa3a3a3, 0x00000000, true);
+        break;
+    case KLOG_WARN:
+        kputs("[WARN] ", 0xfff952, 0x00000000, true);
+        break;
+    case KLOG_ERROR:
+        kputs("[ERROR] ", 0xe33b3b, 0x00000000, true);
+        break;
+    default:
+        kputs("[UNKNOWN] ", 0xb5b5b3, 0x00000000, true); // Unknown
+        break;
     }
 
     framebuffer_set_bold(&global_framebuffer, false);

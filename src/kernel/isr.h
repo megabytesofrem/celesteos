@@ -7,7 +7,8 @@
 /*
  * CPU register state saved during an interrupt.
  */
-struct cpu_registers {
+struct cpu_registers
+{
     uint64_t cr2;
     uint64_t r15;
     uint64_t r14;
@@ -29,10 +30,14 @@ struct cpu_registers {
     uint64_t rip, cs, rflags, rsp, ss;
 };
 
-_Static_assert(offsetof(struct cpu_registers, int_no) == 128,
-               "Interrupt number must follow CR2 and 15 saved registers");
-_Static_assert(sizeof(struct cpu_registers) == 184,
-               "Interrupt frame must match the assembly stack layout");
+_Static_assert(
+    offsetof(struct cpu_registers, int_no) == 128,
+    "Interrupt number must follow CR2 and 15 saved registers"
+);
+_Static_assert(
+    sizeof(struct cpu_registers) == 184,
+    "Interrupt frame must match the assembly stack layout"
+);
 
 /**
  * Install the interrupt service routines (ISRs) for handling CPU exceptions 
@@ -43,11 +48,11 @@ void isr_install(void);
 /**
  * Handle an interrupt by processing the stored CPU register state.
  */
-void isr_handler(struct cpu_registers* regs);
+void isr_handler(struct cpu_registers *regs);
 
 /**
  * Handle a hardware interrupt (IRQ) by processing the stored CPU register state.
  */
-void irq_handler(struct cpu_registers* regs);
+void irq_handler(struct cpu_registers *regs);
 
-#endif  // CELESTEOS_ISR_H
+#endif // CELESTEOS_ISR_H

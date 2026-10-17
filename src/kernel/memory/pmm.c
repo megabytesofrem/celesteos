@@ -59,8 +59,8 @@ void pmm_initialize(struct limine_memmap_response *memmap, uint64_t hhdm_base_of
 
     for (uint64_t i = 0; i < memmap->entry_count; ++i) {
         struct limine_memmap_entry *entry = memmap->entries[i];
-        if (entry != NULL && entry->type == LIMINE_MEMMAP_USABLE && entry->length >= aligned_bitmap_size &&
-            entry->base <= UINT64_MAX - hhdm_base_offset) {
+        if (entry != NULL && entry->type == LIMINE_MEMMAP_USABLE &&
+            entry->length >= aligned_bitmap_size && entry->base <= UINT64_MAX - hhdm_base_offset) {
             new_bitmap = (uint8_t *)(uintptr_t)(entry->base + hhdm_base_offset);
             break;
         }
@@ -96,7 +96,8 @@ void pmm_initialize(struct limine_memmap_response *memmap, uint64_t hhdm_base_of
     }
 
     uint64_t bitmap_phys = (uint64_t)(uintptr_t)bitmap - higher_half_base;
-    for (uint64_t addr = bitmap_phys; addr < bitmap_phys + aligned_bitmap_size; addr += PMM_PAGE_SIZE) {
+    for (uint64_t addr = bitmap_phys; addr < bitmap_phys + aligned_bitmap_size;
+         addr += PMM_PAGE_SIZE) {
         size_t page = (size_t)(addr / PMM_PAGE_SIZE);
         if (page < total_pages && !test_bit(page)) {
             set_bit(page);

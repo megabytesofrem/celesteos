@@ -13,4 +13,4 @@ typedef enum {
     KERN_ABORTED = 8
 } kern_return_t;
 
-#endif  // CELESTEOS_MACH_KERN_RETURN_H
+#endif // CELESTEOS_MACH_KERN_RETURN_H

@@ -1,9 +1,11 @@
 #include "port.h"
 
-kern_return_t ipc_port_allocate(mach_port_space_t *space,
-                                uint32_t flags,
-                                mach_port_name_t *out_name,
-                                ipc_port_t **port) {
+kern_return_t ipc_port_allocate(
+    mach_port_space_t *space,
+    uint32_t flags,
+    mach_port_name_t *out_name,
+    ipc_port_t **port
+) {
     // STUB: Implement IPC port allocation logic here.
     STUB("ipc_port_allocate");
 }

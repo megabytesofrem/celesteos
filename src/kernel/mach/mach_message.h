@@ -58,13 +58,13 @@
 #define MACH_MSGH_BITS_LOCAL_MASK  0x0000ff00
 #define MACH_MSGH_BITS_COMPLEX     0x80000000
 
-#define MACH_MSGH_BITS(remote, local) \
-    ((remote) | ((local) << 8))
+#define MACH_MSGH_BITS(remote, local) ((remote) | ((local) << 8))
 
 /* Return Codes */
 #define MACH_MSG_SUCCESS 0x00000000
 
-typedef struct {
+typedef struct
+{
     uint32_t msgh_bits;                /* flags */
     uint32_t msgh_size;                /* total size of the message */
     mach_port_name_t msgh_remote_port; /* destination port right */
@@ -124,13 +124,14 @@ typedef uint32_t mach_msg_timeout_t;
  * @return The result of the send/receive operation.
  */
 mach_msg_return_t mach_msg(
-    mach_msg_header_t* msg,
+    mach_msg_header_t *msg,
     mach_msg_option_t option,
     mach_msg_size_t send_size,
     mach_msg_size_t rcv_size,
     mach_port_name_t rcv_name,
     mach_msg_timeout_t timeout,
-    mach_port_name_t notify);
+    mach_port_name_t notify
+);
 
 /**
  * Send a Mach message.
@@ -145,10 +146,11 @@ mach_msg_return_t mach_msg(
  * @return The result of the send operation.
  */
 mach_msg_return_t mach_msg_send(
-    mach_msg_header_t* msg,
+    mach_msg_header_t *msg,
     mach_msg_option_t option,
     mach_msg_size_t send_size,
-    mach_msg_timeout_t timeout);
+    mach_msg_timeout_t timeout
+);
 
 /**
  * Receive a Mach message.
@@ -164,10 +166,11 @@ mach_msg_return_t mach_msg_send(
  * @return The result of the receive operation.
  */
 mach_msg_return_t mach_msg_receive(
-    mach_msg_header_t* msg,
+    mach_msg_header_t *msg,
     mach_msg_option_t option,
     mach_msg_size_t rcv_size,
     mach_port_name_t rcv_name,
-    mach_msg_timeout_t timeout);
+    mach_msg_timeout_t timeout
+);
 
-#endif  // CELESTEOS_MACH_MESSAGE_H
+#endif // CELESTEOS_MACH_MESSAGE_H

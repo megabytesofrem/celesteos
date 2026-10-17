@@ -13,7 +13,8 @@
  * On 64 bit, this stores kernel stack pointers for different privilege levels (rings) and
  * interrupt stack table pointers.
  */
-typedef struct __attribute__((packed)) tss_t {
+typedef struct __attribute__((packed)) tss_t
+{
     uint32_t reserved0;
     uint64_t rsp0; /* kernel stack pointer */
     uint64_t rsp1; /* ring 1 stack pointer? */
@@ -30,8 +31,7 @@ extern tss_t kernel_tss;
 _Static_assert(sizeof(tss_t) == 104, "64-bit TSS must be 104 bytes");
 _Static_assert(offsetof(tss_t, rsp0) == 4, "TSS RSP0 must be at offset 4");
 _Static_assert(offsetof(tss_t, ist) == 36, "TSS IST must begin at offset 36");
-_Static_assert(offsetof(tss_t, io_map_base) == 102,
-               "TSS I/O map base must be at offset 102");
+_Static_assert(offsetof(tss_t, io_map_base) == 102, "TSS I/O map base must be at offset 102");
 
 /**
  * Initialize the Task State Segment (TSS) for the kernel, and setup the
@@ -50,7 +50,7 @@ void tss_prepare_usermode(uintptr_t kernel_stack);
  * This function allocates and maps the user stack, sets the kernel stack pointer
  * in the TSS, and then switches to user mode.
  */
-bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t* root, uint64_t hhdm_base);
+bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t *root, uint64_t hhdm_base);
 
 /**
  * Switch from kernel mode to user mode (ring 3) using the TSS and iretq.
@@ -62,4 +62,4 @@ bool tss_jump_to_usermode(uintptr_t entry_point, page_table_t* root, uint64_t hh
  */
 extern void tss_switch_ring3(uintptr_t entry_point, uintptr_t user_stack);
 
-#endif  // CELESTEOS_TSS_H
+#endif // CELESTEOS_TSS_H

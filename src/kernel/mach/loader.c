@@ -59,8 +59,13 @@ static uint64_t macho_prot_to_page_flags(uint32_t prot) {
     return flags;
 }
 
-kern_return_t
-map_segment(page_table_t *root, uint64_t vmaddr, uint64_t vmsize, uint32_t initprot, uint64_t hhdm_base) {
+kern_return_t map_segment(
+    page_table_t *root,
+    uint64_t vmaddr,
+    uint64_t vmsize,
+    uint32_t initprot,
+    uint64_t hhdm_base
+) {
     if (vmsize == 0)
         return KERN_SUCCESS;
 
@@ -75,7 +80,11 @@ map_segment(page_table_t *root, uint64_t vmaddr, uint64_t vmsize, uint32_t initp
     // Allocate backing physical pages
     void *phys_pages;
     if (pmm_alloc_pages(page_count, &phys_pages) != 0) {
-        klog(KLOG_ERROR, "macho-loader: Failed physical allocation for segment at 0x%p\n", (void *)vmaddr);
+        klog(
+            KLOG_ERROR,
+            "macho-loader: Failed physical allocation for segment at 0x%p\n",
+            (void *)vmaddr
+        );
         return KERN_FAILURE;
     }
 
@@ -88,21 +97,29 @@ map_segment(page_table_t *root, uint64_t vmaddr, uint64_t vmsize, uint32_t initp
     uint64_t pmap_flags = macho_prot_to_page_flags(initprot);
 
     for (size_t i = 0; i < page_count; ++i) {
-        if (pmap_map(root, vm_start + (i * PMAP_PAGE_SIZE), phys_addr + (i * PMAP_PAGE_SIZE), pmap_flags) !=
-            0) {
-            klog(KLOG_ERROR, "macho-loader: Failed to map page %zu for segment at 0x%p\n", i, (void *)vmaddr);
+        if (pmap_map(
+                root, vm_start + (i * PMAP_PAGE_SIZE), phys_addr + (i * PMAP_PAGE_SIZE), pmap_flags
+            ) != 0) {
+            klog(
+                KLOG_ERROR,
+                "macho-loader: Failed to map page %zu for segment at 0x%p\n",
+                i,
+                (void *)vmaddr
+            );
             return KERN_FAILURE;
         }
     }
     return KERN_SUCCESS;
 }
 
-kern_return_t copy_segment_payload(page_table_t *root,
-                                   uint64_t vmaddr,
-                                   const uint8_t *payload,
-                                   uint64_t fileoff,
-                                   uint64_t filesz,
-                                   uint64_t hhdm_base) {
+kern_return_t copy_segment_payload(
+    page_table_t *root,
+    uint64_t vmaddr,
+    const uint8_t *payload,
+    uint64_t fileoff,
+    uint64_t filesz,
+    uint64_t hhdm_base
+) {
     if (filesz == 0)
         return KERN_SUCCESS;
 
@@ -112,9 +129,11 @@ kern_return_t copy_segment_payload(page_table_t *root,
         uintptr_t phys_addr = pmap_get_physical(root, curr_user_addr);
 
         if (!phys_addr) {
-            klog(KLOG_ERROR,
-                 "macho-loader: Failed to resolve physical frame for 0x%p\n",
-                 (void *)curr_user_addr);
+            klog(
+                KLOG_ERROR,
+                "macho-loader: Failed to resolve physical frame for 0x%p\n",
+                (void *)curr_user_addr
+            );
             return KERN_FAILURE;
         }
 
@@ -125,7 +144,9 @@ kern_return_t copy_segment_payload(page_table_t *root,
         }
 
         // Copy directly into physical frame using HHDM
-        memcpy((void *)(phys_addr + hhdm_base + page_offset), payload + fileoff + copied, chunk_size);
+        memcpy(
+            (void *)(phys_addr + hhdm_base + page_offset), payload + fileoff + copied, chunk_size
+        );
         copied += chunk_size;
     }
     return KERN_SUCCESS;
@@ -161,8 +182,12 @@ uint64_t user_stack_allocate(page_table_t *root, uint64_t hhdm_base) {
     return stack_base + (page_count * PMAP_PAGE_SIZE);
 }
 
-kern_return_t
-macho_load(const uint8_t *data, page_table_t *root, uint64_t hhdm_base, struct macho_info *out_info) {
+kern_return_t macho_load(
+    const uint8_t *data,
+    page_table_t *root,
+    uint64_t hhdm_base,
+    struct macho_info *out_info
+) {
     *out_info = (struct macho_info){0};
     const mach_header_64 *header = (const mach_header_64 *)(data);
 
@@ -187,24 +212,28 @@ macho_load(const uint8_t *data, page_table_t *root, uint64_t hhdm_base, struct m
                 break;
             }
 
-            klog(KLOG_INFO,
-                 "macho-loader: Mapping segment %s (vmaddr: 0x%p, size: 0x%p)\n",
-                 seg->segname,
-                 (void *)seg->vmaddr,
-                 (void *)seg->vmsize);
+            klog(
+                KLOG_INFO,
+                "macho-loader: Mapping segment %s (vmaddr: 0x%p, size: 0x%p)\n",
+                seg->segname,
+                (void *)seg->vmaddr,
+                (void *)seg->vmsize
+            );
 
             if (strcmp(seg->segname, "__TEXT") == 0) {
                 text_vmaddr = seg->vmaddr;
             }
 
             // 1. Allocate physical pages & map into PML4
-            if (map_segment(root, seg->vmaddr, seg->vmsize, seg->initprot, hhdm_base) != KERN_SUCCESS) {
+            if (map_segment(root, seg->vmaddr, seg->vmsize, seg->initprot, hhdm_base) !=
+                KERN_SUCCESS) {
                 return KERN_FAILURE;
             }
 
             // 2. Copy binary payload into mapped physical memory
-            if (copy_segment_payload(root, seg->vmaddr, data, seg->fileoff, seg->filesize, hhdm_base) !=
-                KERN_SUCCESS) {
+            if (copy_segment_payload(
+                    root, seg->vmaddr, data, seg->fileoff, seg->filesize, hhdm_base
+                ) != KERN_SUCCESS) {
                 return KERN_FAILURE;
             }
 
@@ -224,7 +253,11 @@ macho_load(const uint8_t *data, page_table_t *root, uint64_t hhdm_base, struct m
 
     // Calculate final entry point virtual address
     out_info->entrypoint = text_vmaddr + entry_offset;
-    klog(KLOG_INFO, "macho-loader: Resolved binary entrypoint at 0x%p\n", (void *)out_info->entrypoint);
+    klog(
+        KLOG_INFO,
+        "macho-loader: Resolved binary entrypoint at 0x%p\n",
+        (void *)out_info->entrypoint
+    );
 
     // 3. Allocate Ring 3 user stack
     out_info->stack_pointer = user_stack_allocate(root, hhdm_base);

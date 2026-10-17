@@ -117,17 +117,28 @@ typedef struct __attribute__((packed)) macho_info
 
 const char *macho_describe_lc(uint32_t lc);
 
-kern_return_t
-map_segment(page_table_t *root, uint64_t vmaddr, uint64_t vmsize, uint32_t initprot, uint64_t hhdm_base);
+kern_return_t map_segment(
+    page_table_t *root,
+    uint64_t vmaddr,
+    uint64_t vmsize,
+    uint32_t initprot,
+    uint64_t hhdm_base
+);
 
-kern_return_t copy_segment_payload(page_table_t *root,
-                                   uint64_t vmaddr,
-                                   const uint8_t *payload,
-                                   uint64_t fileoff,
-                                   uint64_t filesz,
-                                   uint64_t hhdm_base);
+kern_return_t copy_segment_payload(
+    page_table_t *root,
+    uint64_t vmaddr,
+    const uint8_t *payload,
+    uint64_t fileoff,
+    uint64_t filesz,
+    uint64_t hhdm_base
+);
 
-kern_return_t
-macho_load(const uint8_t *data, page_table_t *root, uint64_t hhdm_base, struct macho_info *out_info);
+kern_return_t macho_load(
+    const uint8_t *data,
+    page_table_t *root,
+    uint64_t hhdm_base,
+    struct macho_info *out_info
+);
 
 #endif // CELESTEOS_MACHO_H

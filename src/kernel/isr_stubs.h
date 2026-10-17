@@ -35,4 +35,4 @@ extern void isr29();
 extern void isr30();
 extern void isr31();
 
-#endif  // CELESTEOS_ISR_STUBS_H
+#endif // CELESTEOS_ISR_STUBS_H

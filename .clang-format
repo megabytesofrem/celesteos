@@ -24,7 +24,6 @@ BracedInitializerIndentWidth: 4     # Added: Matches your IndentWidth inside the
 BraceWrapping:
   AfterStruct: true
   AfterClass: true
-  SplitEmptyRecords: true
 
 # Clean spacing & clean macro alignment
 UseTab: Never
@@ -38,4 +37,3 @@ AlignConsecutiveMacros: true
 
 SortIncludes: true
 IncludeBlocks: Preserve
----
