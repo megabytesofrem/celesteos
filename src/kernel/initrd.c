@@ -1,6 +1,7 @@
 #include "initrd.h"
 
 #include <kernel/memory/kmalloc.h>
+#include <libkernel.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -460,4 +461,31 @@ kern_return_t initrd_read_file(struct initrd_filesystem *fs, const char *path, v
         }
     }
     return KERN_NOT_FOUND;
+}
+
+static void initrd_print_tree_prefix(const struct initrd_tree_prefix *prefix) {
+    if (prefix == NULL) {
+        return;
+    }
+    initrd_print_tree_prefix(prefix->parent);
+    kprintf("%s", prefix->is_last ? "    " : "|   ");
+}
+
+void initrd_print_tree(const initrd_directory_t *directory,
+                       const struct initrd_tree_prefix *prefix) {
+    for (size_t i = 0; i < directory->subdirectory_count; i++) {
+        const initrd_directory_t *child = directory->subdirectories[i];
+        bool is_last = i + 1 == directory->subdirectory_count && directory->file_count == 0;
+        initrd_print_tree_prefix(prefix);
+        kprintf("%s%s/\n", is_last ? "-- " : "|-- ", child->name);
+
+        struct initrd_tree_prefix child_prefix = { .parent = prefix, .is_last = is_last };
+        initrd_print_tree(child, &child_prefix);
+    }
+
+    for (size_t i = 0; i < directory->file_count; i++) {
+        bool is_last = i + 1 == directory->file_count;
+        initrd_print_tree_prefix(prefix);
+        kprintf("%s%s\n", is_last ? "-- " : "|-- ", directory->files[i]->name);
+    }
 }

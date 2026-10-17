@@ -1,6 +1,7 @@
 #ifndef CELESTEOS_INITRD_H
 #define CELESTEOS_INITRD_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -63,6 +64,11 @@ typedef struct initrd_filesystem {
     struct initrd_directory *root;
 } initrd_filesystem_t;
 
+struct initrd_tree_prefix {
+    const struct initrd_tree_prefix *parent;
+    bool is_last;
+};
+
 /**
  * Initialize a initial ramdisk filesystem with the given root directory.
  */
@@ -100,5 +106,11 @@ kern_return_t initrd_delete_file(struct initrd_filesystem *fs, const char *path)
  */
 kern_return_t initrd_read_file(struct initrd_filesystem *fs, const char *path, void **data,
                                size_t *size);
+
+/**
+ * Print a filesystem tree starting from the given directory.
+ */
+void initrd_print_tree(const initrd_directory_t *directory,
+                       const struct initrd_tree_prefix *prefix);
 
 #endif // CELESTEOS_INITRD_H

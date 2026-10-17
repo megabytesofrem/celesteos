@@ -149,6 +149,10 @@ void load_initrd(uint64_t hhdm_base, page_table_t *user_pml4, struct macho_info 
         halt_forever();
     }
 
+    klog(KLOG_INFO, "kmain: initrd filesystem tree:\n");
+    kprintf("\n");
+    initrd_print_tree(initrd_fs.root, NULL);
+
     initrd_file_t launchd_file;
     if (initrd_read_file(&initrd_fs, "/usr/libexec/launchd", &launchd_file.data,
                          &launchd_file.size) != KERN_SUCCESS) {
