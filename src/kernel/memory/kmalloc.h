@@ -8,9 +8,9 @@
 #include "vm_map.h"
 
 typedef struct BlockHeader {
-	size_t size;
-	bool is_free;
-	struct BlockHeader *next;
+    size_t size;
+    bool is_free;
+    struct BlockHeader *next;
 } BlockHeader;
 
 /**

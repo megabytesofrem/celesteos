@@ -10,9 +10,9 @@
 #include <mach/port_space.h>
 
 typedef enum {
-	TASK_ACTIVE,
-	TASK_SUSPENDED,
-	TASK_TERMINATED
+    TASK_ACTIVE,
+    TASK_SUSPENDED,
+    TASK_TERMINATED
 } task_state_t;
 
 /* Forward declarations for kernel task-related structures */
@@ -25,24 +25,24 @@ typedef struct thread thread_t;
  * space, thread group, and capability space within the kernel.
  */
 typedef struct task {
-	spinlock_t lock;    /* lock for synchronizing access to the task structure */
-	uint32_t task_id;   /* unique identifier for the task */
-	task_state_t state; /* current execution state of the task */
+    spinlock_t lock;    /* lock for synchronizing access to the task structure */
+    uint32_t task_id;   /* unique identifier for the task */
+    task_state_t state; /* current execution state of the task */
 
-	/* Memory management */
-	vm_map_t *vm_map; /* pointer to the task's virtual memory map */
+    /* Memory management */
+    vm_map_t *vm_map; /* pointer to the task's virtual memory map */
 
-	/* IPC state */
-	mach_port_space_t *itk_space; /* pointer to the task's port space */
-	mach_port_name_t itk_self;    /* the name of the task's own port */
+    /* IPC state */
+    mach_port_space_t *itk_space; /* pointer to the task's port space */
+    mach_port_name_t itk_self;    /* the name of the task's own port */
 
-	/* Threads */
-	thread_t *thread_list; /* pointer to the list of threads belonging to the task */
-	uint32_t thread_count; /* number of threads belonging to the task */
+    /* Threads */
+    thread_t *thread_list; /* pointer to the list of threads belonging to the task */
+    uint32_t thread_count; /* number of threads belonging to the task */
 
-	/* BSD/POSIX compatibility */
-	uint32_t uid; /* stub: user ID for POSIX/BSD */
-	uint32_t gid; /* stub: group ID for POSIX/BSD */
+    /* BSD/POSIX compatibility */
+    uint32_t uid; /* stub: user ID for POSIX/BSD */
+    uint32_t gid; /* stub: group ID for POSIX/BSD */
 } task_t;
 
 /**

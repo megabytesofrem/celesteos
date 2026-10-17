@@ -72,8 +72,7 @@ kern_return_t initrd_init_fs(struct initrd_filesystem *fs, struct initrd_directo
 /**
  * Load a tar archive into the initial ramdisk filesystem.
  */
-kern_return_t initrd_load_tar(struct initrd_filesystem *fs,
-                              const initrd_tar_archive_t *archive);
+kern_return_t initrd_load_tar(struct initrd_filesystem *fs, const initrd_tar_archive_t *archive);
 
 /**
  * Destroy an initial ramdisk filesystem, freeing its resources.

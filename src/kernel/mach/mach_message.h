@@ -64,11 +64,11 @@
 #define MACH_MSG_SUCCESS 0x00000000
 
 typedef struct {
-	uint32_t msgh_bits;                /* flags */
-	uint32_t msgh_size;                /* total size of the message */
-	mach_port_name_t msgh_remote_port; /* destination port right */
-	mach_port_name_t msgh_local_port;  /* reply port right */
-	uint32_t msgh_id;                  /* message identifier */
+    uint32_t msgh_bits;                /* flags */
+    uint32_t msgh_size;                /* total size of the message */
+    mach_port_name_t msgh_remote_port; /* destination port right */
+    mach_port_name_t msgh_local_port;  /* reply port right */
+    uint32_t msgh_id;                  /* message identifier */
 } mach_msg_header_t;
 
 typedef uint32_t mach_msg_type_name_t;

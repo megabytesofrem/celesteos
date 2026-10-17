@@ -20,21 +20,21 @@ typedef uintptr_t vm_offset_t;
 #define VM_PROT_ALL (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXEC) /* ALL permissions */
 
 typedef struct vm_map_entry {
-	struct vm_map_entry *next;
-	struct vm_map_entry *prev;
+    struct vm_map_entry *next;
+    struct vm_map_entry *prev;
 
-	vm_offset_t start; /* start address of the memory region */
-	vm_offset_t end;   /* end address of the memory region */
-	vm_prot_t prot;    /* protection flags for the memory region */
+    vm_offset_t start; /* start address of the memory region */
+    vm_offset_t end;   /* end address of the memory region */
+    vm_prot_t prot;    /* protection flags for the memory region */
 } vm_map_entry_t;
 
 typedef struct vm_map {
-	spinlock_t lock;          /* spinlock to protect the virtual memory map */
-	page_table_t *page_table; /* pointer to the page table for this virtual memory map */
+    spinlock_t lock;          /* spinlock to protect the virtual memory map */
+    page_table_t *page_table; /* pointer to the page table for this virtual memory map */
 
-	vm_map_entry_t *entries; /* pointer to the list of virtual memory map entries */
-	size_t entry_count;      /* number of entries in the virtual memory map */
-	size_t total_size;       /* total size of all memory regions in the virtual memory map */
+    vm_map_entry_t *entries; /* pointer to the list of virtual memory map entries */
+    size_t entry_count;      /* number of entries in the virtual memory map */
+    size_t total_size;       /* total size of all memory regions in the virtual memory map */
 } vm_map_t;
 
 /* Global pointer to the higher-half kernel address space map */

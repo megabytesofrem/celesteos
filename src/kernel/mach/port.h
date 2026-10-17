@@ -13,28 +13,28 @@ typedef struct thread thread_t;
 typedef struct mach_port_space mach_port_space_t;
 
 typedef struct mach_kmsg {
-	struct mach_kmsg *next;
-	struct mach_kmsg *prev;
-	struct mach_msg_header *header; /* Mach message header */
-	uint8_t data[];                 /* the message data */
+    struct mach_kmsg *next;
+    struct mach_kmsg *prev;
+    struct mach_msg_header *header; /* Mach message header */
+    uint8_t data[];                 /* the message data */
 } mach_kmsg_t;
 
 /**
  * A Mach IPC port.
  */
 typedef struct ipc_port {
-	spinlock_t lock;
-	uint32_t ref_count; /* reference count for the port */
+    spinlock_t lock;
+    uint32_t ref_count; /* reference count for the port */
 
-	bool is_locked; /* indicates if the port is currently locked */
-	bool is_alive;  /* indicates if the port is currently alive */
+    bool is_locked; /* indicates if the port is currently locked */
+    bool is_alive;  /* indicates if the port is currently alive */
 
-	/* Message queue */
-	mach_kmsg_t *msg_queue_head; /* head of the queue */
-	mach_kmsg_t *msg_queue_tail; /* tail of the queue */
-	uint32_t msg_count;          /* number of messages in the queue */
+    /* Message queue */
+    mach_kmsg_t *msg_queue_head; /* head of the queue */
+    mach_kmsg_t *msg_queue_tail; /* tail of the queue */
+    uint32_t msg_count;          /* number of messages in the queue */
 
-	thread_t *blocked_thread; /* thread blocking on the port */
+    thread_t *blocked_thread; /* thread blocking on the port */
 } ipc_port_t;
 
 /**

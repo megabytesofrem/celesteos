@@ -22,25 +22,25 @@ typedef struct ipc_port ipc_port_t;
  * A single entry in the Mach port table.
  */
 typedef struct mach_port_entry {
-	mach_port_name_t name;   /* the name of the port */
-	mach_port_right_t right; /* the associated port right (e.g., send, receive) */
-	ipc_port_t *port;
+    mach_port_name_t name;   /* the name of the port */
+    mach_port_right_t right; /* the associated port right (e.g., send, receive) */
+    ipc_port_t *port;
 } mach_port_entry_t;
 
 /**
  * The Mach port table, which holds all port entries.
  */
 typedef struct mach_port_table {
-	mach_port_entry_t *entries;
-	uint32_t count;
+    mach_port_entry_t *entries;
+    uint32_t count;
 } mach_port_table_t;
 
 /**
  * The Mach port space, which contains the port table and a lock.
  */
 typedef struct mach_port_space {
-	spinlock_t lock;
-	mach_port_table_t table;
+    spinlock_t lock;
+    mach_port_table_t table;
 } mach_port_space_t;
 
 /**

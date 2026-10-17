@@ -14,15 +14,15 @@
  * interrupt stack table pointers.
  */
 typedef struct __attribute__((packed)) tss_t {
-	uint32_t reserved0;
-	uint64_t rsp0; /* kernel stack pointer */
-	uint64_t rsp1; /* ring 1 stack pointer? */
-	uint64_t rsp2; /* ring 2 stack pointer? */
-	uint64_t reserved1;
-	uint64_t ist[7]; /* interrupt stack table pointers */
-	uint64_t reserved2;
-	uint16_t reserved3;
-	uint16_t io_map_base;
+    uint32_t reserved0;
+    uint64_t rsp0; /* kernel stack pointer */
+    uint64_t rsp1; /* ring 1 stack pointer? */
+    uint64_t rsp2; /* ring 2 stack pointer? */
+    uint64_t reserved1;
+    uint64_t ist[7]; /* interrupt stack table pointers */
+    uint64_t reserved2;
+    uint16_t reserved3;
+    uint16_t io_map_base;
 } tss_t;
 
 extern tss_t kernel_tss;

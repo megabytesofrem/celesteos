@@ -8,16 +8,16 @@
 #include <stdint.h>
 
 struct framebuffer_state {
-	struct limine_framebuffer *fb;
+    struct limine_framebuffer *fb;
 
-	bool bold;
-	uint32_t *pixel_data;
+    bool bold;
+    uint32_t *pixel_data;
 
-	size_t width;
-	size_t height;
-	size_t pitch_pixels;
-	size_t cursor_x;
-	size_t cursor_y;
+    size_t width;
+    size_t height;
+    size_t pitch_pixels;
+    size_t cursor_x;
+    size_t cursor_y;
 };
 
 extern struct framebuffer_state global_framebuffer;
