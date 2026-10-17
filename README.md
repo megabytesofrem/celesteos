@@ -1,7 +1,11 @@
 <img src="./resources/readme_logo.png">
 <hr>
 
-Hobby OS based around the Mach microkernel, aiming for binary compatibility with macOS.
+An open source operating system aiming for binary compatibility with Mac OS X 10.6 Snow Leopard.
+
+## What Mac OSX version is supported?
+celesteOS aims for binary compatibility with Mac OS X 10.6 Snow Leopard because modern
+macOS is a moving target with frequent changes, and complex security mechanisms.
 
 ## Building
 CelesteOS depends on a cross compiler for `x86_64-elf` and `limine`. Both can built by running `./scripts/build_limine.sh` and

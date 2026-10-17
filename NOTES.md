@@ -9,9 +9,36 @@
 
 ## Useful Links
 - **Apple official kernel documentation**: https://developer.apple.com/documentation/kernel/
-- **Apple XNU source code**: https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/
+- **Apple XNU source code (Snow Leopard)**: https://github.com/apple-oss-distributions/xnu/tree/rel/xnu-1504
 - **CMU Mach 3.0 kernel**: https://github.com/Prajna/mach/tree/master/kernel/mach
 - **Darling Project**: https://github.com/darlinghq/darling
+
+## Initrd Notes
+The kernel mounts an initramfs (initrd) at boot which replicates a native Mac OS X filesystem structure.
+```
+├── Applications
+├── Library
+├── private
+│   ├── etc
+│   ├── tmp
+│   └── var
+├── System
+│   └── Library
+│       ├── CoreServices
+│       ├── Extensions
+│       ├── Frameworks
+│       └── LaunchDaemons
+├── usr
+│   ├── bin
+│   ├── lib
+│   └── libexec
+│       ├── launchd
+│       └── launchd.c
+└── Volumes
+```
+
+`launchd` is PID 1, and is the first user-space process started by the kernel, responsible for launching and managing other system services and daemons.
+
 
 ## Code Hygiene
 - `vmm.h` was renamed to `pmap.h` to mirror Mach more accurately, as it was a weird acronym because
