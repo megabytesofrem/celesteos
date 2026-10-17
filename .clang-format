@@ -1,11 +1,13 @@
 ---
 BasedOnStyle: LLVM
-IndentWidth: 8
-TabWidth: 8
-UseTab: ForIndentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
 ColumnLimit: 100
 BreakBeforeBraces: Attach
 Cpp11BracedListStyle: false
 AllowShortEnumsOnASingleLine: false
 AlignTrailingComments: true
-SortIncludes: false
+
+SortIncludes: true
+IncludeBlocks: Preserve
