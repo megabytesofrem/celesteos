@@ -12,40 +12,36 @@
 typedef struct thread thread_t;
 typedef struct mach_port_space mach_port_space_t;
 
-typedef struct mach_kmsg
-{
-    struct mach_kmsg *next;
-    struct mach_kmsg *prev;
-    uint32_t size;  /* size of the message */
-    uint8_t data[]; /* the message data */
+typedef struct mach_kmsg {
+	struct mach_kmsg *next;
+	struct mach_kmsg *prev;
+	struct mach_msg_header *header; /* Mach message header */
+	uint8_t data[];                 /* the message data */
 } mach_kmsg_t;
 
 /**
  * A Mach IPC port.
  */
-typedef struct ipc_port
-{
-    spinlock_t lock;
-    uint32_t ref_count; /* reference count for the port */
-    bool is_alive;      /* indicates if the port is currently alive */
+typedef struct ipc_port {
+	spinlock_t lock;
+	uint32_t ref_count; /* reference count for the port */
 
-    /* Message queue */
-    mach_kmsg_t *msg_head; /* head of the queue */
-    mach_kmsg_t *msg_tail; /* tail of the queue */
-    uint32_t msg_count;    /* number of messages in the queue */
+	bool is_locked; /* indicates if the port is currently locked */
+	bool is_alive;  /* indicates if the port is currently alive */
 
-    thread_t *blocked_thread; /* thread blocking on the port */
+	/* Message queue */
+	mach_kmsg_t *msg_queue_head; /* head of the queue */
+	mach_kmsg_t *msg_queue_tail; /* tail of the queue */
+	uint32_t msg_count;          /* number of messages in the queue */
+
+	thread_t *blocked_thread; /* thread blocking on the port */
 } ipc_port_t;
 
 /**
  * Allocate a new Mach IPC port.
  */
-kern_return_t ipc_port_alloc(
-    mach_port_space_t *space,
-    uint32_t flags,
-    mach_port_name_t *out_name,
-    ipc_port_t **out_port
-);
+kern_return_t ipc_port_alloc(mach_port_space_t *space, uint32_t flags, mach_port_name_t *out_name,
+                             ipc_port_t **out_port);
 
 /**
  * Increment the reference count of the given Mach IPC port.
@@ -66,14 +62,14 @@ kern_return_t ipc_port_destroy(ipc_port_t *port);
 
 /**
  * Enqueue a Mach kernel message to the given Mach IPC port's message queue.
- * 
+ *
  * Returns true if the message was successfully enqueued, false otherwise.
  */
 kern_return_t ipc_port_enqueue_kmsg(ipc_port_t *port, mach_kmsg_t *kmsg);
 
 /**
  * Dequeue a Mach kernel message from the given Mach IPC port's message queue.
- * 
+ *
  * Returns the dequeued message, or NULL if the queue is empty.
  */
 kern_return_t ipc_port_dequeue_kmsg(ipc_port_t *port, mach_kmsg_t **out_kmsg);
