@@ -20,8 +20,14 @@ mkdir -p \
     "$TEMPLATE/System/Library/Frameworks" \
     "$TEMPLATE/System/Library/Extensions" \
     "$TEMPLATE/System/Library/CoreServices" \
+    "$TEMPLATE/System/Library/LaunchAgents" \
     "$TEMPLATE/System/Library/LaunchDaemons" \
     "$TEMPLATE/Library" \
+    "$TEMPLATE/Library/Application Support" \
+    "$TEMPLATE/Library/Preferences" \
+    "$TEMPLATE/Library/Preferences/SystemConfiguration" \
+    "$TEMPLATE/Library/LaunchAgents" \
+    "$TEMPLATE/Library/LaunchDaemons" \
     "$TEMPLATE/Applications" \
     "$TEMPLATE/Volumes" \
     "$TEMPLATE/usr/bin" \
@@ -30,6 +36,10 @@ mkdir -p \
     "$TEMPLATE/private/etc" \
     "$TEMPLATE/private/var" \
     "$TEMPLATE/private/tmp"
+
+# NOTE: /private/etc links to /etc
+# NOTE: /private/var links to /var
+# NOTE: /private/tmp links to /tmp
 
 # Copy the template contents into the initrd directory
 cp -r "$TEMPLATE/." "$INITRD/"

@@ -50,9 +50,31 @@ If in doubt, use `kern_return` everywhere in the `mach/` subdirectory, and spars
 
 - **General advice**: If in doubt, we mirror Mach/XNU conventions as we are aiming for binary compatibility ala ReactOS.
 
+## Dumping Mach Traps
+Scripts are provided in `scripts/osx/` to dump kernel traps from a running `/mach_kernel`, as well to parse said traps into a tabular format.  
+
+You will need a OSX 10.6 system to run them.
+
+Other useful comamnds are:
+
+### Locating mach_trap_table symbol:
+`nm /mach_kernel | grep -i mach_trap_table`
+
+### Inspecting segment headers:
+`otool -l /mach_kernel`
+
+### Inspecting binaries:
+- `nm -g /usr/lib/libSystem.B.dylib | grep -e "mach_|semaphore_|task_"` can be used to list all symbols related to Mach IPC, tasks, and threads within the Mach subsystem.
+
+- `otool -L /usr/lib/libSystem.B.dylib` can be used to list all shared libraries that `libSystem.B.dylib` depends on.
+
+- `otool -tv /usr/lib/libSystem.B.dylib` can be used to display the disassembled text (code) section of `libSystem.B.dylib` (the output may be large, so it should be paged or redirected to a file).
+
+
 ## Priority
 - Mach loader
 - Mach IPC logic (`mach_message.c`, `port_space.c`, `thread.c`, `task.c`, etc)
+- Stub out syscalls (`sys_task_self_trap`, `sys_mach_reply_port`, etc)
 - APIC (Advanced Programmable Interrupt Controller)
 - HPET (High Precision Event Timer)
 
