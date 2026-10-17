@@ -5,6 +5,7 @@
 - [x] Physical and virtual memory manager (`pmap.c`)
 - [x] `kmalloc`/`kfree` functions
 - [x] Spinlock and TSS (Task State Segment)
+- [x] CPUID (CPU Identification)
 
 ## Useful Links
 - **Apple official kernel documentation**: https://developer.apple.com/documentation/kernel/
@@ -26,7 +27,6 @@ If in doubt, use `kern_return` everywhere in the `mach/` subdirectory, and spars
 - Mach loader
 - Mach IPC logic (`mach_message.c`, `port_space.c`, `thread.c`, `task.c`, etc)
 - APIC (Advanced Programmable Interrupt Controller)
-- CPUID (CPU Identification)
 - HPET (High Precision Event Timer)
 
 ## In Progress

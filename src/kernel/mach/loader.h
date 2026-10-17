@@ -115,8 +115,14 @@ typedef struct __attribute__((packed)) macho_info
     uint64_t data_filesize; /* size of the __DATA segment */
 } macho_info;
 
+/**
+ * Describe a Mach-O load command.
+ */
 const char *macho_describe_lc(uint32_t lc);
 
+/**
+ * Map a Mach-O segment into virtual memory, including its initial protections.
+ */
 kern_return_t map_segment(
     page_table_t *root,
     uint64_t vmaddr,
@@ -125,6 +131,10 @@ kern_return_t map_segment(
     uint64_t hhdm_base
 );
 
+/**
+ * Copy the payload of a Mach-O segment into mapped virtual memory,
+ * starting from the specified segment file offset (`fileoff`).
+ */
 kern_return_t copy_segment_payload(
     page_table_t *root,
     uint64_t vmaddr,
@@ -134,6 +144,12 @@ kern_return_t copy_segment_payload(
     uint64_t hhdm_base
 );
 
+/**
+ * Load a Mach-O binary into memory, mapping its segments and copying their payloads.
+ * 
+ * This also allocates a user stack for the Mach-O binary to execute it in Ring 3.
+ * `out_info` is populated with details about the loaded Mach-O binary.
+ */
 kern_return_t macho_load(
     const uint8_t *data,
     page_table_t *root,
