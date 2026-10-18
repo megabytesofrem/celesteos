@@ -1,6 +1,6 @@
 #include "initrd.h"
 
-#include <kernel/memory/kmalloc.h>
+#include <kernel/kmalloc.h>
 #include <libkernel.h>
 #include <stdbool.h>
 #include <string.h>

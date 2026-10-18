@@ -1,6 +1,6 @@
 #include "port.h"
 
-#include <kernel/memory/kmalloc.h>
+#include <kernel/kmalloc.h>
 
 kern_return_t ipc_port_allocate(mach_port_space_t *space, uint32_t flags,
                                 mach_port_name_t *out_name, ipc_port_t **port) {
@@ -9,26 +9,32 @@ kern_return_t ipc_port_allocate(mach_port_space_t *space, uint32_t flags,
 }
 
 kern_return_t ipc_port_reference(ipc_port_t *port) {
-    // STUB: Implement IPC port reference logic here.
+    // Invalid port passed to ipc_port_reference
+    if (!port) {
+        return KERN_INVALID_ARGUMENT;
+    }
+
     port->ref_count++;
 
     return KERN_SUCCESS;
 }
 
 kern_return_t ipc_port_release(ipc_port_t *port) {
+    // Invalid port passed to ipc_port_release
     if (!port) {
         return KERN_INVALID_ARGUMENT;
     }
 
     spinlock_acquire(&port->lock);
 
+    // Decrement the ports reference count
     if (port->ref_count > 0) {
         port->ref_count--;
     }
 
     spinlock_release(&port->lock);
 
-    // If the reference count reaches zero, destroy the port.
+    // Destroy the port if its reference count reaches zero
     if (port->ref_count == 0) {
         ipc_port_destroy(port);
     }

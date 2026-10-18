@@ -1,6 +1,6 @@
 #include "vm_map.h"
 
-#include <kernel/memory/kmalloc.h>
+#include <kernel/kmalloc.h>
 #include <kernel/memory/pmm.h>
 #include <libkernel.h>
 

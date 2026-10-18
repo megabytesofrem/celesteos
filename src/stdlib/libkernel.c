@@ -104,6 +104,9 @@ void klog(enum log_level level, const char *format, ...) {
     case KLOG_ERROR:
         kputs_color("[ERROR] ", 0xe33b3b, 0x00000000, true);
         break;
+    case KLOG_DEBUG:
+        kputs_color("[DEBUG] ", 0x52dce3, 0x00000000, true);
+        break;
     default:
         kputs_color("[UNKNOWN] ", 0xb5b5b3, 0x00000000, true); // Unknown
         break;

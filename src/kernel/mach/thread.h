@@ -16,7 +16,7 @@
 /* Forward declarations for kernel thread-related structures */
 typedef struct task task_t;
 struct mach_kmsg;
-struct mach_port_space;
+struct ipc_port_space;
 
 typedef enum {
     THREAD_RUNNING,

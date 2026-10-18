@@ -7,6 +7,7 @@
 enum log_level {
     KLOG_NONE,
     KLOG_INFO,
+    KLOG_DEBUG,
     KLOG_WARN,
     KLOG_ERROR,
 };

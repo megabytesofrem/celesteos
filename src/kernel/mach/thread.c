@@ -2,13 +2,18 @@
 
 #include <string.h>
 
-#include <kernel/memory/kmalloc.h>
+#include <kernel/kmalloc.h>
 #include <mach/kern_return.h>
 #include <mach/mach_types.h>
 #include <mach/task.h>
 
 static uintptr_t next_tid = 1;
 
+/**
+ * Generate a unique thread ID.
+ *
+ * This function is used internally to assign a unique identifier to each thread.
+ */
 static uintptr_t generate_tid() { return next_tid++; }
 
 kern_return_t thread_create(task_t *parent, uintptr_t entry_point, uintptr_t arg,

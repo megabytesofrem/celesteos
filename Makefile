@@ -48,10 +48,11 @@ C_SRCS := src/kernel/kmain.c \
           src/kernel/idt.c \
           src/kernel/isr.c \
           src/kernel/pic.c \
+          src/kernel/syscall.c \
           src/kernel/memory/pmm.c \
           src/kernel/memory/pmap.c \
           src/kernel/memory/vm_map.c \
-          src/kernel/memory/kmalloc.c \
+          src/kernel/kmalloc.c \
           src/stdlib/string.c \
           src/stdlib/libkernel.c \
           src/kernel/drivers/framebuffer.c \
@@ -63,6 +64,7 @@ C_SRCS := src/kernel/kmain.c \
 ASM_SRCS := src/kernel/asm/entry.asm \
             src/kernel/asm/load_gdt.asm \
             src/kernel/asm/int.asm \
+            src/kernel/asm/syscall_entry.asm \
             src/kernel/asm/tss_ring3.asm
 
 # Map sources to object files in build directory

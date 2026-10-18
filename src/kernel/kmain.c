@@ -5,13 +5,14 @@
 
 #include <kernel/drivers/framebuffer.h>
 #include <kernel/initrd.h>
+#include <kernel/kmalloc.h>
 #include <kernel/mach/loader.h>
-#include <kernel/memory/kmalloc.h>
 #include <kernel/memory/pmap.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vm_map.h>
 #include <kernel/pic.h>
 #include <kernel/ports.h>
+#include <kernel/syscall.h>
 #include <kernel/task.h>
 
 #include <libkernel.h>
@@ -211,6 +212,11 @@ void kmain(void) {
 
     // Initialize the Global Descriptor Table (GDT)
     gdt_initialize();
+
+    if (syscall_init(kernel_tss.rsp0) != 0) {
+        klog(KLOG_ERROR, "kmain: Failed to initialize system calls!\n");
+        halt_forever();
+    }
 
     // Initialize the Interrupt Descriptor Table (IDT)
     idt_initialize();

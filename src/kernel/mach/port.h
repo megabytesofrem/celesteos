@@ -10,7 +10,7 @@
 #include <mach/mach_types.h>
 
 typedef struct thread thread_t;
-typedef struct mach_port_space mach_port_space_t;
+typedef struct ipc_port_space mach_port_space_t;
 
 typedef struct mach_kmsg {
     struct mach_kmsg *next;
