@@ -1,3 +1,4 @@
 build/
+internal/
 scripts/osx_scripts.iso
 x86_64-elf-cross/

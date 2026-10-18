@@ -50,15 +50,26 @@ static inline void write_msr(uint32_t msr, uint64_t value) {
     __asm__ volatile("wrmsr" : : "a"(low), "d"(high), "c"(msr));
 }
 
+typedef int64_t (*mach_trap_handler_t)(struct cpu_register_frame *frame);
+
+typedef struct mach_trap {
+    int64_t trap_number;
+    mach_trap_handler_t handler;
+} mach_trap_t;
+
 int syscall_init(uintptr_t kernel_stack_top);
 
 /**
  * System call dispatch handler, called from syscall_entry.asm.
  */
-uint64_t mach_syscall_dispatch(uint64_t syscall_number, struct cpu_register_frame *register_frame);
+uint64_t mach_syscall_dispatch(int64_t syscall_number, struct cpu_register_frame *register_frame);
 
 /* Mach traps. */
-int64_t sys_mach_reply_port(void);
-int64_t sys_task_self_trap(void);
+int64_t sys_mach_reply_port(struct cpu_register_frame *frame);         /* -26 */
+int64_t sys_mach_thread_self_trap(struct cpu_register_frame *frame);   /* -27 */
+int64_t sys_task_self_trap(struct cpu_register_frame *frame);          /* -28 */
+int64_t sys_host_self_trap(struct cpu_register_frame *frame);          /* -29 */
+int64_t sys_mach_msg_trap(struct cpu_register_frame *frame);           /* -31 */
+int64_t sys_mach_msg_overwrite_trap(struct cpu_register_frame *frame); /* -32 */
 
 #endif /* CELESTEOS_SYSCALL_H */

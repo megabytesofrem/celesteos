@@ -20,6 +20,6 @@ clang --target=x86_64-apple-darwin10 \
     -ffreestanding \
     -nostdlib \
     -fuse-ld=lld \
-    -Wl,-e,__start \
+    -Wl,-e,_start \
     -Wl,-no_pie \
     "$SOURCE_FILE" -o "$OUTPUT_FILE"

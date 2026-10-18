@@ -8,6 +8,7 @@ PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 TEMPLATE="$PROJECT_ROOT/user/template"
 INITRD="$PROJECT_ROOT/user/initrd"
 BUILD_DIR="$SCRIPT_DIR/build"
+SOURCES="$PROJECT_ROOT/user/sources"
 
 echo "Initrd directory: $INITRD"
 echo "Template directory: $TEMPLATE"
@@ -37,22 +38,29 @@ mkdir -p \
     "$TEMPLATE/private/var" \
     "$TEMPLATE/private/tmp"
 
+# Build user programs into the template filesystem
+while IFS= read -r -d '' source_file; do
+    binary_name="$(basename -- "${source_file%.c}")"
+
+    case "$binary_name" in
+        "launchd")
+            # launchd is special-cased and goes into /usr/libexec
+            "$SCRIPT_DIR/build_macho.sh" "$source_file" "$TEMPLATE/usr/libexec/$binary_name"
+            ;;
+        *)
+            # All other binaries go into /usr/bin
+            "$SCRIPT_DIR/build_macho.sh" "$source_file" "$TEMPLATE/usr/bin/$binary_name"
+            ;;
+    esac
+
+done < <(find "$SOURCES" -type f -name '*.c' -print0)
+
 # NOTE: /private/etc links to /etc
 # NOTE: /private/var links to /var
 # NOTE: /private/tmp links to /tmp
 
 # Copy the template contents into the initrd directory
 cp -r "$TEMPLATE/." "$INITRD/"
-
-while IFS= read -r -d '' c_file; do
-    relative_path="${c_file#"$TEMPLATE"/}"
-    executable_path="$BUILD_DIR/${relative_path%.c}"
-    initrd_executable="$INITRD/${relative_path%.c}"
-
-    mkdir -p "$(dirname -- "$executable_path")" "$(dirname -- "$initrd_executable")"
-    bash "$SCRIPT_DIR/build_macho.sh" "$c_file" "$executable_path"
-    cp "$executable_path" "$initrd_executable"
-done < <(find "$TEMPLATE" -type f -name '*.c' -print0)
 
 # Compress the initrd into a tarball
 tar --format=ustar -cf "$BUILD_DIR/initrd.tar" -C "$INITRD" .
