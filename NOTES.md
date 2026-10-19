@@ -6,6 +6,7 @@
 - [x] `kmalloc`/`kfree` functions
 - [x] Spinlock and TSS (Task State Segment)
 - [x] CPUID (CPU Identification)
+- [x] Mach/BSD syscall stubs 
 
 ## Useful Links
 - **Apple official kernel documentation**: https://developer.apple.com/documentation/kernel/
@@ -53,9 +54,9 @@ If in doubt, use `kern_return` everywhere in the `mach/` subdirectory, and spars
 ## Dumping Mach Traps
 Scripts are provided in `scripts/osx/` to dump kernel traps from a running `/mach_kernel`, as well to parse said traps into a tabular format.  
 
-You will need a OSX 10.6 system to run them.
+You will need a real OSX 10.6 system to run them, a virtual machine can be setup if necessary.
 
-Other useful comamnds are:
+Other useful commands are:
 
 ### Locating mach_trap_table symbol:
 `nm /mach_kernel | grep -i mach_trap_table`
@@ -69,6 +70,26 @@ Other useful comamnds are:
 - `otool -L /usr/lib/libSystem.B.dylib` can be used to list all shared libraries that `libSystem.B.dylib` depends on.
 
 - `otool -tv /usr/lib/libSystem.B.dylib` can be used to display the disassembled text (code) section of `libSystem.B.dylib` (the output may be large, so it should be paged or redirected to a file).
+
+## Syscalls
+- Mach syscalls are negative (starting at -26, `mach_reply_port`)
+- BSD syscalls are offset by `0x2000000` (e.g., `sys_write` is `0x2000004`), rather than `4` as in traditional Unix-like systems.
+
+Syscall number is held in `rax`, with arguments passed in the following registers:
+- `rdi`: first argument
+- `rsi`: second argument
+- `rdx`: third argument
+- `r10`: fourth argument
+- `r8`: fifth argument
+- `r9`: sixth argument
+
+`r11` and `rcx` hold usermode RFLAGS and RIP (the return address) temporarily during the syscall.
+
+A list of all the syscalls are defined at: [xnu syscall_sw.h](https://github.com/apple-oss-distributions/xnu/blob/rel/xnu-1504/osfmk/mach/i386/syscall_sw.h)
+
+And for the BSD syscalls:
+- [FreeBSD syscalls table](https://alfonsosiciliano.gitlab.io/posts/2021-01-02-freebsd-system-calls-table.html)
+- [OpenBSD syscalls.master](https://github.com/openbsd/src/blob/master/sys/kern/syscalls.master)
 
 
 ## Priority
