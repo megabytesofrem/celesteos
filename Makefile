@@ -5,6 +5,7 @@ LD      := ld
 XORRISO := xorriso
 QEMU    := qemu-system-x86_64
 BASH    := bash
+PYTHON  ?= python3
 
 # Directories
 SRC_DIR   := src
@@ -49,6 +50,8 @@ C_SRCS := src/kernel/kmain.c \
           src/kernel/isr.c \
           src/kernel/pic.c \
           src/kernel/syscall.c \
+          src/kernel/sys_dispatch.c \
+          src/kernel/sys_names.c \
           src/kernel/memory/pmm.c \
           src/kernel/memory/pmap.c \
           src/kernel/memory/vm_map.c \
@@ -57,6 +60,7 @@ C_SRCS := src/kernel/kmain.c \
           src/stdlib/libkernel.c \
           src/kernel/drivers/framebuffer.c \
           src/kernel/mach/loader.c \
+          src/kernel/mach/mach_traps.c \
           src/kernel/initrd.c \
           src/kernel/task.c
           
@@ -78,6 +82,17 @@ LIBGCC := $(shell $(CC) -print-libgcc-file-name)
 .PHONY: all iso limine_bootloader qemu clean
 
 all: iso
+
+SYSCALL_GENERATED := src/kernel/sys_enter.h \
+                     src/kernel/sys_dispatch.h \
+                     src/kernel/sys_dispatch.c \
+                     src/kernel/sys_names.c
+
+$(SYSCALL_GENERATED) &: scripts/make_syscalls.py src/kernel/syscalls.master
+	$(PYTHON) scripts/make_syscalls.py src/kernel/syscalls.master
+
+$(BUILD_DIR)/kernel/syscall.o $(BUILD_DIR)/kernel/sys_dispatch.o \
+$(BUILD_DIR)/kernel/sys_names.o: $(SYSCALL_GENERATED)
 
 # Compile C sources
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c

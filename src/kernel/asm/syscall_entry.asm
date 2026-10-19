@@ -24,6 +24,7 @@ syscall_entry:
 
     push r11    ; holds user RFLAGS
     push rcx    ; holds user RIP
+    push qword [rel user_rsp]
     push rbp
     push r15
     push r14
@@ -42,7 +43,9 @@ syscall_entry:
     ; Pass syscall number and register frame in rax and rsp to the syscall dispatcher
     mov rdi, rax    ; first argument: syscall number
     mov rsi, rsp    ; second argument: pointer to the saved register frame
+    sub rsp, 8     ; align the stack for the System V AMD64 C call
     call mach_syscall_dispatch
+    add rsp, 8
 
     ; Restore registers from the kernel stack
     ; x86 stack grows downwards, so we must pop in the reverse order of pushes
@@ -60,6 +63,7 @@ syscall_entry:
     pop r14
     pop r15
     pop rbp
+    add rsp, 8  ; Discard the saved user RSP
     pop rcx    ; Restores User RIP
     pop r11    ; Restores User RFLAGS
 

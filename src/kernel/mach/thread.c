@@ -90,7 +90,7 @@ kern_return_t thread_destroy(thread_t *thread) {
     return KERN_SUCCESS;
 }
 
-kern_return_t thread_blockon(thread_t *thread, ipc_port_t *port) {
+kern_return_t thread_blockon(thread_t *thread, mach_port_t *port) {
     if (!thread)
         return KERN_INVALID_ARGUMENT;
 

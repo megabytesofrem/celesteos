@@ -1,0 +1,21 @@
+; CelesteOS Master Syscall Definition Table
+;
+; Format:
+;   number  type    { return_type name(args...); }
+
+#include <mach/mach_types.h>
+#include <mach/mach_message.h>
+#include <mach/mach_traps.h>
+
+; --- Mach Traps (Negative Traps) ---
+-26 STD { mach_port_name_t mach_reply_port(void); }
+-27 STD { mach_port_name_t thread_self_trap(void); }
+-28 STD { mach_port_name_t task_self_trap(void); }
+-29 STD { mach_port_name_t host_self_trap(void); }
+-31 STD { mach_msg_return_t mach_msg_trap(mach_msg_header_t *msg, mach_msg_option_t option, mach_msg_size_t send_size, mach_msg_size_t rcv_size, mach_port_name_t rcv_name, mach_msg_timeout_t timeout, mach_port_name_t notify); }
+
+; --- BSD System Calls (Offset by 0x2000000) ---
+1 STD { void sys_exit(int rval); }
+2 STD { int sys_fork(void); }
+3 STD { ssize_t sys_read(int fd, void *buf, size_t nbyte); }
+4 STD { ssize_t sys_write(int fd, const void *buf, size_t nbyte); }

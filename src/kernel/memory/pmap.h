@@ -132,4 +132,10 @@ page_table_t *pmap_get_pml4(void);
 uint64_t pmap_get_pml4_physical(void);
 uintptr_t pmap_get_physical(page_table_t *pml4, uint64_t virt);
 
+/**
+ * Copy readable user memory from the active address space into a kernel buffer.
+ * Returns -1 if the range is noncanonical, unmapped, or supervisor-only.
+ */
+int pmap_copy_from_user(void *destination, uintptr_t source, size_t size);
+
 #endif // CELESTEOS_PMAP_H

@@ -2,7 +2,7 @@
 
 #include <kernel/kmalloc.h>
 
-kern_return_t ipc_port_space_create(mach_port_space_t **out_space) {
+kern_return_t port_space_create(mach_port_space_t **out_space) {
     mach_port_space_t *space = kmalloc(sizeof(mach_port_space_t));
 
     // Failed to allocate memory for the port space
@@ -19,7 +19,7 @@ kern_return_t ipc_port_space_create(mach_port_space_t **out_space) {
     return KERN_SUCCESS;
 }
 
-kern_return_t ipc_port_space_destroy(mach_port_space_t *space) {
+kern_return_t port_space_destroy(mach_port_space_t *space) {
     // Cannot free a NULL mach_port_space
     if (!space) {
         return KERN_FAILURE;
@@ -39,14 +39,14 @@ kern_return_t ipc_port_space_destroy(mach_port_space_t *space) {
     return KERN_SUCCESS;
 }
 
-kern_return_t ipc_port_space_insert(mach_port_space_t *space, ipc_port_t *port,
-                                    mach_port_name_t name, mach_port_right_t right) {
+kern_return_t port_space_insert(mach_port_space_t *space, mach_port_t *port, mach_port_name_t name,
+                                mach_port_right_t right) {
     // STUB: Implement Mach port space insertion logic here.
-    STUB("ipc_port_space_insert");
+    STUB("port_space_insert");
 }
 
-kern_return_t ipc_port_space_lookup(mach_port_space_t *space, mach_port_name_t name,
-                                    ipc_port_t **out_port, mach_port_right_t *out_right) {
+kern_return_t port_space_lookup(mach_port_space_t *space, mach_port_name_t name,
+                                mach_port_t **out_port, mach_port_right_t *out_right) {
     // STUB: Implement Mach port space lookup logic here.
-    STUB("ipc_port_space_lookup");
+    STUB("port_space_lookup");
 }

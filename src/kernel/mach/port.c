@@ -3,12 +3,12 @@
 #include <kernel/kmalloc.h>
 
 kern_return_t ipc_port_allocate(mach_port_space_t *space, uint32_t flags,
-                                mach_port_name_t *out_name, ipc_port_t **port) {
+                                mach_port_name_t *out_name, mach_port_t **port) {
     // STUB: Implement IPC port allocation logic here.
     STUB("ipc_port_allocate");
 }
 
-kern_return_t ipc_port_reference(ipc_port_t *port) {
+kern_return_t mach_port_reference(mach_port_t *port) {
     // Invalid port passed to ipc_port_reference
     if (!port) {
         return KERN_INVALID_ARGUMENT;
@@ -19,7 +19,7 @@ kern_return_t ipc_port_reference(ipc_port_t *port) {
     return KERN_SUCCESS;
 }
 
-kern_return_t ipc_port_release(ipc_port_t *port) {
+kern_return_t mach_port_release(mach_port_t *port) {
     // Invalid port passed to ipc_port_release
     if (!port) {
         return KERN_INVALID_ARGUMENT;
@@ -36,13 +36,13 @@ kern_return_t ipc_port_release(ipc_port_t *port) {
 
     // Destroy the port if its reference count reaches zero
     if (port->ref_count == 0) {
-        ipc_port_destroy(port);
+        mach_port_destroy(port);
     }
 
     return KERN_SUCCESS;
 }
 
-kern_return_t ipc_port_destroy(ipc_port_t *port) {
+kern_return_t mach_port_destroy(mach_port_t *port) {
     if (!port) {
         return KERN_INVALID_ARGUMENT;
     }
@@ -60,7 +60,7 @@ kern_return_t ipc_port_destroy(ipc_port_t *port) {
     return KERN_SUCCESS;
 }
 
-kern_return_t ipc_port_enqueue_kmsg(ipc_port_t *port, mach_kmsg_t *kmsg) {
+kern_return_t mach_port_enqueue_kmsg(mach_port_t *port, mach_kmsg_t *kmsg) {
     if (!port || !kmsg) {
         return KERN_INVALID_ARGUMENT;
     }
@@ -94,7 +94,7 @@ kern_return_t ipc_port_enqueue_kmsg(ipc_port_t *port, mach_kmsg_t *kmsg) {
     return KERN_SUCCESS;
 }
 
-kern_return_t ipc_port_dequeue_kmsg(ipc_port_t *port, mach_kmsg_t **kmsg) {
+kern_return_t mach_port_dequeue_kmsg(mach_port_t *port, mach_kmsg_t **kmsg) {
     // STUB: Implement IPC port dequeue logic here.
 
     if (!port || !kmsg) {
