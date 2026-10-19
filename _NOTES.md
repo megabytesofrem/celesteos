@@ -17,8 +17,15 @@
 ## Initrd Notes
 The kernel mounts an initramfs (initrd) at boot which replicates a native Mac OS X filesystem structure.
 ```
+user/initrd/
 ├── Applications
 ├── Library
+│   ├── Application Support
+│   ├── LaunchAgents
+│   ├── LaunchDaemons
+│   └── Preferences
+│       └── SystemConfiguration
+│           └── com.apple.Boot.plist
 ├── private
 │   ├── etc
 │   ├── tmp
@@ -28,9 +35,12 @@ The kernel mounts an initramfs (initrd) at boot which replicates a native Mac OS
 │       ├── CoreServices
 │       ├── Extensions
 │       ├── Frameworks
+│       ├── LaunchAgents
 │       └── LaunchDaemons
 ├── usr
 │   ├── bin
+│   │   ├── bsd_trap
+│   │   └── stub.c
 │   ├── lib
 │   └── libexec
 │       ├── launchd
@@ -40,16 +50,8 @@ The kernel mounts an initramfs (initrd) at boot which replicates a native Mac OS
 
 `launchd` is PID 1, and is the first user-space process started by the kernel, responsible for launching and managing other system services and daemons.
 
+`/Library/Preferences` contains user and system preference files, including `SystemConfiguration/com.apple.Boot.plist` which holds boot configuration settings, used by celesteOS later on.
 
-## Code Hygiene
-- `vmm.h` was renamed to `pmap.h` to mirror Mach more accurately, as it was a weird acronym because
-the virtual memory manager does not really manage anything; it maps virtual addresses to physical addresses using page tables (PML4/PDPT/PD/PT).
-
-- `kern_return_t` is used everywhere to indicate success or failure (and *why*), typically returning `KERN_SUCCESS` on success and an appropriate error code on failure. It is absent from the lowest level code e.g PIC, GDT, IDT.
-
-If in doubt, use `kern_return` everywhere in the `mach/` subdirectory, and sparsely everywhere else. If an int or void suffices, that is what should be used (e.g., `heap_initialize` returns an int instead of `kern_return_t`), `vm_map` is __an exception__.
-
-- **General advice**: If in doubt, we mirror Mach/XNU conventions as we are aiming for binary compatibility ala ReactOS.
 
 ## Dumping Mach Traps
 Scripts are provided in `scripts/osx/` to dump kernel traps from a running `/mach_kernel`, as well to parse said traps into a tabular format.  
@@ -90,6 +92,8 @@ A list of all the syscalls are defined at: [xnu syscall_sw.h](https://github.com
 And for the BSD syscalls:
 - [FreeBSD syscalls table](https://alfonsosiciliano.gitlab.io/posts/2021-01-02-freebsd-system-calls-table.html)
 - [OpenBSD syscalls.master](https://github.com/openbsd/src/blob/master/sys/kern/syscalls.master)
+
+Syscalls are defined once in `kernel/syscalls.master`, and are built by the build system into the appropriate syscall tables and stubs.
 
 
 ## Priority

@@ -1,17 +1,17 @@
 <img src="./resources/readme_logo.png">
 <hr>
 
-An open source operating system aiming for binary compatibility with Mac OS X 10.6 Snow Leopard.
+celesteOS is an open source operating system aiming for binary compatibility with Mac OS X 10.6 Snow Leopard at the _kernel level_. It is a Darwin-like operating system, and serves as a clean room implementation of the Darwin kernel.
 
-## What Mac OSX version is supported?
+## What Mac OS X version is supported?
 celesteOS aims for binary compatibility with Mac OS X 10.6 Snow Leopard because modern
 macOS is a moving target with frequent changes, and complex security mechanisms.
 
 ## Building
-CelesteOS depends on a cross compiler for `x86_64-elf` and `limine`. Both can built by running `./scripts/build_limine.sh` and
+celesteOS depends on a cross compiler for `x86_64-elf` and `limine`. Both can built by running `./scripts/build_limine.sh` and
 `./scripts/build_toolchain.sh`. You will need to install the packages for `nasm, qemu, xorriso`.
 
-To build CelesteOS:
+To build celesteOS:
 ```sh
 make all
 
@@ -65,6 +65,3 @@ To build the user-space ramdisk, run `scripts/build_initrd.sh`.
 All binaries **must** be x86_64 native Mac OS X binaries compiled with `clang` for `x86_64-apple-darwin`. ELF is not supported, so you cannot compile a binary for celesteOS using standard ELF toolchains.
 
 A wrapper script is provided to cross-compile binaries: `scripts/build_macho.sh <source_file> <output_file>`.
-
-## Checklist
-Moved to [NOTES.md](NOTES.md)
