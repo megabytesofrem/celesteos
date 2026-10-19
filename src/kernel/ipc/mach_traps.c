@@ -6,7 +6,7 @@
 
 #define STUB_TRAP(x, dummy_handle)                                                                 \
     do {                                                                                           \
-        klog(KLOG_DEBUG, "kmain: MACH TRAP: " x " (stub)\n");                                      \
+        klog(KLOG_DEBUG, "sys_dispatch: IPC Mach trap: " x " (stub)\n");                           \
         return dummy_handle;                                                                       \
     } while (0)
 

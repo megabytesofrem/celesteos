@@ -3,9 +3,13 @@
 
 #include <stddef.h>
 
-#include <mach/mach_message.h>
+#include <ipc/ipc_port.h>
+#include <ipc/mach_message.h>
 #include <mach/mach_types.h>
-#include <mach/port.h>
+
+/**
+ * General Mach traps.
+ */
 
 mach_port_name_t mach_reply_port(void);
 mach_port_name_t thread_self_trap(void);

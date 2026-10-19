@@ -4,8 +4,8 @@
 
 #include "sys_dispatch.h"
 #include <mach/mach_types.h>
-#include <mach/mach_message.h>
-#include <mach/mach_traps.h>
+#include <ipc/mach_message.h>
+#include <ipc/mach_traps.h>
 
 struct sys_mach_msg_trap_args {
     mach_msg_header_t * msg;

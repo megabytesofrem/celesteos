@@ -5,10 +5,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <ipc/ipc_port.h>
 #include <kernel/spinlock.h>
 #include <mach/kern_return.h>
 #include <mach/mach_types.h>
-#include <mach/port.h>
 
 #define KERNEL_PAGE_SIZE 0x1000                  /* 4KiB */
 #define KERNEL_STACK_SIZE (KERNEL_PAGE_SIZE * 4) /* 16KiB */
@@ -63,7 +63,9 @@ typedef struct thread {
 /* HACK: Store a global thread: g_current_thread */
 extern thread_t *g_current_thread;
 
-static inline thread_t *current_thread(void) { return g_current_thread; }
+static inline thread_t *current_thread(void) {
+    return g_current_thread;
+}
 
 static inline task_t *current_task(void) {
     thread_t *thread = current_thread();

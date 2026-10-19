@@ -1,13 +1,19 @@
-#ifndef CELESTEOS_MACH_PORT_SPACE_H
-#define CELESTEOS_MACH_PORT_SPACE_H
+/**
+ * ipc/ipc_space.h
+ *
+ * Internal IPC spaces.
+ */
+
+#ifndef CELESTEOS_IPC_SPACE_H
+#define CELESTEOS_IPC_SPACE_H
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kernel/mach/kern_return.h>
+#include <kernel/mach/mach_types.h>
 #include <kernel/spinlock.h>
-#include <mach/kern_return.h>
-#include <mach/mach_types.h>
 
 #define MACH_PORT_RIGHT_NONE 0x00          /* Port has no rights */
 #define MACH_PORT_RIGHT_SEND (1 << 0)      /* Port can send messages */
@@ -36,40 +42,40 @@ typedef struct mach_port_table {
 } mach_port_table_t;
 
 /**
- * The Mach port space, which contains the port table and a lock.
+ * The IPC space which contains a Mach port table and a lock.
  */
-typedef struct mach_port_space {
+typedef struct ipc_space {
     spinlock_t lock;
     mach_port_table_t table;
-} mach_port_space_t;
+} ipc_space_t;
 
 /**
- * Allocate a new Mach port space and initialize its lock and port table.
+ * Allocate a new IPC space and initialize its lock and port table.
  *
- * Returns a pointer to the newly created Mach port space, or NULL if allocation fails.
+ * Returns a pointer to the newly created IPC space, or NULL if allocation fails.
  */
-kern_return_t port_space_create(mach_port_space_t **out_space);
+kern_return_t ipc_space_create(ipc_space_t **out_space);
 
 /**
- * Destroy the given Mach port space and release its resources.
+ * Destroy the given IPC space and release its resources.
  */
-kern_return_t port_space_destroy(mach_port_space_t *space);
+kern_return_t ipc_space_destroy(ipc_space_t *space);
 
 /**
- * Insert an entry into the given Mach port space.
+ * Insert an entry into the given IPC space.
  *
  * Returns KERN_SUCCESS if the entry was successfully inserted, KERN_FAILURE otherwise.
  */
-kern_return_t port_space_insert(mach_port_space_t *space, mach_port_t *port,
-                                    mach_port_name_t name, mach_port_right_t right);
+kern_return_t ipc_space_insert(ipc_space_t *space, mach_port_t *port, mach_port_name_t name,
+                               mach_port_right_t right);
 
 /**
- * Look up an entry in the given Mach port space by its name.
+ * Look up an entry in the given IPC space by its name.
  *
  * Returns KERN_SUCCESS if the entry was found, KERN_FAILURE otherwise.
  * If found, the associated port and right are stored in the output parameters.
  */
-kern_return_t port_space_lookup(mach_port_space_t *space, mach_port_name_t name,
-                                    mach_port_t **out_port, mach_port_right_t *out_right);
+kern_return_t ipc_space_lookup(ipc_space_t *space, mach_port_name_t name, mach_port_t **out_port,
+                               mach_port_right_t *out_right);
 
-#endif // CELESTEOS_MACH_PORT_SPACE_H
+#endif // CELESTEOS_IPC_SPACE_H

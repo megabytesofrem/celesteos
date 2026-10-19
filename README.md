@@ -19,6 +19,9 @@ make all
 make qemu
 ```
 
+Kernel builds track C header dependencies automatically. After moving source files,
+update `C_SRCS` in the Makefile so the new paths are compiled into the kernel.
+
 QEMU exposes a remote GDB server on `127.0.0.1:1234` and starts with the CPU paused.
 Connect from another terminal:
 

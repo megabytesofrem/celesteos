@@ -1,6 +1,6 @@
 #include "task.h"
 
-#include <mach/thread.h>
+#include <ipc/thread.h>
 
 /* Kernel bootstrap task */
 struct task kernel_task;

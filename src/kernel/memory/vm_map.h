@@ -5,7 +5,7 @@
 
 #include <kernel/memory/pmap.h>
 #include <kernel/spinlock.h>
-#include <mach/kern_return.h>
+#include <kernel/mach/kern_return.h>
 
 typedef uint32_t vm_prot_t;
 typedef uintptr_t vm_offset_t;

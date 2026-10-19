@@ -2,10 +2,10 @@
 
 #include <string.h>
 
+#include <ipc/task.h>
 #include <kernel/kmalloc.h>
 #include <mach/kern_return.h>
 #include <mach/mach_types.h>
-#include <mach/task.h>
 
 static uintptr_t next_tid = 1;
 
@@ -14,7 +14,9 @@ static uintptr_t next_tid = 1;
  *
  * This function is used internally to assign a unique identifier to each thread.
  */
-static uintptr_t generate_tid() { return next_tid++; }
+static uintptr_t generate_tid() {
+    return next_tid++;
+}
 
 kern_return_t thread_create(task_t *parent, uintptr_t entry_point, uintptr_t arg,
                             thread_t **out_thread) {
@@ -90,7 +92,7 @@ kern_return_t thread_destroy(thread_t *thread) {
     return KERN_SUCCESS;
 }
 
-kern_return_t thread_blockon(thread_t *thread, mach_port_t *port) {
+kern_return_t thread_blockon(thread_t *thread, ipc_port_t *port) {
     if (!thread)
         return KERN_INVALID_ARGUMENT;
 
@@ -103,13 +105,14 @@ kern_return_t thread_blockon(thread_t *thread, mach_port_t *port) {
     return KERN_SUCCESS;
 }
 
-kern_return_t thread_unblock(thread_t *thread) {
+kern_return_t thread_unblock(thread_t *thread, int32_t result) {
     if (!thread)
         return KERN_INVALID_ARGUMENT;
 
     // Lock the thread before modifying its state
     spinlock_acquire(&thread->lock);
     thread->waiting_on_port = NULL;
+    thread->wait_result = result;
     thread->state = THREAD_RUNNING;
     // Unlock the thread after modifying its state
     spinlock_release(&thread->lock);

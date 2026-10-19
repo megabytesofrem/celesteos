@@ -36,6 +36,7 @@ CFLAGS := -std=c17 \
           -Wall \
           -Wno-unused-variable \
           -Wextra \
+          -MMD -MP \
           $(INCLUDES)
 
 NASMFLAGS := -f elf64 -g -F dwarf
@@ -59,12 +60,14 @@ C_SRCS := src/kernel/kmain.c \
           src/stdlib/string.c \
           src/stdlib/libkernel.c \
           src/kernel/drivers/framebuffer.c \
-          src/kernel/mach/loader.c \
-          src/kernel/mach/mach_traps.c \
+	  src/kernel/ipc/ipc_port.c \
+	  src/kernel/ipc/ipc_space.c \
+          src/kernel/ipc/loader.c \
+	  src/kernel/ipc/mach_message.c \
+          src/kernel/ipc/mach_traps.c \
           src/kernel/initrd.c \
           src/kernel/task.c
           
-
 ASM_SRCS := src/kernel/asm/entry.asm \
             src/kernel/asm/load_gdt.asm \
             src/kernel/asm/int.asm \
@@ -74,6 +77,8 @@ ASM_SRCS := src/kernel/asm/entry.asm \
 # Map sources to object files in build directory
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SRCS)) \
         $(patsubst $(SRC_DIR)/%.asm,$(BUILD_DIR)/%.o,$(ASM_SRCS))
+
+DEPS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.d,$(C_SRCS))
 
 # Libgcc path lookup for freestanding 64-bit divide/stubs
 LIBGCC := $(shell $(CC) -print-libgcc-file-name)
@@ -95,7 +100,7 @@ $(BUILD_DIR)/kernel/syscall.o $(BUILD_DIR)/kernel/sys_dispatch.o \
 $(BUILD_DIR)/kernel/sys_names.o: $(SYSCALL_GENERATED)
 
 # Compile C sources
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c Makefile
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -139,3 +144,5 @@ qemu: iso
 # Clean build artifacts
 clean:
 	rm -rf $(BUILD_DIR)
+
+-include $(DEPS)

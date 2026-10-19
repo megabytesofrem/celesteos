@@ -4,8 +4,8 @@
 ;   number  type    { return_type name(args...); }
 
 #include <mach/mach_types.h>
-#include <mach/mach_message.h>
-#include <mach/mach_traps.h>
+#include <ipc/mach_message.h>
+#include <ipc/mach_traps.h>
 
 ; --- Mach Traps (Negative Traps) ---
 -26 STD { mach_port_name_t mach_reply_port(void); }

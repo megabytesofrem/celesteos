@@ -1,13 +1,13 @@
-#ifndef CELESTEOS_MACH_TASK_H
-#define CELESTEOS_MACH_TASK_H
+#ifndef CELESTEOS_IPC_TASK_H
+#define CELESTEOS_IPC_TASK_H
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kernel/ipc/ipc_space.h>
 #include <kernel/memory/vm_map.h>
 #include <kernel/spinlock.h>
-#include <mach/port_space.h>
 
 typedef enum {
     TASK_ACTIVE,
@@ -33,8 +33,8 @@ typedef struct task {
     vm_map_t *vm_map; /* pointer to the task's virtual memory map */
 
     /* IPC state */
-    mach_port_space_t *itk_space; /* pointer to the task's port space */
-    mach_port_name_t itk_self;    /* the name of the task's own port */
+    ipc_space_t *itk_space;    /* pointer to the task's port space */
+    mach_port_name_t itk_self; /* the name of the task's own port */
 
     /* Threads */
     thread_t *thread_list; /* pointer to the list of threads belonging to the task */
@@ -65,4 +65,4 @@ kern_return_t task_suspend(task_t *task);
  */
 kern_return_t task_resume(task_t *task);
 
-#endif // CELESTEOS_MACH_TASK_H
+#endif // CELESTEOS_IPC_TASK_H

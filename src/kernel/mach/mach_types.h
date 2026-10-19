@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <libkernel.h>
+#include <stdlib/libkernel.h>
 
 typedef uint32_t mach_port_name_t;
 typedef uint32_t mach_port_right_t;
