@@ -14,13 +14,13 @@ const char *syscall_name(int64_t number) {
     case -26:
         return "mach_reply_port";
     case 0x2000001:
-        return "sys_exit";
+        return "exit";
     case 0x2000002:
-        return "sys_fork";
+        return "fork";
     case 0x2000003:
-        return "sys_read";
+        return "read";
     case 0x2000004:
-        return "sys_write";
+        return "write";
     default:
         return "unknown";
     }

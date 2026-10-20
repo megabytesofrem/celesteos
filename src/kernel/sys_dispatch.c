@@ -3,10 +3,10 @@
 #include <kernel/memory/pmap.h>
 #include <libkernel.h>
 
-extern void sys_sys_exit(const struct sys_sys_exit_args *args) __attribute__((weak));
-extern int sys_sys_fork(const struct sys_sys_fork_args *args) __attribute__((weak));
-extern intptr_t sys_sys_read(const struct sys_sys_read_args *args) __attribute__((weak));
-extern intptr_t sys_sys_write(const struct sys_sys_write_args *args) __attribute__((weak));
+extern void sys_exit(const struct sys_exit_args *args) __attribute__((weak));
+extern int sys_fork(const struct sys_fork_args *args) __attribute__((weak));
+extern intptr_t sys_read(const struct sys_read_args *args) __attribute__((weak));
+extern intptr_t sys_write(const struct sys_write_args *args) __attribute__((weak));
 
 static int64_t dispatch_mach_msg_trap(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
@@ -50,62 +50,62 @@ static int64_t dispatch_mach_reply_port(const stack_frame_t *frame,
     return (int64_t)mach_reply_port();
 }
 
-static int64_t dispatch_sys_exit(const stack_frame_t *frame,
+static int64_t dispatch_exit(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
-    if (sys_sys_exit == NULL) {
-        klog(KLOG_WARN, "sys_dispatch: unimplemented BSD syscall: sys_exit\n");
+    if (sys_exit == NULL) {
+        klog(KLOG_WARN, "sys_dispatch: unimplemented BSD syscall: exit\n");
         return -1;
     }
     (void)stack_args;
-    const struct sys_sys_exit_args args = {
+    const struct sys_exit_args args = {
         .rval = (int)frame->rdi,
     };
-    sys_sys_exit(&args);
+    sys_exit(&args);
     return 0;
 }
 
-static int64_t dispatch_sys_fork(const stack_frame_t *frame,
+static int64_t dispatch_fork(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
-    if (sys_sys_fork == NULL) {
-        klog(KLOG_WARN, "sys_dispatch: unimplemented BSD syscall: sys_fork\n");
+    if (sys_fork == NULL) {
+        klog(KLOG_WARN, "sys_dispatch: unimplemented BSD syscall: fork\n");
         return -1;
     }
     (void)frame;
     (void)stack_args;
-    const struct sys_sys_fork_args args = {
+    const struct sys_fork_args args = {
         .unused = 0,
     };
-    return (int64_t)sys_sys_fork(&args);
+    return (int64_t)sys_fork(&args);
 }
 
-static int64_t dispatch_sys_read(const stack_frame_t *frame,
+static int64_t dispatch_read(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
-    if (sys_sys_read == NULL) {
-        klog(KLOG_WARN, "sys_dispatch: unimplemented BSD syscall: sys_read\n");
+    if (sys_read == NULL) {
+        klog(KLOG_WARN, "sys_dispatch: unimplemented BSD syscall: read\n");
         return -1;
     }
     (void)stack_args;
-    const struct sys_sys_read_args args = {
+    const struct sys_read_args args = {
         .fd = (int)frame->rdi,
         .buf = (void *)frame->rsi,
         .nbyte = (size_t)frame->rdx,
     };
-    return (int64_t)sys_sys_read(&args);
+    return (int64_t)sys_read(&args);
 }
 
-static int64_t dispatch_sys_write(const stack_frame_t *frame,
+static int64_t dispatch_write(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
-    if (sys_sys_write == NULL) {
-        klog(KLOG_WARN, "sys_dispatch: unimplemented BSD syscall: sys_write\n");
+    if (sys_write == NULL) {
+        klog(KLOG_WARN, "sys_dispatch: unimplemented BSD syscall: write\n");
         return -1;
     }
     (void)stack_args;
-    const struct sys_sys_write_args args = {
+    const struct sys_write_args args = {
         .fd = (int)frame->rdi,
         .buf = (const void *)frame->rsi,
         .nbyte = (size_t)frame->rdx,
     };
-    return (int64_t)sys_sys_write(&args);
+    return (int64_t)sys_write(&args);
 }
 
 const sys_dispatch_entry_t sys_dispatch_table[] = {
@@ -114,10 +114,10 @@ const sys_dispatch_entry_t sys_dispatch_table[] = {
     { -28, 0, dispatch_task_self_trap },
     { -27, 0, dispatch_thread_self_trap },
     { -26, 0, dispatch_mach_reply_port },
-    { 0x2000001, 1, dispatch_sys_exit },
-    { 0x2000002, 0, dispatch_sys_fork },
-    { 0x2000003, 3, dispatch_sys_read },
-    { 0x2000004, 3, dispatch_sys_write },
+    { 0x2000001, 1, dispatch_exit },
+    { 0x2000002, 0, dispatch_fork },
+    { 0x2000003, 3, dispatch_read },
+    { 0x2000004, 3, dispatch_write },
 };
 const size_t sys_dispatch_count = sizeof(sys_dispatch_table) / sizeof(sys_dispatch_table[0]);
 

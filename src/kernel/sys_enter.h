@@ -33,32 +33,32 @@ struct sys_mach_reply_port_args {
     unsigned char unused;
 };
 
-struct sys_sys_exit_args {
+struct sys_exit_args {
     int rval;
 };
 
-void sys_sys_exit(const struct sys_sys_exit_args *args);
+void sys_exit(const struct sys_exit_args *args);
 
-struct sys_sys_fork_args {
+struct sys_fork_args {
     unsigned char unused;
 };
 
-int sys_sys_fork(const struct sys_sys_fork_args *args);
+int sys_fork(const struct sys_fork_args *args);
 
-struct sys_sys_read_args {
+struct sys_read_args {
     int fd;
     void * buf;
     size_t nbyte;
 };
 
-intptr_t sys_sys_read(const struct sys_sys_read_args *args);
+intptr_t sys_read(const struct sys_read_args *args);
 
-struct sys_sys_write_args {
+struct sys_write_args {
     int fd;
     const void * buf;
     size_t nbyte;
 };
 
-intptr_t sys_sys_write(const struct sys_sys_write_args *args);
+intptr_t sys_write(const struct sys_write_args *args);
 
 #endif /* CELESTEOS_SYS_ENTER_H */
