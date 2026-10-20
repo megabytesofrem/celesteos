@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <kernel/spinlock.h>
+#include <ipc/ipc_object.h>
 #include <mach/kern_return.h>
 #include <mach/mach_types.h>
 
@@ -23,8 +23,7 @@ typedef struct mach_kmsg {
  * A Mach IPC port.
  */
 typedef struct mach_port {
-    spinlock_t lock;
-    uint32_t ref_count; /* reference count for the port */
+    ipc_object_t io; /* common object lock, references, and type/state bits */
 
     bool is_locked; /* indicates if the port is currently locked */
     bool is_alive;  /* indicates if the port is currently alive */
@@ -36,6 +35,8 @@ typedef struct mach_port {
 
     thread_t *blocked_thread; /* thread blocking on the port */
 } mach_port_t;
+
+_Static_assert(offsetof(mach_port_t, io) == 0, "IPC object must be the port's first member");
 
 /**
  * Allocate a new Mach IPC port by creating a new port right in the specified port space

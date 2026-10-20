@@ -37,6 +37,29 @@ stepi
 Use `stepi` to execute one instruction at a time. Execution remains paused between
 steps; `continue` resumes normal execution.
 
+## Kernel IPC objects
+
+Both `ipc_port_t` and the separate `mach_port_t` structure embed `ipc_object_t`
+as their first member. The common header owns their
+lock, reference count, active bit, and object/kernel-object type bits. IPC-space
+table entries refer to this header. `struct mach_port` remains a distinct
+structure, and `struct mach_kmsg` remains the message container defined in
+`mach/mach_port.h` and shared by both port headers; messages are not IPC objects.
+Tasks, threads, and IPC spaces retain their own locks; they are not IPC objects.
+Port sets are not implemented yet.
+
+Use the object lock when accessing shared object state. The `io_reference` and
+`io_release` macros require that lock; `ipc_object_reference` and
+`ipc_object_release` acquire it internally. Callers must own a live reference
+before retaining or accessing an object and detach type-specific resources
+(including queued messages) before its final release.
+
+IPC-space insertion/lookup and object/name allocation are still unfinished.
+`ipc_port_alloc` reports failure until name allocation is implemented instead of
+returning success without a usable port.
+
+Run the host-side object/port regression checks with `make test-ipc`.
+
 ## Building user-space
 celesteOS relies on a user-space replicating a native Mac OS X filesystem layout.
 ```

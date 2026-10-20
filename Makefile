@@ -60,6 +60,7 @@ C_SRCS := src/kernel/kmain.c \
           src/stdlib/string.c \
           src/stdlib/libkernel.c \
           src/kernel/drivers/framebuffer.c \
+	  src/kernel/ipc/ipc_object.c \
 	  src/kernel/ipc/ipc_port.c \
 	  src/kernel/ipc/ipc_space.c \
           src/kernel/ipc/loader.c \
@@ -84,7 +85,7 @@ DEPS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.d,$(C_SRCS))
 LIBGCC := $(shell $(CC) -print-libgcc-file-name)
 
 # Targets
-.PHONY: all iso limine_bootloader qemu clean
+.PHONY: all iso limine_bootloader qemu clean test-ipc
 
 all: iso
 
@@ -142,6 +143,14 @@ qemu: iso
 		-D qemu.log
 
 # Clean build artifacts
+test-ipc:
+	@mkdir -p $(BUILD_DIR)/tests
+	$(CC) -std=c17 -Wall -Wextra -Werror -Wno-unused-parameter \
+		-Isrc -Isrc/kernel -Isrc/kernel/memory \
+		tests/ipc_object_test.c src/kernel/ipc/ipc_object.c \
+		src/kernel/ipc/ipc_port.c -o $(BUILD_DIR)/tests/ipc_object_test
+	$(BUILD_DIR)/tests/ipc_object_test
+
 clean:
 	rm -rf $(BUILD_DIR)
 

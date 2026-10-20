@@ -71,7 +71,7 @@ typedef struct {
     uint32_t msgh_id;                  /* message identifier */
 } mach_msg_header_t;
 
-typedef uint32_t mach_msg_type_name_t;
+typedef natural_t mach_msg_type_name_t;
 
 /*
  * Port rights for Mach messages.
@@ -87,7 +87,8 @@ typedef uint32_t mach_msg_type_name_t;
 #define MACH_MSG_TYPE_PORT_SEND_ONCE MACH_MSG_TYPE_MOVE_SEND_ONCE
 #define MACH_MSG_TYPE_PORT_RECEIVE MACH_MSG_TYPE_MOVE_RECEIVE
 
-typedef int32_t mach_msg_return_t;
+/* Mach message return type */
+typedef natural_t mach_msg_return_t;
 
 /*
  * Return codes for Mach message send and receive operations.

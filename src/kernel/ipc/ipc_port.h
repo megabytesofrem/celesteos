@@ -1,5 +1,5 @@
 /**
- * ipc/ipc_port.h
+ * File: ipc/ipc_port.h
  *
  * Internal kernel IPC ports.
  */
@@ -11,8 +11,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <ipc/ipc_object.h>
 #include <kernel/spinlock.h>
 #include <mach/kern_return.h>
+#include <mach/mach_port.h>
 #include <mach/mach_types.h>
 
 typedef struct thread thread_t;
@@ -20,21 +22,11 @@ typedef struct ipc_space ipc_space_t;
 
 typedef int ipc_port_init_flags_t;
 
-/* Internal Kernel Message Container */
-typedef struct mach_kmsg {
-    struct mach_kmsg *next;
-    struct mach_kmsg *prev;
-    struct mach_msg_header *header;
-    uint8_t data[];
-} mach_kmsg_t;
-
-/* Internal Kernel Port Object Structure */
+/**
+ * Internal IPC port structure.
+ */
 typedef struct ipc_port {
-    spinlock_t lock;
-    uint32_t ref_count;
-
-    bool is_locked;
-    bool is_alive;
+    ipc_object_t io;
 
     /* Message queue */
     mach_kmsg_t *msg_queue_head;
@@ -43,6 +35,10 @@ typedef struct ipc_port {
 
     thread_t *blocked_thread;
 } ipc_port_t;
+
+#define ip_active(port) io_active(&(port)->io)
+#define ip_lock(port) io_lock(&(port)->io)
+#define ip_unlock(port) io_unlock(&(port)->io)
 
 /* Internal Kernel Port Primitives */
 
@@ -64,6 +60,7 @@ void ipc_port_reference(ipc_port_t *port);
 
 /**
  * Release an internal pointer reference to the kernel port.
+ * The message queue must be drained before releasing the last reference.
  */
 void ipc_port_release(ipc_port_t *port);
 
