@@ -1,12 +1,75 @@
 #include "ipc_object.h"
 
+#include <ipc/ipc_port.h>
+#include <ipc/ipc_space.h>
 #include <kernel/kmalloc.h>
+#include <string.h>
+
+#include <kernel/stub.h>
+
+static bool ipc_right_from_type(mach_port_type_t type, mach_port_right_t *right) {
+    switch (type) {
+    case MACH_PORT_TYPE_SEND:
+        *right = MACH_PORT_RIGHT_SEND;
+        return true;
+    case MACH_PORT_TYPE_RECEIVE:
+        *right = MACH_PORT_RIGHT_RECEIVE;
+        return true;
+    case MACH_PORT_TYPE_SEND_ONCE:
+        *right = MACH_PORT_RIGHT_SEND_ONCE;
+        return true;
+    default:
+        return false;
+    }
+}
+
+static kern_return_t ipc_object_allocate_name(ipc_space_t *space, ipc_object_type_t type,
+                                              mach_port_type_t ptype, mach_port_urefs_t refs,
+                                              mach_port_name_t requested_name,
+                                              mach_port_name_t *name, ipc_object_t **object) {
+    if (object == NULL || name == NULL) {
+        return KERN_INVALID_ARGUMENT;
+    }
+    *object = NULL;
+    *name = MACH_PORT_NULL;
+    if (space == NULL || type != IO_TYPE_PORT || refs != 1) {
+        return KERN_INVALID_ARGUMENT;
+    }
+
+    mach_port_right_t right;
+    if (!ipc_right_from_type(ptype, &right)) {
+        return KERN_INVALID_ARGUMENT;
+    }
+
+    ipc_port_t *port = kmalloc(sizeof(*port));
+    if (port == NULL) {
+        return KERN_NO_MEMORY;
+    }
+    memset(port, 0, sizeof(*port));
+    io_lock_init(&port->io);
+    port->io.ref_count = 1;
+    port->io.bits = io_makebits(true, IO_TYPE_PORT, 0);
+
+    kern_return_t result = requested_name == MACH_PORT_NULL
+                               ? ipc_space_insert_anon(space, &port->io, right, name)
+                               : ipc_space_insert(space, &port->io, requested_name, right);
+    if (result != KERN_SUCCESS) {
+        kfree(port);
+        return result;
+    }
+    if (requested_name != MACH_PORT_NULL) {
+        *name = requested_name;
+    }
+    *object = &port->io;
+    return KERN_SUCCESS;
+}
 
 kern_return_t ipc_object_alloc(ipc_space_t *space, ipc_object_type_t type, mach_port_type_t ptype,
                                mach_port_urefs_t refs, mach_port_name_t *name,
                                ipc_object_t **object) {
 
     /**
+     *
      * Implementation note:
      *
      * ************************************************************************************
@@ -36,28 +99,13 @@ kern_return_t ipc_object_alloc(ipc_space_t *space, ipc_object_type_t type, mach_
      * - The function may fail, in which case no ownership is transferred and the caller must handle
      * the error.
      *
-     * Psuedocode:
-     *
-     * kern_return_t ipc_object_alloc(...) {
-     *      validate arguments and capabilities
-     *      clear outputs
-     *
-     *      allocate the object and set up initial capability
-     *      pepare any storage needed for the entry
-     *      lock space
-     *          install capability metadata and object pointer
-     *          establish the entry in the space and its linkage to the object
-     *      unlock space
-     *
-     *      return success or failure, with object pointer set on success
-     *      on failure:
-     *          release all private resources allocated for the object
-     *          set the object pointer to NULL
-     *          return an error code
-     * }
      */
 
-    STUB("ipc_object_alloc: not implemented");
+    if (name == NULL) {
+        return KERN_INVALID_ARGUMENT;
+    }
+    *name = MACH_PORT_NULL;
+    return ipc_object_allocate_name(space, type, ptype, refs, MACH_PORT_NULL, name, object);
 }
 
 kern_return_t ipc_object_alloc_name(ipc_space_t *space, ipc_object_type_t type,
@@ -83,11 +131,15 @@ kern_return_t ipc_object_alloc_name(ipc_space_t *space, ipc_object_type_t type,
      * the error.
      */
 
-    STUB("ipc_object_alloc_name: not implemented");
+    if (name == MACH_PORT_NULL || object == NULL) {
+        return KERN_INVALID_ARGUMENT;
+    }
+    *object = NULL;
+    mach_port_name_t installed_name;
+    return ipc_object_allocate_name(space, type, ptype, refs, name, &installed_name, object);
 }
 
 void ipc_object_destroy(ipc_object_t *object, mach_msg_type_name_t msg_type) {
-
     /**
      * Implementation note:
      *
@@ -111,35 +163,38 @@ void ipc_object_destroy(ipc_object_t *object, mach_msg_type_name_t msg_type) {
      *
      */
 
-    // Check for valid object before attempting to destroy it.
+    (void)msg_type;
+    FIXME("ipc_object_destroy: not handle msg_type");
+
     if (!IO_VALID(object)) {
         klog(KLOG_ERROR, "ipc: ipc_object_destroy: invalid object\n");
         return;
     }
-
-    STUB_NORETURN("ipc_object_destroy: not implemented, STUB kfree(object)");
-
-    kfree(object);
+    ipc_object_release(object);
 }
 
 void ipc_object_reference(ipc_object_t *object) {
-    // Check for valid object before attempting to reference it.
+    kern_return_t result = ipc_object_try_reference(object);
+    if (result != KERN_SUCCESS) {
+        klog(KLOG_ERROR, "ipc: ipc_object_reference: cannot retain object (%d)\n", result);
+    }
+}
+
+kern_return_t ipc_object_try_reference(ipc_object_t *object) {
     if (!IO_VALID(object)) {
-        klog(KLOG_ERROR, "ipc: ipc_object_reference: invalid object\n");
-        return;
+        return KERN_INVALID_ARGUMENT;
     }
 
     io_lock(object);
 
-    // Check for invalid reference count before incrementing
-    if (object->ref_count == UINT32_MAX) {
+    if (object->ref_count == UINT32_MAX || !io_active(object)) {
         io_unlock(object);
-        klog(KLOG_ERROR, "ipc: ipc_object_reference: invalid reference count\n");
-        return;
+        return KERN_ABORTED;
     }
 
     io_reference(object);
     io_unlock(object);
+    return KERN_SUCCESS;
 }
 
 void ipc_object_release(ipc_object_t *object) {
@@ -163,6 +218,10 @@ void ipc_object_release(ipc_object_t *object) {
     io_unlock(object);
 
     if (last_reference) {
-        kfree(object);
+        if (io_otype(object) == IO_TYPE_PORT) {
+            ipc_port_dealloc((ipc_port_t *)object);
+        } else {
+            kfree(object);
+        }
     }
 }

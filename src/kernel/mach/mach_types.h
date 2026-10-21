@@ -29,19 +29,4 @@ typedef natural_t mach_port_urefs_t;
 #define MACH_PORT_TYPE_PORT_SET MACH_PORT_TYPE(MACH_PORT_RIGHT_PORT_SET)
 #define MACH_PORT_TYPE_DEAD_NAME MACH_PORT_TYPE(MACH_PORT_RIGHT_DEAD_NAME)
 
-/**
- * STUB out functions we have yet to implement.
- */
-#define STUB(x)                                                                                    \
-    do {                                                                                           \
-        klog(KLOG_WARN, " STUB: " x);                                                              \
-        return KERN_SUCCESS;                                                                       \
-    } while (0)
-
-#define STUB_NORETURN(x)                                                                           \
-    do {                                                                                           \
-        klog(KLOG_WARN, " STUB: " x);                                                              \
-        return;                                                                                    \
-    } while (0)
-
 #endif // CELESTEOS_MACH_TYPES_H

@@ -22,7 +22,7 @@
 typedef struct mach_port_entry {
     mach_port_name_t name;   /* the name of the port */
     mach_port_right_t right; /* the associated port right (e.g., send, receive) */
-    ipc_object_t *object; /* port or port-set object; not an embedded object */
+    ipc_object_t *object;    /* port or port-set object; not an embedded object */
 } mach_port_entry_t;
 
 /**
@@ -39,6 +39,7 @@ typedef struct mach_port_table {
 typedef struct ipc_space {
     spinlock_t lock;
     mach_port_table_t table;
+    mach_port_name_t next_name;
 } ipc_space_t;
 
 /**
@@ -62,12 +63,24 @@ kern_return_t ipc_space_insert(ipc_space_t *space, ipc_object_t *object, mach_po
                                mach_port_right_t right);
 
 /**
+ * Insert an object under the next available name in the space.
+ *
+ * Returns KERN_SUCCESS if the object was successfully inserted.
+ */
+kern_return_t ipc_space_insert_anon(ipc_space_t *space, ipc_object_t *object,
+                                    mach_port_right_t right, mach_port_name_t *out_name);
+
+/**
  * Look up an entry in the given IPC space by its name.
  *
- * Returns KERN_SUCCESS if the entry was found, KERN_FAILURE otherwise.
- * If found, the associated object and right are stored in the output parameters.
+ * The returned object is retained; callers must release it with ipc_object_release.
  */
 kern_return_t ipc_space_lookup(ipc_space_t *space, mach_port_name_t name, ipc_object_t **out_object,
                                mach_port_right_t *out_right);
+
+/**
+ * Remove a name from the space and release its reference to the object.
+ */
+kern_return_t ipc_space_remove(ipc_space_t *space, mach_port_name_t name);
 
 #endif // CELESTEOS_IPC_SPACE_H

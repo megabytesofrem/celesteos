@@ -8,6 +8,51 @@ extern int sys_fork(const struct sys_fork_args *args) __attribute__((weak));
 extern intptr_t sys_read(const struct sys_read_args *args) __attribute__((weak));
 extern intptr_t sys_write(const struct sys_write_args *args) __attribute__((weak));
 
+static int64_t dispatch_mach_port_deallocate_trap(const stack_frame_t *frame,
+                                 const uint64_t *stack_args) {
+    (void)stack_args;
+    const struct sys_mach_port_deallocate_trap_args args = {
+        .name = (mach_port_name_t)frame->rdi,
+    };
+    return (int64_t)mach_port_deallocate_trap(args.name);
+}
+
+static int64_t dispatch_mach_port_make_send_trap(const stack_frame_t *frame,
+                                 const uint64_t *stack_args) {
+    (void)stack_args;
+    const struct sys_mach_port_make_send_trap_args args = {
+        .receive_name = (mach_port_name_t)frame->rdi,
+        .send_name = (mach_port_name_t *)frame->rsi,
+    };
+    return (int64_t)mach_port_make_send_trap(args.receive_name, args.send_name);
+}
+
+static int64_t dispatch_mach_port_allocate_trap(const stack_frame_t *frame,
+                                 const uint64_t *stack_args) {
+    (void)stack_args;
+    const struct sys_mach_port_allocate_trap_args args = {
+        .right = (mach_port_right_t)frame->rdi,
+        .name = (mach_port_name_t *)frame->rsi,
+    };
+    return (int64_t)mach_port_allocate_trap(args.right, args.name);
+}
+
+static int64_t dispatch_mach_msg_overwrite_trap(const stack_frame_t *frame,
+                                 const uint64_t *stack_args) {
+    const struct sys_mach_msg_overwrite_trap_args args = {
+        .msg = (mach_msg_header_t *)frame->rdi,
+        .option = (mach_msg_option_t)frame->rsi,
+        .send_size = (mach_msg_size_t)frame->rdx,
+        .rcv_size = (mach_msg_size_t)frame->r10,
+        .rcv_name = (mach_port_name_t)frame->r8,
+        .timeout = (mach_msg_timeout_t)frame->r9,
+        .notify = (mach_port_name_t)stack_args[0],
+        .rcv_msg = (mach_msg_header_t *)stack_args[1],
+        .rcv_limit = (mach_msg_size_t)stack_args[2],
+    };
+    return (int64_t)mach_msg_overwrite_trap(args.msg, args.option, args.send_size, args.rcv_size, args.rcv_name, args.timeout, args.notify, args.rcv_msg, args.rcv_limit);
+}
+
 static int64_t dispatch_mach_msg_trap(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
     const struct sys_mach_msg_trap_args args = {
@@ -109,6 +154,10 @@ static int64_t dispatch_write(const stack_frame_t *frame,
 }
 
 const sys_dispatch_entry_t sys_dispatch_table[] = {
+    { -35, 1, dispatch_mach_port_deallocate_trap },
+    { -34, 2, dispatch_mach_port_make_send_trap },
+    { -33, 2, dispatch_mach_port_allocate_trap },
+    { -32, 9, dispatch_mach_msg_overwrite_trap },
     { -31, 7, dispatch_mach_msg_trap },
     { -29, 0, dispatch_host_self_trap },
     { -28, 0, dispatch_task_self_trap },
@@ -132,7 +181,7 @@ int64_t sys_dispatch(int64_t number, const stack_frame_t *frame) {
             klog(KLOG_ERROR, "sys_dispatch: missing frame for %s\n", syscall_name(number));
             return -1;
         }
-        uint64_t stack_args[1] = {0};
+        uint64_t stack_args[3] = {0};
         if (needed != 0 &&
             (frame->rsp > UINT64_MAX - sizeof(uint64_t) ||
              pmap_copy_from_user(stack_args, frame->rsp + sizeof(uint64_t),

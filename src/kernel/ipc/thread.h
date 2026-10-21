@@ -54,6 +54,7 @@ typedef struct thread {
     /* Parent task */
     task_t *parent_task; /* pointer to the parent task */
     struct thread *next; /* pointer to the next thread in the task's thread list */
+    mach_port_name_t itk_self;
 
     /* IPC state*/
     ipc_port_t *waiting_on_port; /* the port the thread is waiting on */
@@ -78,7 +79,7 @@ static inline task_t *current_task(void) {
  * Allocates thread_t, initializes its context and kernel stack, and links it to the parent task.
  */
 kern_return_t thread_create(task_t *parent, uintptr_t entry_point, uintptr_t arg,
-                            ipc_port_t *out_port);
+                            thread_t **out_thread);
 
 /**
  * Destroy a thread and free its resources.
@@ -91,13 +92,12 @@ kern_return_t thread_destroy(thread_t *thread);
 /**
  * Block a thread on a specific IPC port.
  *
- * Sets the thread's waiting_on_port to the specified port and changes its state to THREAD_WAITING.
+ * Returns KERN_ABORTED until a context-switch scheduler can actually park the thread.
  */
 kern_return_t thread_blockon(thread_t *thread, ipc_port_t *port);
 
 /**
- * Unblock a thread that was previously waiting on an IPC port, and places it back into the run
- * queue.
+ * Returns KERN_ABORTED until a context-switch scheduler can enqueue the thread.
  */
 kern_return_t thread_unblock(thread_t *thread, int32_t result);
 

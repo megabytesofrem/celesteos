@@ -240,3 +240,47 @@ int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
     }
     return 0;
 }
+
+int pmap_copy_to_user(uintptr_t destination, const void *source, size_t size) {
+    const uintptr_t user_limit = UINT64_C(1) << 47;
+    if (destination >= user_limit || size > user_limit - destination ||
+        (size != 0 && source == NULL)) {
+        return -1;
+    }
+
+    uintptr_t active_cr3;
+    __asm__ volatile("mov %%cr3, %0" : "=r"(active_cr3));
+    page_table_t *root =
+        (page_table_t *)((active_cr3 & UINT64_C(0x000FFFFFFFFFF000)) + higher_half_base);
+    const unsigned char *input = source;
+
+    while (size != 0) {
+        page_table_t *table = root;
+        uint64_t physical = 0;
+        for (unsigned int shift = 39; ; shift -= 9) {
+            const page_table_entry_t *entry = &table->entries[(destination >> shift) & 0x1FF];
+            if (!pte_is_present(entry) || !pte_is_user(entry) || !pte_is_writable(entry)) {
+                return -1;
+            }
+            if (shift == 12 || ((shift == 30 || shift == 21) && pte_is_huge_page(entry))) {
+                uintptr_t offset_mask = (UINT64_C(1) << shift) - 1;
+                physical = (pte_get_address(entry) & ~offset_mask) | (destination & offset_mask);
+                break;
+            }
+            if (shift == 39 && pte_is_huge_page(entry)) {
+                return -1;
+            }
+            table = (page_table_t *)(pte_get_address(entry) + higher_half_base);
+        }
+
+        size_t chunk = PMAP_PAGE_SIZE - (destination & (PMAP_PAGE_SIZE - 1));
+        if (chunk > size) {
+            chunk = size;
+        }
+        memcpy((void *)(physical + higher_half_base), input, chunk);
+        input += chunk;
+        destination += chunk;
+        size -= chunk;
+    }
+    return 0;
+}

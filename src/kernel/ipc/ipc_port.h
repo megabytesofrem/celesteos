@@ -14,8 +14,9 @@
 #include <ipc/ipc_object.h>
 #include <kernel/spinlock.h>
 #include <mach/kern_return.h>
-#include <mach/mach_port.h>
 #include <mach/mach_types.h>
+
+#include <kernel/stub.h>
 
 typedef struct thread thread_t;
 typedef struct ipc_space ipc_space_t;

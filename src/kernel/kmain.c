@@ -5,8 +5,9 @@
 
 #include <kernel/drivers/framebuffer.h>
 #include <kernel/initrd.h>
-#include <kernel/kmalloc.h>
 #include <kernel/ipc/loader.h>
+#include <kernel/ipc/task.h>
+#include <kernel/kmalloc.h>
 #include <kernel/memory/pmap.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vm_map.h>
@@ -186,35 +187,6 @@ void load_initrd(uint64_t hhdm_base, page_table_t *user_pml4, struct macho_info 
              (void *)launchd_info.entrypoint, (void *)launchd_info.stack_pointer);
         halt_forever();
     }
-
-    /* DEBUG: bsd_trap */
-    // initrd_file_t bsd_trap_file;
-    // if (initrd_read_file(&initrd_fs, "/usr/bin/bsd_trap", &bsd_trap_file.data,
-    //                      &bsd_trap_file.size) != KERN_SUCCESS) {
-    //     klog(KLOG_ERROR, "kmain: Failed to read /usr/bin/bsd_trap from initrd!\n");
-    //     halt_forever();
-    // }
-
-    // klog(KLOG_INFO, "kmain: bsd_trap file found at 0x%p (size: %u bytes)\n", bsd_trap_file.data,
-    //      bsd_trap_file.size);
-
-    // /* Load the Mach-O binary for bsd_trap from initrd */
-    // struct macho_info bsd_trap_info;
-    // if (macho_load(bsd_trap_file.data, user_pml4, hhdm_base, &bsd_trap_info) != KERN_SUCCESS) {
-    //     klog(KLOG_ERROR, "kmain: Failed to load /usr/bin/bsd_trap Mach-O binary!\n");
-    //     halt_forever();
-    // }
-
-    // klog(KLOG_INFO, "kmain: /usr/bin/bsd_trap loaded successfully. Entry point at 0x%p\n",
-    //      (void *)bsd_trap_info.entrypoint);
-
-    // // Jump to the entry point of bsd_trap
-    // if (tss_jump_to_usermode(bsd_trap_info.entrypoint, bsd_trap_info.stack_pointer, user_pml4,
-    //                          hhdm_base) != 0) {
-    //     klog(KLOG_ERROR, "kmain: Failed privilege drop to user mode (rip=0x%p, rsp=0x%p)!\n",
-    //          (void *)bsd_trap_info.entrypoint, (void *)bsd_trap_info.stack_pointer);
-    //     halt_forever();
-    // }
 }
 
 /**
@@ -281,6 +253,11 @@ void kmain(void) {
     volatile uint64_t *heap_test = (volatile uint64_t *)kmalloc(sizeof(uint64_t));
     if (heap_test == NULL) {
         klog(KLOG_ERROR, "kmain: Failed to allocate from the heap!\n");
+        halt_forever();
+    }
+
+    if (task_initialize_kernel() != KERN_SUCCESS) {
+        klog(KLOG_ERROR, "kmain: Failed to initialize the bootstrap IPC task!\n");
         halt_forever();
     }
 

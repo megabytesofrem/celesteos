@@ -48,7 +48,12 @@ typedef struct task {
 /**
  * Create a new Mach task (with an optional parent task).
  */
-kern_return_t task_create(task_t *parent_task);
+kern_return_t task_create(task_t *parent_task, task_t **out_task);
+
+/**
+ * Initialize the bootstrap task and its initial running thread before entering user mode.
+ */
+kern_return_t task_initialize_kernel(void);
 
 /**
  * Destroy a Mach task, freeing its memory map and all associated resources.

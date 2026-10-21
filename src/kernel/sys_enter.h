@@ -7,6 +7,32 @@
 #include <ipc/mach_message.h>
 #include <ipc/mach_traps.h>
 
+struct sys_mach_port_deallocate_trap_args {
+    mach_port_name_t name;
+};
+
+struct sys_mach_port_make_send_trap_args {
+    mach_port_name_t receive_name;
+    mach_port_name_t * send_name;
+};
+
+struct sys_mach_port_allocate_trap_args {
+    mach_port_right_t right;
+    mach_port_name_t * name;
+};
+
+struct sys_mach_msg_overwrite_trap_args {
+    mach_msg_header_t * msg;
+    mach_msg_option_t option;
+    mach_msg_size_t send_size;
+    mach_msg_size_t rcv_size;
+    mach_port_name_t rcv_name;
+    mach_msg_timeout_t timeout;
+    mach_port_name_t notify;
+    mach_msg_header_t * rcv_msg;
+    mach_msg_size_t rcv_limit;
+};
+
 struct sys_mach_msg_trap_args {
     mach_msg_header_t * msg;
     mach_msg_option_t option;

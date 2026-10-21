@@ -95,6 +95,11 @@ void ipc_object_destroy(ipc_object_t *object, mach_msg_type_name_t msg_type);
 void ipc_object_reference(ipc_object_t *object);
 
 /**
+ * Retain an active object, returning an error if it is inactive or saturated.
+ */
+kern_return_t ipc_object_try_reference(ipc_object_t *object);
+
+/**
  * Decrement the reference count and free the object on its last reference.
  * Type-specific resources must already be detached before the last release.
  */

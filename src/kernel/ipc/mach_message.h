@@ -63,13 +63,20 @@
 /* Return Codes */
 #define MACH_MSG_SUCCESS 0x00000000
 
-typedef struct {
+typedef struct mach_msg_header {
     uint32_t msgh_bits;                /* flags */
     uint32_t msgh_size;                /* total size of the message */
     mach_port_name_t msgh_remote_port; /* destination port right */
     mach_port_name_t msgh_local_port;  /* reply port right */
     uint32_t msgh_id;                  /* message identifier */
 } mach_msg_header_t;
+
+typedef struct mach_kmsg {
+    struct mach_kmsg *next;
+    struct mach_kmsg *prev;
+    mach_msg_header_t *header;
+    uint8_t data[];
+} mach_kmsg_t;
 
 typedef natural_t mach_msg_type_name_t;
 
@@ -106,6 +113,9 @@ typedef natural_t mach_msg_return_t;
 #define MACH_RCV_TOO_LARGE 0x20000004    /* receive: message too large */
 #define MACH_RCV_INTERRUPTED 0x20000005  /* receive: interrupted */
 #define MACH_RCV_PORT_DIED 0x20000006    /* receive: port died */
+#define MACH_SEND_NO_BUFFER 0x10000007   /* send: kernel could not allocate a message buffer */
+#define MACH_SEND_INVALID_RIGHT 0x10000008
+#define MACH_RCV_INVALID_DATA 0x20000007
 
 typedef uint32_t mach_msg_size_t;
 typedef uint32_t mach_msg_option_t;
@@ -147,8 +157,9 @@ mach_msg_return_t mach_msg_send(mach_msg_header_t *msg, mach_msg_option_t option
  * Receive a Mach message.
  *
  * Resolves `rcv_name` in the current task's space, calls `ipc_port_dequeue_kmsg` to dequeue a
- * message from the receive port, and copies the payload into the provided message buffer (or blocks
- * the calling thread until a message is available).
+ * message from the receive port, and copies the payload into the provided user message buffer.
+ * An empty queue returns immediately; blocking receive is unavailable until the kernel has a
+ * context-switch scheduler.
  *
  * @param msg The message header to receive into.
  * @param option The receive options.

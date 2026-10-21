@@ -18,6 +18,7 @@ OUTPUT_FILE="$2"
 # -Wl,-no_pie: Standard fixed virtual memory address layout
 clang --target=x86_64-apple-darwin10 \
     -ffreestanding \
+    -mno-red-zone \
     -nostdlib \
     -fuse-ld=lld \
     -Wl,-e,_start \

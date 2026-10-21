@@ -138,4 +138,10 @@ uintptr_t pmap_get_physical(page_table_t *pml4, uint64_t virt);
  */
 int pmap_copy_from_user(void *destination, uintptr_t source, size_t size);
 
+/**
+ * Copy into writable user memory in the active address space.
+ * Returns -1 if any part of the range is noncanonical, unmapped, or not writable.
+ */
+int pmap_copy_to_user(uintptr_t destination, const void *source, size_t size);
+
 #endif // CELESTEOS_PMAP_H

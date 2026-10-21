@@ -66,6 +66,8 @@ C_SRCS := src/kernel/kmain.c \
           src/kernel/ipc/loader.c \
 	  src/kernel/ipc/mach_message.c \
           src/kernel/ipc/mach_traps.c \
+          src/kernel/ipc/thread.c \
+          src/kernel/ipc/task.c \
           src/kernel/initrd.c \
           src/kernel/task.c
           
@@ -145,10 +147,12 @@ qemu: iso
 # Clean build artifacts
 test-ipc:
 	@mkdir -p $(BUILD_DIR)/tests
-	$(CC) -std=c17 -Wall -Wextra -Werror -Wno-unused-parameter \
-		-Isrc -Isrc/kernel -Isrc/kernel/memory \
+	$(CC) -std=c17 -Wall -Wextra -Werror -Wno-unused-parameter -fno-builtin \
+		-Isrc -Isrc/kernel -Isrc/kernel/memory -Isrc/stdlib \
 		tests/ipc_object_test.c src/kernel/ipc/ipc_object.c \
-		src/kernel/ipc/ipc_port.c -o $(BUILD_DIR)/tests/ipc_object_test
+		src/kernel/ipc/ipc_port.c src/kernel/ipc/ipc_space.c \
+		src/kernel/ipc/mach_message.c src/kernel/ipc/mach_traps.c \
+		-o $(BUILD_DIR)/tests/ipc_object_test
 	$(BUILD_DIR)/tests/ipc_object_test
 
 clean:
