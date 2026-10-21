@@ -62,6 +62,26 @@ kern_return_t ipc_port_enqueue_kmsg(ipc_port_t *port, mach_kmsg_t *kmsg) {
         return KERN_INVALID_ARGUMENT;
     }
 
+    /**
+     * FIXME:
+     *
+     * This code is horribly, horribly unsafe, and violates all manner of thread safety.
+     * It is the definition of "we just want this shit working, YOLO it"
+     *
+     * It has the following *amazing* properties:
+     *
+     * Returning `KERN_SUCCESS` when there is no guarantee the message was enqueued/dequeued
+     * properly.
+     *
+     * Using a spin lock does not account for the case where there is no data in the queue,
+     * potentially leading to a NULL pointer (thanks Gemini)
+     *
+     * The manual doubly linked list management is an absolute coding warcrime, and is very
+     * _very_ easy to fuck up (ask me how I know...)
+     *
+     * The solution is using a wait queue so threads can safely wait for messages to arrive.
+     */
+
     ip_lock(port);
 
     // Enqueue the message to the port's message queue.
@@ -93,6 +113,26 @@ kern_return_t ipc_port_dequeue_kmsg(ipc_port_t *port, mach_kmsg_t **out_kmsg) {
     if (!port || !out_kmsg) {
         return KERN_INVALID_ARGUMENT;
     }
+
+    /**
+     * FIXME:
+     *
+     * This code is horribly, horribly unsafe, and violates all manner of thread safety.
+     * It is the definition of "we just want this shit working, YOLO it"
+     *
+     * It has the following *amazing* properties:
+     *
+     * Returning `KERN_SUCCESS` when there is no guarantee the message was enqueued/dequeued
+     * properly.
+     *
+     * Using a spin lock does not account for the case where there is no data in the queue,
+     * potentially leading to a NULL pointer (thanks Gemini)
+     *
+     * The manual doubly linked list management is an absolute coding warcrime, and is very
+     * _very_ easy to fuck up (ask me how I know...)
+     *
+     * The solution is using a wait queue so threads can safely wait for messages to arrive.
+     */
 
     ip_lock(port);
 
