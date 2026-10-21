@@ -7,20 +7,6 @@
 #include <ipc/mach_message.h>
 #include <ipc/mach_traps.h>
 
-struct sys_mach_port_deallocate_trap_args {
-    mach_port_name_t name;
-};
-
-struct sys_mach_port_make_send_trap_args {
-    mach_port_name_t receive_name;
-    mach_port_name_t * send_name;
-};
-
-struct sys_mach_port_allocate_trap_args {
-    mach_port_right_t right;
-    mach_port_name_t * name;
-};
-
 struct sys_mach_msg_overwrite_trap_args {
     mach_msg_header_t * msg;
     mach_msg_option_t option;
@@ -57,6 +43,20 @@ struct sys_thread_self_trap_args {
 
 struct sys_mach_reply_port_args {
     unsigned char unused;
+};
+
+struct sys_mach_port_make_send_trap_args {
+    mach_port_name_t receive_name;
+    mach_port_name_t * send_name;
+};
+
+struct sys_mach_port_deallocate_trap_args {
+    mach_port_name_t name;
+};
+
+struct sys_mach_port_allocate_trap_args {
+    mach_port_right_t right;
+    mach_port_name_t * name;
 };
 
 struct sys_exit_args {

@@ -2,9 +2,9 @@ typedef unsigned int mach_port_name_t;
 typedef unsigned int mach_msg_size_t;
 
 #define SYS_MACH_MSG_TRAP (-31)
-#define SYS_MACH_PORT_ALLOCATE_TRAP (-33)
-#define SYS_MACH_PORT_MAKE_SEND_TRAP (-34)
-#define SYS_MACH_PORT_DEALLOCATE_TRAP (-35)
+#define SYS_MACH_PORT_ALLOCATE_TRAP (-16)
+#define SYS_MACH_PORT_MAKE_SEND_TRAP (-24)
+#define SYS_MACH_PORT_DEALLOCATE_TRAP (-18)
 
 #define MACH_PORT_RIGHT_RECEIVE 1
 #define MACH_SEND_MSG 1

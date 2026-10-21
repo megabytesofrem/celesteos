@@ -3,12 +3,6 @@
 
 const char *syscall_name(int64_t number) {
     switch (number) {
-    case -35:
-        return "mach_port_deallocate_trap";
-    case -34:
-        return "mach_port_make_send_trap";
-    case -33:
-        return "mach_port_allocate_trap";
     case -32:
         return "mach_msg_overwrite_trap";
     case -31:
@@ -21,6 +15,12 @@ const char *syscall_name(int64_t number) {
         return "thread_self_trap";
     case -26:
         return "mach_reply_port";
+    case -24:
+        return "mach_port_make_send_trap";
+    case -18:
+        return "mach_port_deallocate_trap";
+    case -16:
+        return "mach_port_allocate_trap";
     case 0x2000001:
         return "exit";
     case 0x2000002:
