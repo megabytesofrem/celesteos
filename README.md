@@ -35,6 +35,15 @@ stepi
 Use `stepi` to execute one instruction at a time. Execution remains paused between
 steps; `continue` resumes normal execution.
 
+## Project Structure
+celesteOS is organized into several key directories:
+- `src/kernel`: The core kernel source code (based on Mach 3.0)
+- `src/bsd`: The BSD personality layer atop the kernel, providing traditional Unix-like APIs
+- `src/stdlib`: A barebones stdlib implementation used in the kernel (should probably rename, it is not a userspace libc)
+- `user`: The user-space source code and initrd layout
+- `scripts`: Build and utility scripts for the project
+- `resources`: Contains images and other assets for branding and boot splash
+
 ## Building user-space
 celesteOS relies on a user-space replicating a native Mac OS X filesystem layout.
 ```

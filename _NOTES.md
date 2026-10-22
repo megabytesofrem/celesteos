@@ -6,7 +6,8 @@
 - [x] `kmalloc`/`kfree` functions
 - [x] Spinlock and TSS (Task State Segment)
 - [x] CPUID (CPU Identification)
-- [x] Mach/BSD syscall stubs 
+- [x] Mach/BSD syscall stubs
+- [x] Wired up basic IPC for the kernel (ports, message passing)
 
 ## Useful Links
 - **Apple official kernel documentation**: https://developer.apple.com/documentation/kernel/
