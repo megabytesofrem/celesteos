@@ -8,8 +8,9 @@ celesteOS aims for binary compatibility with Mac OS X 10.6 Snow Leopard because 
 macOS is a moving target with frequent changes, and complex security mechanisms.
 
 ## Building
-celesteOS depends on a cross compiler for `x86_64-elf` and `limine`. Both can built by running `./scripts/build_limine.sh` and
-`./scripts/build_toolchain.sh`. You will need to install the packages for `nasm, qemu, xorriso`.
+celesteOS depends on a cross compiler for `x86_64-elf` and `limine`. Both can built by running `./scripts/build_limine.sh` and `./scripts/build_toolchain.sh`.
+
+You will also need the following packages: `ruby`, `clang`, `nasm`, `qemu`, `xorriso`.
 
 To build celesteOS:
 ```sh
@@ -18,9 +19,6 @@ make all
 # To run in QEMU (requires QEMU in $PATH)
 make qemu
 ```
-
-Kernel builds track C header dependencies automatically. After moving source files,
-update `C_SRCS` in the Makefile so the new paths are compiled into the kernel.
 
 QEMU exposes a remote GDB server on `127.0.0.1:1234` and starts with the CPU paused.
 Connect from another terminal:
@@ -64,4 +62,5 @@ To build the user-space ramdisk, run `scripts/build_initrd.sh`.
 
 All binaries **must** be x86_64 native Mac OS X binaries compiled with `clang` for `x86_64-apple-darwin`. ELF is not supported, so you cannot compile a binary for celesteOS using standard ELF toolchains.
 
-A wrapper script is provided to cross-compile binaries: `scripts/build_macho.sh <source_file> <output_file>`.
+Binaries placed in `user/sources` will be compiled into Mach-O binaries and included in the initrd
+automatically during the build process.

@@ -5,7 +5,7 @@ LD      := ld
 XORRISO := xorriso
 QEMU    := qemu-system-x86_64
 BASH    := bash
-PYTHON  ?= python3
+RUBY    ?= ruby
 
 # Directories
 SRC_DIR   := src
@@ -87,7 +87,7 @@ DEPS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.d,$(C_SRCS))
 LIBGCC := $(shell $(CC) -print-libgcc-file-name)
 
 # Targets
-.PHONY: all iso limine_bootloader qemu clean test-ipc
+.PHONY: all iso limine_bootloader qemu clean test-ipc test-syscalls
 
 all: iso
 
@@ -96,8 +96,8 @@ SYSCALL_GENERATED := src/kernel/sys_enter.h \
                      src/kernel/sys_dispatch.c \
                      src/kernel/sys_names.c
 
-$(SYSCALL_GENERATED) &: scripts/make_syscalls.py src/kernel/syscalls.master
-	$(PYTHON) scripts/make_syscalls.py src/kernel/syscalls.master
+$(SYSCALL_GENERATED) &: scripts/make_syscalls.rb src/kernel/syscalls.master
+	$(RUBY) scripts/make_syscalls.rb src/kernel/syscalls.master
 
 $(BUILD_DIR)/kernel/syscall.o $(BUILD_DIR)/kernel/sys_dispatch.o \
 $(BUILD_DIR)/kernel/sys_names.o: $(SYSCALL_GENERATED)
@@ -154,6 +154,9 @@ test-ipc:
 		src/kernel/ipc/mach_message.c src/kernel/ipc/mach_traps.c \
 		-o $(BUILD_DIR)/tests/ipc_object_test
 	$(BUILD_DIR)/tests/ipc_object_test
+
+test-syscalls:
+	$(RUBY) tests/make_syscalls_test.rb
 
 clean:
 	rm -rf $(BUILD_DIR)

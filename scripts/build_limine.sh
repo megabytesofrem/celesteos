@@ -36,7 +36,8 @@ for file in limine limine-bios.sys limine-bios-cd.bin; do
 done
 
 # Build and stage the initrd where limine.conf expects its module.
-"$BASH" "$ROOT/build_initrd.sh"
+ruby "$ROOT/make_initrd.rb"
+
 ISO_BOOT_DIR="$PROJECT_ROOT/build/iso_root/boot"
 mkdir -p "$ISO_BOOT_DIR"
 cp "$ROOT/build/initrd.tar" "$ISO_BOOT_DIR/initrd.tar"

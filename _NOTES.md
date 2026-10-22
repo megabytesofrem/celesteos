@@ -25,7 +25,7 @@ user/initrd/
 │   ├── LaunchDaemons
 │   └── Preferences
 │       └── SystemConfiguration
-│           └── com.apple.Boot.plist
+│           └── com.celesteOS.Boot.plist
 ├── private
 │   ├── etc
 │   ├── tmp
@@ -50,7 +50,7 @@ user/initrd/
 
 `launchd` is PID 1, and is the first user-space process started by the kernel, responsible for launching and managing other system services and daemons.
 
-`/Library/Preferences` contains user and system preference files, including `SystemConfiguration/com.apple.Boot.plist` which holds boot configuration settings, used by celesteOS later on.
+`/Library/Preferences` contains user and system preference files, including `SystemConfiguration/com.celesteOS.Boot.plist` which holds boot configuration settings, used by celesteOS later on.
 
 
 ## Dumping Mach Traps
