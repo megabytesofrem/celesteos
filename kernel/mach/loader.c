@@ -162,23 +162,25 @@ uint64_t user_stack_allocate(page_table_t *root, uint64_t hhdm_base) {
 kern_return_t macho_load(const uint8_t *data, page_table_t *root, uint64_t hhdm_base,
                          struct macho_info *out_info) {
     *out_info = (struct macho_info){ 0 };
-    const mach_header_64 *header = (const mach_header_64 *)(data);
+    const struct mach_header_64 *header = (const struct mach_header_64 *)(data);
 
     if (header->magic != MH_MAGIC_64 && header->magic != MH_CIGAM_64) {
         klog(KLOG_ERROR, "macho-loader: Invalid Mach-O magic number: 0x%x\n", header->magic);
         return KERN_FAILURE;
     }
 
-    const uint8_t *load_cmd_ptr = data + sizeof(mach_header_64);
+    bool has_lc_main = false;
+
+    const uint8_t *load_cmd_ptr = data + sizeof(struct mach_header_64);
     uint64_t text_vmaddr = 0;
     uint64_t entry_offset = 0;
 
     for (uint32_t i = 0; i < header->ncmds; ++i) {
-        const load_command *lc = (const load_command *)(load_cmd_ptr);
+        const struct load_command *lc = (const struct load_command *)(load_cmd_ptr);
 
         switch (lc->cmd) {
         case LC_SEGMENT_64: {
-            const segment_command_64 *seg = (const segment_command_64 *)(lc);
+            const struct segment_command_64 *seg = (const struct segment_command_64 *)(lc);
 
             // ALWAYS skip __PAGEZERO to avoid zero-page traps or 4GB memory
             // allocations!
@@ -193,13 +195,13 @@ kern_return_t macho_load(const uint8_t *data, page_table_t *root, uint64_t hhdm_
                 text_vmaddr = seg->vmaddr;
             }
 
-            // 1. Allocate physical pages & map into PML4
+            // Allocate physical pages & map into PML4
             if (map_segment(root, seg->vmaddr, seg->vmsize, seg->initprot, hhdm_base) !=
                 KERN_SUCCESS) {
                 return KERN_FAILURE;
             }
 
-            // 2. Copy binary payload into mapped physical memory
+            // Copy binary payload into mapped physical memory
             if (copy_segment_payload(root, seg->vmaddr, data, seg->fileoff, seg->filesize,
                                      hhdm_base) != KERN_SUCCESS) {
                 return KERN_FAILURE;
@@ -207,9 +209,34 @@ kern_return_t macho_load(const uint8_t *data, page_table_t *root, uint64_t hhdm_
 
             break;
         }
+        case LC_LOAD_DYLINKER: {
+            // Map the dynamic linker segment into memory
+            const struct dylinker_command *dyld = (const struct dylinker_command *)(lc);
+            // if (map_segment(root, dyld->vmaddr, dyld->vmsize, dyld->initprot, hhdm_base) !=
+            //     KERN_SUCCESS) {
+            //     return KERN_FAILURE;
+            // }
+            // if (copy_segment_payload(root, dyld->vmaddr, data, dyld->fileoff, dyld->filesize,
+            //                          hhdm_base) != KERN_SUCCESS) {
+            //     return KERN_FAILURE;
+            // }
+            break;
+        }
         case LC_MAIN: {
-            const entry_point_command *ep = (const entry_point_command *)(lc);
+            const struct entry_point_command *ep = (const struct entry_point_command *)(lc);
+            // entryoff is relative to the Mach-O header / __TEXT segment start
             entry_offset = ep->entryoff;
+            has_lc_main = true;
+            break;
+        }
+        case LC_UNIXTHREAD: {
+            // OS X 10.6 legacy thread state entrypoint fallback
+            const uint32_t *thread_state = (const uint32_t *)(load_cmd_ptr + 16);
+            // x86_THREAD_STATE64 RIP field location
+            uint64_t rip = *(const uint64_t *)&thread_state[16];
+            if (!has_lc_main) {
+                out_info->entrypoint = rip;
+            }
             break;
         }
         default:

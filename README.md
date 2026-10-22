@@ -36,13 +36,18 @@ Use `stepi` to execute one instruction at a time. Execution remains paused betwe
 steps; `continue` resumes normal execution.
 
 ## Project Structure
-celesteOS is organized into several key directories:
-- `src/kernel`: The core kernel source code (based on Mach 3.0)
-- `src/bsd`: The BSD personality layer atop the kernel, providing traditional Unix-like APIs
-- `src/stdlib`: A barebones stdlib implementation used in the kernel (should probably rename, it is not a userspace libc)
-- `user`: The user-space source code and initrd layout
-- `scripts`: Build and utility scripts for the project
-- `resources`: Contains images and other assets for branding and boot splash
+```text
+kernel/            Kernel implementation, architecture code, and ABI interfaces
+lib/stdlib/        Freestanding support library used by the kernel
+include/           Shared external protocol headers
+userspace/
+  programs/        User program C sources
+  rootfs/          Hand-maintained root filesystem skeleton and configuration
+build/             Generated objects, binaries, ISO tree, rootfs, and initrd
+scripts/           Build and utility scripts
+tests/             Host-side tests
+resources/         Images and other project assets
+```
 
 ## Building user-space
 celesteOS relies on a user-space replicating a native Mac OS X filesystem layout.
@@ -67,9 +72,10 @@ celesteOS relies on a user-space replicating a native Mac OS X filesystem layout
 └── Volumes
 ```
 
-To build the user-space ramdisk, run `scripts/build_initrd.sh`. 
+To build the user-space ramdisk, run `make initrd`. The generated filesystem is
+written to `build/rootfs/`, and its archive is `build/initrd.tar`.
 
 All binaries **must** be x86_64 native Mac OS X binaries compiled with `clang` for `x86_64-apple-darwin`. ELF is not supported, so you cannot compile a binary for celesteOS using standard ELF toolchains.
 
-Binaries placed in `user/sources` will be compiled into Mach-O binaries and included in the initrd
-automatically during the build process.
+Binaries placed in `userspace/programs/` will be compiled into Mach-O binaries and
+included in the generated initrd automatically during the build process.

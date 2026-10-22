@@ -1,3 +1,7 @@
+/**
+ * Credit: https://github.com/apple/darwin-xnu/blob/main/EXTERNAL_HEADERS/mach-o/loader.h
+ */
+
 #ifndef CELESTEOS_MACHO_H
 #define CELESTEOS_MACHO_H
 
@@ -22,10 +26,13 @@
 /* Entry point command (LC_MAIN) */
 #define LC_MAIN 0x80000028
 
+/* Legacy thread state load command (LC_UNIXTHREAD) */
+#define LC_UNIXTHREAD 0x5
+
 /**
  * A 64-bit Mach-O header.
  */
-typedef struct __attribute__((packed)) mach_header_64 {
+struct __attribute__((packed)) mach_header_64 {
     uint32_t magic;
     uint32_t cputype;
     uint32_t cpusubtype;
@@ -34,20 +41,20 @@ typedef struct __attribute__((packed)) mach_header_64 {
     uint32_t sizeofcmds;
     uint32_t flags;
     uint32_t reserved;
-} mach_header_64;
+};
 
 /**
  * A Mach-O load command.
  */
-typedef struct __attribute__((packed)) load_command {
+struct load_command {
     uint32_t cmd;
     uint32_t cmdsize;
-} load_command;
+};
 
 /**
  * A 64-bit Mach-O segment command.
  */
-typedef struct __attribute__((packed)) segment_command_64 {
+struct segment_command_64 {
     uint32_t cmd;      /* LC_SEGMENT_64 */
     uint32_t cmdsize;  /* total size of this command */
     char segname[16];  /* segment name, e.g., "__TEXT" */
@@ -59,16 +66,24 @@ typedef struct __attribute__((packed)) segment_command_64 {
     uint32_t initprot; /* initial VM protection */
     uint32_t nsects;   /* number of sections in this segment */
     uint32_t flags;    /* segment flags */
-} segment_command_64;
+};
 
-typedef struct __attribute__((packed)) symtab_command {
+/**
+ * A load command (LC_SYMTAB) that specifies the location and size of the symbol
+ * and string tables in the binary.
+ */
+struct symtab_command {
     uint32_t cmd;     /* LC_SYMTAB */
     uint32_t cmdsize; /* total size of this command */
     uint32_t symoff;  /* file offset of the symbol table */
     uint32_t nsyms;   /* number of symbol table entries */
     uint32_t stroff;  /* file offset of the string table */
     uint32_t strsize; /* size of the string table */
-} symtab_command;
+};
+
+union lc_str {
+    uint32_t offset;
+};
 
 struct nlist_64 {
     uint32_t n_strx;  /* index into the string table */
@@ -81,12 +96,37 @@ struct nlist_64 {
 /**
  * A Mach-O entry point command (LC_MAIN).
  */
-typedef struct __attribute__((packed)) entry_point_command {
+struct entry_point_command {
     uint32_t cmd;       /* LC_MAIN */
     uint32_t cmdsize;   /* total size of this command */
     uint64_t entryoff;  /* offset of main() from start of __TEXT segment */
     uint64_t stacksize; /* initial stack size */
-} entry_point_command;
+};
+
+struct dylib {
+    union lc_str name;              /* library name */
+    uint32_t timestamp;             /* timestamp of the library */
+    uint32_t current_version;       /* current version of the library */
+    uint32_t compatibility_version; /* compatibility version of the library */
+};
+
+/**
+ * A family of load commands that specify dynamic libraries to be loaded by the dynamic linker.
+ */
+struct dylib_command {
+    uint32_t cmd;       /* LC_ID_DYLIB, LC_LOAD_DYLIB, LC_LOAD_WEAK_DYLIB, etc */
+    uint32_t cmdsize;   /* total size of this command, includes path string */
+    struct dylib dylib; /* dynamic library information */
+};
+
+/**
+ * A program that uses a dynamic linker, specifying the path to the dynamic linker.
+ */
+struct dylinker_command {
+    uint32_t cmd;      /* LC_LOAD_DYLINKER */
+    uint32_t cmdsize;  /* total size of this command */
+    union lc_str name; /* dynamic linker path string */
+};
 
 /**
  * Contains information about a loaded Mach-O binary, including its entry point,

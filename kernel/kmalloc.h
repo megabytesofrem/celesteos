@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "pmap.h"
-#include "vm_map.h"
+#include "memory/pmap.h"
+#include "memory/vm_map.h"
 
 typedef struct BlockHeader {
     size_t size;

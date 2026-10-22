@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "../../limine.h"
+#include <limine.h>
 
 #define PMM_PAGE_SIZE 0x1000 /* 4KiB */
 

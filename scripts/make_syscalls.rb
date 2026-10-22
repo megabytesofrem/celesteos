@@ -476,7 +476,7 @@ end
 
 def main
     options = {
-        output_dir: Pathname.new(__dir__).join("../src/kernel").cleanpath,
+        output_dir: Pathname.new(__dir__).join("../kernel").cleanpath,
         include_prefix: ""
     }
     parser = OptionParser.new do |opts|

@@ -18,7 +18,7 @@
 ## Initrd Notes
 The kernel mounts an initramfs (initrd) at boot which replicates a native Mac OS X filesystem structure.
 ```
-user/initrd/
+userspace/rootfs/ (template; generated output is written under build/rootfs/)
 ├── Applications
 ├── Library
 │   ├── Application Support

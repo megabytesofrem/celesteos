@@ -5,9 +5,9 @@
 
 #include <kernel/drivers/framebuffer.h>
 #include <kernel/initrd.h>
-#include <kernel/ipc/loader.h>
 #include <kernel/ipc/task.h>
 #include <kernel/kmalloc.h>
+#include <kernel/mach/loader.h>
 #include <kernel/memory/pmap.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vm_map.h>
@@ -123,7 +123,7 @@ void draw_greeter(void) {
 /**
  * Load the initrd, in-memory file system from a tar archive.
  *
- * The initrd file system is built by scripts/build_initrd.sh.
+ * The initrd filesystem is built with `make initrd`.
  */
 void load_initrd(uint64_t hhdm_base, page_table_t *user_pml4, struct macho_info *out_macho) {
     klog(KLOG_INFO, "kmain: Initializing initrd...\n");

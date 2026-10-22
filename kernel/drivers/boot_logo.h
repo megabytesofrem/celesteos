@@ -1,5 +1,4 @@
-/*  GIMP header image file format (RGB):
- * /home/charlotte/Projects/celesteos/src/kernel/drivers/boot_logo.h  */
+/* GIMP header image file format (RGB). */
 
 static unsigned int logo_width = 426;
 static unsigned int logo_height = 78;
