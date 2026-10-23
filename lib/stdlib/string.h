@@ -54,6 +54,14 @@ char *strncpy(char *dest, const char *src, size_t num);
 void *memset(void *ptr, int value, size_t num);
 
 /**
+ * Compares the first `num` bytes of the memory areas `ptr1` and `ptr2`.
+ *
+ * Returns zero if the memory areas are equal, a negative value if `ptr1` is less than `ptr2`,
+ * and a positive value if `ptr1` is greater than `ptr2`.
+ */
+int memcmp(const void *ptr1, const void *ptr2, size_t num);
+
+/**
  * Copies `num` bytes from memory area `src` to memory area `dest`.
  *
  * Returns a pointer to the memory area `dest`.

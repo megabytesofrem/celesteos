@@ -1,5 +1,5 @@
-#ifndef CELESTEOS_STD_LIBKERNEL_H
-#define CELESTEOS_STD_LIBKERNEL_H
+#ifndef CELESTEOS_STD_KLOG_H
+#define CELESTEOS_STD_KLOG_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -32,4 +32,4 @@ void kputs_color(const char *str, uint32_t fg_color, uint32_t bg_color, bool bol
  */
 void klog(enum log_level level, const char *format, ...);
 
-#endif // CELESTEOS_STD_LIBKERNEL_H
+#endif // CELESTEOS_STD_KLOG_H

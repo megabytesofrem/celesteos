@@ -2,7 +2,7 @@
 #include "sys_enter.h"
 #include <kernel/memory/pmap.h>
 #include <errno.h>
-#include <libkernel.h>
+#include <klog.h>
 
 extern void sys_exit(int rval) __attribute__((weak));
 extern int sys_fork(void) __attribute__((weak));

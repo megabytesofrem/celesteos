@@ -1,6 +1,6 @@
 #include "loader.h"
 
-#include <libkernel.h>
+#include <klog.h>
 #include <stdbool.h>
 #include <string.h>
 

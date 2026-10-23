@@ -67,19 +67,16 @@ def make_initrd
         build_macho(source_file, output_file)
     end
 
+    image_path = File.join(BUILD_DIR, "initrd.ext2")
+    File.open(image_path, "wb") { |image| image.truncate(32 * 1024 * 1024) }
     command = [
-        "tar",
-        "--format=ustar",
-        "-cf",
-        File.join(BUILD_DIR, "initrd.tar"),
-        "-C",
-        ROOTFS_DIR,
-        "."
+        "mke2fs", "-t", "ext2", "-F", "-b", "1024", "-I", "128",
+        "-O", "none", "-d", ROOTFS_DIR, image_path
     ]
     return if system(*command)
 
     status = $?
-    raise "Failed to create initrd tarball (exit status #{status&.exitstatus || "unknown"})"
+    raise "Failed to create ext2 initrd (exit status #{status&.exitstatus || "unknown"})"
 end
 
 make_initrd if $PROGRAM_NAME == __FILE__

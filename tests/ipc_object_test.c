@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +11,7 @@
 #include <kernel/ipc/task.h>
 #include <kernel/ipc/thread.h>
 #include <kernel/memory/pmap.h>
-#include <stdlib/libkernel.h>
+#include <klog.h>
 
 thread_t *g_current_thread;
 

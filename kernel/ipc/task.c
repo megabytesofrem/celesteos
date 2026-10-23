@@ -3,7 +3,7 @@
 #include <ipc/ipc_port.h>
 #include <ipc/thread.h>
 #include <kernel/kmalloc.h>
-#include <libkernel.h>
+#include <klog.h>
 #include <string.h>
 
 task_t kernel_task;

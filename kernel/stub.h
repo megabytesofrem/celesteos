@@ -1,7 +1,7 @@
 #ifndef CELESTEOS_STUB_H
 #define CELESTEOS_STUB_H
 
-#include <libkernel.h>
+#include <klog.h>
 
 /* Mark a function as unimplemented */
 #define UNIMPLEMENTED                                                                              \

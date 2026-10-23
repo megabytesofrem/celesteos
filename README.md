@@ -10,7 +10,8 @@ macOS is a moving target with frequent changes, and complex security mechanisms.
 ## Building
 celesteOS depends on a cross compiler for `x86_64-elf` and `limine`. Both can built by running `./scripts/build_limine.sh` and `./scripts/build_toolchain.sh`.
 
-You will also need the following packages: `ruby`, `clang`, `nasm`, `qemu`, `xorriso`.
+You will also need the following packages: `ruby`, `clang`, `nasm`, `qemu`,
+`xorriso`, and `e2fsprogs` (for `mke2fs`).
 
 To build celesteOS:
 ```sh
@@ -73,7 +74,38 @@ celesteOS relies on a user-space replicating a native Mac OS X filesystem layout
 ```
 
 To build the user-space ramdisk, run `make initrd`. The generated filesystem is
-written to `build/rootfs/`, and its archive is `build/initrd.tar`.
+staged in `build/rootfs/`, and the resulting 32 MiB ext2 image is
+`build/initrd.ext2`. `make iso` builds and includes this image automatically.
+Limine loads it into memory as the module identified by `ext2-initrd`; no disk
+driver or QEMU `-drive` option is needed.
+
+The kernel retains the module as the ext2 backing image and performs baseline
+superblock/geometry checks. It resolves `/usr/libexec/launchd`, reads its contents,
+loads its Mach-O segments into a user address space, and enters ring 3.
+The ext2 reader currently supports direct blocks and sparse holes only;
+files or directories requiring indirect blocks are rejected. Full metadata
+validation and general-purpose filesystem support remain unfinished.
+
+### Create an ext2 image from a directory
+
+Given an existing directory containing the desired filesystem tree:
+
+```sh
+mkdir -p build
+# Creates/overwrites this disposable image; never substitute a real disk device.
+truncate -s 32M build/custom.ext2
+mke2fs -t ext2 -F -b 1024 -I 128 -O none \
+    -d /absolute/path/to/rootfs build/custom.ext2
+
+# Boot this image instead of rebuilding the default userspace image.
+make qemu INITRD_IMAGE=build/custom.ext2
+```
+
+Use a different output filename for an image you want to keep: image creation
+overwrites that file. Increase the size if the directory does not fit. The image
+contains a filesystem directly, with no partition table. These explicit options
+match the baseline format currently accepted by the kernel. A warning about
+128-byte inode timestamps is expected from newer e2fsprogs.
 
 All binaries **must** be x86_64 native Mac OS X binaries compiled with `clang` for `x86_64-apple-darwin`. ELF is not supported, so you cannot compile a binary for celesteOS using standard ELF toolchains.
 

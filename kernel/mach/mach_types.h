@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <stdlib/libkernel.h>
+#include <klog.h>
 
 typedef uint32_t natural_t;
 

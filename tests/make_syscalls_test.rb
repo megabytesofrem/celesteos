@@ -35,9 +35,9 @@ Dir.mktmpdir("celesteos-syscalls-") do |directory|
     File.write(harness, <<~C)
         #include "sys_enter.h"
         #include <kernel/memory/pmap.h>
-        #include <libkernel.h>
         #include <assert.h>
         #include <string.h>
+        #include <klog.h>
 
         static int exit_status;
         static uintptr_t expected_source;

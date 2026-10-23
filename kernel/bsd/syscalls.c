@@ -1,7 +1,7 @@
 #include <kernel/memory/pmap.h>
 #include <kernel/stub.h>
 #include <kernel/sys_enter.h>
-#include <libkernel.h>
+#include <klog.h>
 
 #include <errno.h>
 #include <stdint.h>

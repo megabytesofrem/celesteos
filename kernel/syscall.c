@@ -4,7 +4,7 @@
 #include <kernel/sys_dispatch.h>
 
 #include <errno.h>
-#include <libkernel.h>
+#include <klog.h>
 
 int syscall_init(uintptr_t kernel_stack_top) {
     if (kernel_stack_top == 0) {

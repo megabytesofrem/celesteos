@@ -2,7 +2,7 @@
 
 #include <kernel/kmalloc.h>
 #include <kernel/memory/pmm.h>
-#include <libkernel.h>
+#include <klog.h>
 
 vm_map_t *kernel_vm_map;
 

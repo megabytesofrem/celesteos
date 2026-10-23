@@ -4,7 +4,7 @@
 #include "pic.h"
 #include "ports.h"
 
-#include <libkernel.h>
+#include <klog.h>
 
 /* Macro to print the value of a CPU register */
 #ifndef PRINT_REGISTER
@@ -127,7 +127,9 @@ void isr_install(void) {
     return;
 }
 
-void irq_handler(struct cpu_registers *regs) { pic_send_eoi((uint8_t)(regs->int_no - 32)); }
+void irq_handler(struct cpu_registers *regs) {
+    pic_send_eoi((uint8_t)(regs->int_no - 32));
+}
 
 void isr_handler(struct cpu_registers *regs) {
     const char *message = regs->int_no < sizeof(exception_messages) / sizeof(exception_messages[0])

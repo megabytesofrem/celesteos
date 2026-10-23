@@ -1,7 +1,7 @@
 #include "kmalloc.h"
 
 #include <errno.h>
-#include <libkernel.h>
+#include <klog.h>
 #include <stdint.h>
 
 /* Start address of the heap (linked list of memory blocks) */

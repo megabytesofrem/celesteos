@@ -1,10 +1,10 @@
 #include <kernel/cpuid.h>
+#include <kernel/ext2.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/isr.h>
 
-#include <kernel/drivers/framebuffer.h>
-#include <kernel/initrd.h>
+#include <kernel/fb.h>
 #include <kernel/ipc/task.h>
 #include <kernel/kmalloc.h>
 #include <kernel/mach/loader.h>
@@ -16,10 +16,11 @@
 #include <kernel/syscall.h>
 #include <kernel/task.h>
 
-#include <libkernel.h>
+#include <klog.h>
 #include <limine.h>
 
 #include <stdint.h>
+#include <string.h>
 
 // Boot logo
 #include <boot_logo.h>
@@ -120,71 +121,96 @@ void draw_greeter(void) {
                                logo_height);
 }
 
+static ext2_fs_t initrd_fs;
+
 /**
- * Load the initrd, in-memory file system from a tar archive.
- *
- * The initrd filesystem is built with `make initrd`.
+ * Load the initial ext2 ramdisk (initrd) early in the boot process to
+ * bootstrap userspace `launchd` (PID 1).
  */
-void load_initrd(uint64_t hhdm_base, page_table_t *user_pml4, struct macho_info *out_macho) {
+static void load_initrd(uint64_t hhdm_base) {
     klog(KLOG_INFO, "kmain: Initializing initrd...\n");
-    if (module_request.response == NULL || module_request.response->module_count < 1) {
+    if (module_request.response == NULL || module_request.response->modules == NULL) {
         klog(KLOG_ERROR, "kmain: No initrd modules found!\n");
         halt_forever();
     }
 
-    struct limine_file *initrd_module = module_request.response->modules[0];
-    klog(KLOG_INFO, "kmain: initrd module found at 0x%p (size: %u bytes)\n", initrd_module->address,
-         initrd_module->size);
-
-    initrd_tar_archive_t initrd_tar = { .base = initrd_module->address,
-                                        .size = initrd_module->size };
-
-    // Construct an initrd ram filesystem
-    struct initrd_filesystem initrd_fs;
-    if (initrd_init_fs(&initrd_fs, NULL, 0) != KERN_SUCCESS) {
-        klog(KLOG_ERROR, "kmain: Failed to initialize initrd filesystem!\n");
+    struct limine_file *initrd_module = NULL;
+    for (uint64_t i = 0; i < module_request.response->module_count; i++) {
+        struct limine_file *module = module_request.response->modules[i];
+        if (module != NULL && module->string != NULL &&
+            strcmp(module->string, "ext2-initrd") == 0) {
+            if (initrd_module != NULL) {
+                klog(KLOG_ERROR, "kmain: Duplicate ext2-initrd modules\n");
+                halt_forever();
+            }
+            initrd_module = module;
+        }
+    }
+    if (initrd_module == NULL || initrd_module->address == NULL || initrd_module->size > SIZE_MAX) {
+        klog(KLOG_ERROR, "kmain: Missing or invalid ext2-initrd module\n");
         halt_forever();
     }
 
-    if (initrd_load_tar(&initrd_fs, &initrd_tar) != KERN_SUCCESS) {
-        klog(KLOG_ERROR, "kmain: Failed to load initrd tar archive!\n");
+    if (ext2_mount_image(&initrd_fs, initrd_module->address, (size_t)initrd_module->size) != 0) {
+        klog(KLOG_ERROR, "kmain: ext2 initrd mount failed!\n");
+        halt_forever();
+    }
+    klog(KLOG_INFO, "kmain: ext2 initrd ready (block size %u, groups %u)\n", initrd_fs.block_size,
+         initrd_fs.group_count);
+
+    // Locate /usr/libexec/launchd
+    uint32_t launchd_inode = ext2_lookup_path(&initrd_fs, "/usr/libexec/launchd");
+    if (launchd_inode == 0) {
+        klog(KLOG_ERROR, "kmain: Failed to locate /usr/libexec/launchd in initrd!\n");
         halt_forever();
     }
 
-    klog(KLOG_INFO, "kmain: initrd filesystem loaded successfully.\n");
-
-    initrd_file_t launchd_file;
-    if (initrd_read_file(&initrd_fs, "/usr/libexec/launchd", &launchd_file.data,
-                         &launchd_file.size) != KERN_SUCCESS) {
-        klog(KLOG_ERROR, "kmain: Failed to read /usr/libexec/launchd from initrd!\n");
+    // Load the launchd inode
+    ext2_inode_t launchd;
+    if (ext2_read_inode(&initrd_fs, launchd_inode, &launchd) != 0) {
+        klog(KLOG_ERROR, "kmain: Failed to read /usr/libexec/launchd inode!\n");
         halt_forever();
     }
 
-    klog(KLOG_INFO, "kmain: launchd file found at 0x%p (size: %u bytes)\n", launchd_file.data,
-         launchd_file.size);
+    if ((launchd.mode & EXT2_INODE_TYPE_MASK) != EXT2_INODE_REGULAR ||
+        launchd.size < sizeof(struct mach_header_64)) {
+        klog(KLOG_ERROR, "kmain: launchd is not a valid regular executable file\n");
+        halt_forever();
+    }
 
-    /* Load the Mach-O binary for launchd from initrd */
+    // Allocate a buffer to hold the launchd file contents
+    uint8_t *launchd_data = kmalloc(launchd.size);
+    if (launchd_data == NULL) {
+        halt_forever();
+    }
+
+    // Read the launchd file contents into memory
+    if (ext2_read_file(&initrd_fs, &launchd, launchd_data, launchd.size) != 0) {
+        kfree(launchd_data);
+        klog(KLOG_ERROR, "kmain: Failed to read launchd contents\n");
+        halt_forever();
+    }
+    page_table_t *user_pml4 = pmap_create_user_pml4(hhdm_base);
+    if (user_pml4 == NULL) {
+        kfree(launchd_data);
+        klog(KLOG_ERROR, "kmain: Failed to create launchd address space\n");
+        halt_forever();
+    }
+
+    // Load the Mach-O image into the user address space
     struct macho_info launchd_info;
-    if (macho_load(launchd_file.data, user_pml4, hhdm_base, &launchd_info) != KERN_SUCCESS) {
-        klog(KLOG_ERROR, "kmain: Failed to load /usr/libexec/launchd Mach-O binary!\n");
+    kern_return_t result = macho_load(launchd_data, user_pml4, hhdm_base, &launchd_info);
+    kfree(launchd_data);
+    if (result != KERN_SUCCESS) {
+        klog(KLOG_ERROR, "kmain: Failed to load launchd Mach-O image (%d)\n", result);
         halt_forever();
     }
+    klog(KLOG_INFO, "kmain: Launching launchd at 0x%p\n", (void *)launchd_info.entrypoint);
 
-    klog(KLOG_INFO, "kmain: /usr/libexec/launchd loaded successfully. Entry point at 0x%p\n",
-         (void *)launchd_info.entrypoint);
-
-    klog(KLOG_INFO, "kmain: Launching /usr/libexec/launchd at entry point 0x%p\n",
-         (void *)launchd_info.entrypoint);
-
-    if (out_macho != NULL) {
-        *out_macho = launchd_info;
-    }
-
-    // Jump to the entry point of launchd
+    // Ring 3 transition: jump to user mode with the loaded launchd image
     if (tss_jump_to_usermode(launchd_info.entrypoint, launchd_info.stack_pointer, user_pml4,
                              hhdm_base) != 0) {
-        klog(KLOG_ERROR, "kmain: Failed privilege drop to user mode (rip=0x%p, rsp=0x%p)!\n",
-             (void *)launchd_info.entrypoint, (void *)launchd_info.stack_pointer);
+        klog(KLOG_ERROR, "kmain: Failed to enter launchd user mode\n");
         halt_forever();
     }
 }
@@ -262,10 +288,7 @@ void kmain(void) {
     }
 
     /* INITRD */
-    page_table_t *user_pml4 = pmap_create_user_pml4(hhdm_base);
-
-    struct macho_info launchd_info;
-    load_initrd(hhdm_base, user_pml4, &launchd_info);
+    load_initrd(hhdm_base);
 
     halt_forever();
 }

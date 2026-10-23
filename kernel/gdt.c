@@ -1,7 +1,7 @@
 #include "gdt.h"
 #include "task.h"
 
-#include <libkernel.h>
+#include <klog.h>
 #include <string.h>
 
 static gdt_t gdt;

@@ -1,6 +1,6 @@
-#include "libkernel.h"
+#include "klog.h"
 
-#include <drivers/framebuffer.h>
+#include <kernel/fb.h>
 #include <kernel/ports.h>
 
 #include "string.h"

@@ -325,7 +325,7 @@ def generate_dispatch(calls)
         '#include "sys_enter.h"',
         "#include <kernel/memory/pmap.h>",
         "#include <errno.h>",
-        "#include <libkernel.h>",
+        "#include <klog.h>",
         ""
     ]
 

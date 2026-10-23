@@ -1,4 +1,4 @@
-#include "framebuffer.h"
+#include "fb.h"
 
 #include <string.h>
 
@@ -11,7 +11,9 @@ bool framebuffer_is_initialized(struct framebuffer_state *fb) {
     return (fb != NULL && fb->fb != NULL);
 }
 
-void framebuffer_set_bold(struct framebuffer_state *fb, bool bold) { fb->bold = bold; }
+void framebuffer_set_bold(struct framebuffer_state *fb, bool bold) {
+    fb->bold = bold;
+}
 
 void framebuffer_init(struct framebuffer_state *fb, struct limine_framebuffer *limine_fb) {
     fb->fb = limine_fb;

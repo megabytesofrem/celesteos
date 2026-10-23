@@ -15,6 +15,7 @@ LIMINE_DIR:= $(BUILD_DIR)/limine
 # Output Files
 TARGET_ELF := $(BUILD_DIR)/celesteos.elf
 TARGET_ISO := $(BUILD_DIR)/celesteos.iso
+INITRD_IMAGE ?= $(BUILD_DIR)/initrd.ext2
 
 # Include Directories
 INCLUDES := -I. \
@@ -59,8 +60,9 @@ C_SRCS := kernel/kmain.c \
           kernel/memory/vm_map.c \
           kernel/kmalloc.c \
           lib/stdlib/string.c \
-          lib/stdlib/libkernel.c \
-          kernel/drivers/framebuffer.c \
+          lib/stdlib/klog.c \
+          kernel/fb.c \
+          kernel/ext2.c \
           kernel/ipc/ipc_object.c \
           kernel/ipc/ipc_port.c \
           kernel/ipc/ipc_space.c \
@@ -69,7 +71,6 @@ C_SRCS := kernel/kmain.c \
           kernel/ipc/thread.c \
           kernel/ipc/task.c \
           kernel/mach/loader.c \
-          kernel/initrd.c \
           kernel/bsd/syscalls.c \
           kernel/task.c
           
@@ -101,7 +102,7 @@ $(BUILD_DIR)/kernel/syscall.o $(BUILD_DIR)/kernel/sys_dispatch.o \
 $(BUILD_DIR)/kernel/sys_names.o $(BUILD_DIR)/kernel/bsd/syscalls.o: $(SYSCALL_GENERATED)
 
 # Targets
-.PHONY: all iso limine_bootloader qemu initrd clean test-ipc test-syscalls
+.PHONY: all iso limine_bootloader qemu initrd clean test-ipc test-syscalls test-ext2
 
 all: iso
 
@@ -129,9 +130,10 @@ limine:
 	LIMINE_DIR="$(LIMINE_DIR)" $(BASH) scripts/build_limine.sh
 
 # Build ISO target
-iso: $(TARGET_ELF) limine
+iso: $(TARGET_ELF) limine $(if $(filter $(BUILD_DIR)/initrd.ext2,$(INITRD_IMAGE)),initrd,$(INITRD_IMAGE))
 	@mkdir -p $(ISO_DIR)/boot
 	cp $(TARGET_ELF) $(ISO_DIR)/boot/kernel.elf
+	cp "$(INITRD_IMAGE)" $(ISO_DIR)/boot/initrd.ext2
 	cp $(LIMINE_DIR)/limine-bios.sys $(ISO_DIR)/
 	cp $(LIMINE_DIR)/limine-bios-cd.bin $(ISO_DIR)/
 	cp limine.conf $(ISO_DIR)/
@@ -163,6 +165,12 @@ test-ipc:
 
 test-syscalls:
 	$(RUBY) tests/make_syscalls_test.rb
+
+test-ext2: initrd
+	@mkdir -p $(BUILD_DIR)/tests
+	$(CC) -std=c17 -Wall -Wextra -Werror -I. \
+		tests/ext2_mount_test.c kernel/ext2.c -o $(BUILD_DIR)/tests/ext2_mount_test
+	$(BUILD_DIR)/tests/ext2_mount_test $(BUILD_DIR)/initrd.ext2
 
 clean:
 	rm -rf $(BUILD_DIR)
