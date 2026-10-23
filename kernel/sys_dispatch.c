@@ -3,39 +3,19 @@
 #include <kernel/memory/pmap.h>
 #include <libkernel.h>
 
-extern void sys_exit(const struct sys_exit_args *args) __attribute__((weak));
-extern int sys_fork(const struct sys_fork_args *args) __attribute__((weak));
-extern intptr_t sys_read(const struct sys_read_args *args) __attribute__((weak));
-extern intptr_t sys_write(const struct sys_write_args *args) __attribute__((weak));
+extern void sys_exit(int rval) __attribute__((weak));
+extern int sys_fork(void) __attribute__((weak));
+extern intptr_t sys_read(int fd, void * buf, size_t nbyte) __attribute__((weak));
+extern intptr_t sys_write(int fd, const void * buf, size_t nbyte) __attribute__((weak));
 
 static int64_t dispatch_mach_msg_overwrite_trap(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
-    const struct sys_mach_msg_overwrite_trap_args args = {
-        .msg = (mach_msg_header_t *)frame->rdi,
-        .option = (mach_msg_option_t)frame->rsi,
-        .send_size = (mach_msg_size_t)frame->rdx,
-        .rcv_size = (mach_msg_size_t)frame->r10,
-        .rcv_name = (mach_port_name_t)frame->r8,
-        .timeout = (mach_msg_timeout_t)frame->r9,
-        .notify = (mach_port_name_t)stack_args[0],
-        .rcv_msg = (mach_msg_header_t *)stack_args[1],
-        .rcv_limit = (mach_msg_size_t)stack_args[2],
-    };
-    return (int64_t)mach_msg_overwrite_trap(args.msg, args.option, args.send_size, args.rcv_size, args.rcv_name, args.timeout, args.notify, args.rcv_msg, args.rcv_limit);
+    return (int64_t)mach_msg_overwrite_trap((mach_msg_header_t *)frame->rdi, (mach_msg_option_t)frame->rsi, (mach_msg_size_t)frame->rdx, (mach_msg_size_t)frame->r10, (mach_port_name_t)frame->r8, (mach_msg_timeout_t)frame->r9, (mach_port_name_t)stack_args[0], (mach_msg_header_t *)stack_args[1], (mach_msg_size_t)stack_args[2]);
 }
 
 static int64_t dispatch_mach_msg_trap(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
-    const struct sys_mach_msg_trap_args args = {
-        .msg = (mach_msg_header_t *)frame->rdi,
-        .option = (mach_msg_option_t)frame->rsi,
-        .send_size = (mach_msg_size_t)frame->rdx,
-        .rcv_size = (mach_msg_size_t)frame->r10,
-        .rcv_name = (mach_port_name_t)frame->r8,
-        .timeout = (mach_msg_timeout_t)frame->r9,
-        .notify = (mach_port_name_t)stack_args[0],
-    };
-    return (int64_t)mach_msg_trap(args.msg, args.option, args.send_size, args.rcv_size, args.rcv_name, args.timeout, args.notify);
+    return (int64_t)mach_msg_trap((mach_msg_header_t *)frame->rdi, (mach_msg_option_t)frame->rsi, (mach_msg_size_t)frame->rdx, (mach_msg_size_t)frame->r10, (mach_port_name_t)frame->r8, (mach_msg_timeout_t)frame->r9, (mach_port_name_t)stack_args[0]);
 }
 
 static int64_t dispatch_host_self_trap(const stack_frame_t *frame,
@@ -69,30 +49,19 @@ static int64_t dispatch_mach_reply_port(const stack_frame_t *frame,
 static int64_t dispatch_mach_port_make_send_trap(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
     (void)stack_args;
-    const struct sys_mach_port_make_send_trap_args args = {
-        .receive_name = (mach_port_name_t)frame->rdi,
-        .send_name = (mach_port_name_t *)frame->rsi,
-    };
-    return (int64_t)mach_port_make_send_trap(args.receive_name, args.send_name);
+    return (int64_t)mach_port_make_send_trap((mach_port_name_t)frame->rdi, (mach_port_name_t *)frame->rsi);
 }
 
 static int64_t dispatch_mach_port_deallocate_trap(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
     (void)stack_args;
-    const struct sys_mach_port_deallocate_trap_args args = {
-        .name = (mach_port_name_t)frame->rdi,
-    };
-    return (int64_t)mach_port_deallocate_trap(args.name);
+    return (int64_t)mach_port_deallocate_trap((mach_port_name_t)frame->rdi);
 }
 
 static int64_t dispatch_mach_port_allocate_trap(const stack_frame_t *frame,
                                  const uint64_t *stack_args) {
     (void)stack_args;
-    const struct sys_mach_port_allocate_trap_args args = {
-        .right = (mach_port_right_t)frame->rdi,
-        .name = (mach_port_name_t *)frame->rsi,
-    };
-    return (int64_t)mach_port_allocate_trap(args.right, args.name);
+    return (int64_t)mach_port_allocate_trap((mach_port_right_t)frame->rdi, (mach_port_name_t *)frame->rsi);
 }
 
 static int64_t dispatch_exit(const stack_frame_t *frame,
@@ -102,10 +71,7 @@ static int64_t dispatch_exit(const stack_frame_t *frame,
         return -1;
     }
     (void)stack_args;
-    const struct sys_exit_args args = {
-        .rval = (int)frame->rdi,
-    };
-    sys_exit(&args);
+    sys_exit((int)frame->rdi);
     return 0;
 }
 
@@ -117,10 +83,7 @@ static int64_t dispatch_fork(const stack_frame_t *frame,
     }
     (void)frame;
     (void)stack_args;
-    const struct sys_fork_args args = {
-        .unused = 0,
-    };
-    return (int64_t)sys_fork(&args);
+    return (int64_t)sys_fork();
 }
 
 static int64_t dispatch_read(const stack_frame_t *frame,
@@ -130,12 +93,7 @@ static int64_t dispatch_read(const stack_frame_t *frame,
         return -1;
     }
     (void)stack_args;
-    const struct sys_read_args args = {
-        .fd = (int)frame->rdi,
-        .buf = (void *)frame->rsi,
-        .nbyte = (size_t)frame->rdx,
-    };
-    return (int64_t)sys_read(&args);
+    return (int64_t)sys_read((int)frame->rdi, (void *)frame->rsi, (size_t)frame->rdx);
 }
 
 static int64_t dispatch_write(const stack_frame_t *frame,
@@ -145,12 +103,7 @@ static int64_t dispatch_write(const stack_frame_t *frame,
         return -1;
     }
     (void)stack_args;
-    const struct sys_write_args args = {
-        .fd = (int)frame->rdi,
-        .buf = (const void *)frame->rsi,
-        .nbyte = (size_t)frame->rdx,
-    };
-    return (int64_t)sys_write(&args);
+    return (int64_t)sys_write((int)frame->rdi, (const void *)frame->rsi, (size_t)frame->rdx);
 }
 
 const syscall_table_entry_t mach_trap_table[MACH_TRAP_TABLE_COUNT] = {

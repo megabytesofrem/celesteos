@@ -161,14 +161,23 @@ int pmap_flush_tlb(uint64_t virt) {
     return 0;
 }
 
-page_table_t *pmap_get_pml4(void) { return pml4; }
+page_table_t *pmap_get_pml4(void) {
+    return pml4;
+}
 
-uint64_t pmap_get_pml4_physical(void) { return pml4_phys_addr; }
+uint64_t pmap_get_pml4_physical(void) {
+    return pml4_phys_addr;
+}
 
 uintptr_t pmap_get_physical(page_table_t *pml4, uint64_t virt) {
     if (!pml4) {
         return 0;
     }
+
+    // PML4: shifted by 39 bits to get the index
+    // PDPT: shifted by 30 bits to get the index
+    // PD: shifted by 21 bits to get the index
+    // PT: shifted by 12 bits to get the index
     size_t pml4_index = (size_t)((virt >> 39) & 0x1FF);
     size_t pdpt_index = (size_t)((virt >> 30) & 0x1FF);
     size_t pd_index = (size_t)((virt >> 21) & 0x1FF);
@@ -198,14 +207,20 @@ uintptr_t pmap_get_physical(page_table_t *pml4, uint64_t virt) {
 }
 
 int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
+    // Validate the source address and destination buffer before copying from user space.
+
+    // Define the user-space address limit (47-bit address space) and check if the destination
+    // address and size are within this limit and the source buffer is valid.
     const uintptr_t user_limit = UINT64_C(1) << 47;
-    if (source >= user_limit || size > user_limit - source ||
-        (size != 0 && destination == NULL)) {
+    if (source >= user_limit || size > user_limit - source || (size != 0 && destination == NULL)) {
         return -1;
     }
 
+    // Save the current CR3 and get the root page table
     uintptr_t active_cr3;
     __asm__ volatile("mov %%cr3, %0" : "=r"(active_cr3));
+
+    // The root page table is obtained from the current CR3 register and mapped into the higher half
     page_table_t *root =
         (page_table_t *)((active_cr3 & UINT64_C(0x000FFFFFFFFFF000)) + higher_half_base);
     unsigned char *output = destination;
@@ -213,11 +228,21 @@ int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
     while (size != 0) {
         page_table_t *table = root;
         uint64_t physical = 0;
-        for (unsigned int shift = 39; ; shift -= 9) {
+
+        // Traverse the page table hierarchy to find the physical address corresponding to the
+        // user-space source address
+        for (unsigned int shift = 39;; shift -= 9) {
+            // Shift indicates the current level in the page table hierarchy (39 for PML4, 30 for
+            // PDPT, 21 for PD, 12 for PT)
+
+            // Get the page table entry for the current level
             const page_table_entry_t *entry = &table->entries[(source >> shift) & 0x1FF];
             if (!pte_is_present(entry) || !pte_is_user(entry)) {
                 return -1;
             }
+
+            // If we reach the last level (PT) or encounter a huge page, calculate the physical
+            // address
             if (shift == 12 || ((shift == 30 || shift == 21) && pte_is_huge_page(entry))) {
                 uintptr_t offset_mask = (UINT64_C(1) << shift) - 1;
                 physical = (pte_get_address(entry) & ~offset_mask) | (source & offset_mask);
@@ -229,10 +254,13 @@ int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
             table = (page_table_t *)(pte_get_address(entry) + higher_half_base);
         }
 
+        // Calculate the size of the chunk to copy, ensuring it does not cross a page boundary
         size_t chunk = PMAP_PAGE_SIZE - (source & (PMAP_PAGE_SIZE - 1));
         if (chunk > size) {
             chunk = size;
         }
+
+        // Copy the chunk from the physical address to the output buffer
         memcpy(output, (const void *)(physical + higher_half_base), chunk);
         output += chunk;
         source += chunk;
@@ -242,12 +270,17 @@ int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
 }
 
 int pmap_copy_to_user(uintptr_t destination, const void *source, size_t size) {
+    // Validate the destination address and source buffer before copying to user space.
+
+    // Define the user-space address limit (47-bit address space) and check if the destination
+    // address and size are within this limit and the source buffer is valid.
     const uintptr_t user_limit = UINT64_C(1) << 47;
     if (destination >= user_limit || size > user_limit - destination ||
         (size != 0 && source == NULL)) {
         return -1;
     }
 
+    // Save the current CR3 register and get the root page table for the active address space.
     uintptr_t active_cr3;
     __asm__ volatile("mov %%cr3, %0" : "=r"(active_cr3));
     page_table_t *root =
@@ -257,7 +290,10 @@ int pmap_copy_to_user(uintptr_t destination, const void *source, size_t size) {
     while (size != 0) {
         page_table_t *table = root;
         uint64_t physical = 0;
-        for (unsigned int shift = 39; ; shift -= 9) {
+
+        // Traverse the page table hierarchy to find the physical address corresponding to the
+        // user-space source address
+        for (unsigned int shift = 39;; shift -= 9) {
             const page_table_entry_t *entry = &table->entries[(destination >> shift) & 0x1FF];
             if (!pte_is_present(entry) || !pte_is_user(entry) || !pte_is_writable(entry)) {
                 return -1;
@@ -273,10 +309,13 @@ int pmap_copy_to_user(uintptr_t destination, const void *source, size_t size) {
             table = (page_table_t *)(pte_get_address(entry) + higher_half_base);
         }
 
+        // Calculate the size of the chunk to copy, ensuring it does not cross a page boundary.
         size_t chunk = PMAP_PAGE_SIZE - (destination & (PMAP_PAGE_SIZE - 1));
         if (chunk > size) {
             chunk = size;
         }
+
+        // Copy the chunk from the input buffer to the physical address in memory.
         memcpy((void *)(physical + higher_half_base), input, chunk);
         input += chunk;
         destination += chunk;

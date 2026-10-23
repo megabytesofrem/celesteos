@@ -97,6 +97,10 @@ class Syscall
     def table_index
         is_mach_call? ? -encoded_number : encoded_number - SYS_BSD_OFFSET
     end
+
+    def parameter_list
+        arguments.empty? ? "void" : arguments.map(&:to_s).join(", ")
+    end
 end
 
 def parse_declaration(declaration)
@@ -244,17 +248,8 @@ def generate_header(calls, includes, prefix)
     lines << ""
 
     calls.each do |call|
-        if call.type_flag != "NOARGS"
-            lines << "struct sys_#{call.name}_args {"
-            if call.arguments.empty?
-                lines << "    unsigned char unused;"
-            else
-                call.arguments.each { |argument| lines << "    #{argument};" }
-            end
-            lines.concat(["};", ""])
-        end
-        if call.number.positive?
-            lines << "#{call.return_type} sys_#{call.name}(const struct sys_#{call.name}_args *args);"
+        if call.is_bsd_call?
+            lines << "#{call.return_type} sys_#{call.name}(#{call.parameter_list});"
             lines << ""
         end
     end
@@ -337,8 +332,7 @@ def generate_dispatch(calls)
     calls.each do |call|
         next unless call.is_bsd_call?
 
-        lines << "extern #{call.return_type} sys_#{call.name}("
-        lines[-1] += "const struct sys_#{call.name}_args *args) __attribute__((weak));"
+        lines << "extern #{call.return_type} sys_#{call.name}(#{call.parameter_list}) __attribute__((weak));"
     end
     lines << ""
 
@@ -358,27 +352,17 @@ def generate_dispatch(calls)
         end
         lines << "    (void)frame;" if call.arguments.empty?
         lines << "    (void)stack_args;" if call.stack_count.zero?
-        if !call.arguments.empty? || call.is_bsd_call?
-            lines << "    const struct sys_#{call.name}_args args = {"
-            call.arguments.each_with_index do |argument, index|
-                source = if index < REGISTER_ARGUMENTS.length
-                           "frame->#{REGISTER_ARGUMENTS[index]}"
-                         else
-                           "stack_args[#{index - REGISTER_ARGUMENTS.length}]"
-                         end
-                lines << "        .#{argument.name} = (#{argument.c_type})#{source},"
-            end
-            lines << "        .unused = 0," if call.arguments.empty?
-            lines << "    };"
+        arguments = call.arguments.each_with_index.map do |argument, index|
+            source = if index < REGISTER_ARGUMENTS.length
+                       "frame->#{REGISTER_ARGUMENTS[index]}"
+                     else
+                       "stack_args[#{index - REGISTER_ARGUMENTS.length}]"
+                     end
+            "(#{argument.c_type})#{source}"
         end
 
-        # Generate the invocation of the syscall with the prepared arguments
-        # Mach calls are invoked directly by name, while BSD calls use the sys_ prefix and take a pointer to the args structure
-        invocation = if call.is_mach_call?
-                       "#{call.name}(#{call.arguments.map { |argument| "args.#{argument.name}" }.join(", ")})"
-                     else
-                       "sys_#{call.name}(&args)"
-                     end
+        function_name = call.is_mach_call? ? call.name : "sys_#{call.name}"
+        invocation = "#{function_name}(#{arguments.join(', ')})"
         if call.return_type == "void"
             lines.concat(["    #{invocation};", "    return 0;"])
         else

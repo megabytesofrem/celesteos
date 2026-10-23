@@ -70,6 +70,7 @@ C_SRCS := kernel/kmain.c \
           kernel/ipc/task.c \
           kernel/mach/loader.c \
           kernel/initrd.c \
+          kernel/bsd/syscalls.c \
           kernel/task.c
           
 ASM_SRCS := kernel/asm/entry.asm \
@@ -97,7 +98,7 @@ $(SYSCALL_GENERATED) &: scripts/make_syscalls.rb kernel/syscalls.master
 	$(RUBY) scripts/make_syscalls.rb kernel/syscalls.master
 
 $(BUILD_DIR)/kernel/syscall.o $(BUILD_DIR)/kernel/sys_dispatch.o \
-$(BUILD_DIR)/kernel/sys_names.o: $(SYSCALL_GENERATED)
+$(BUILD_DIR)/kernel/sys_names.o $(BUILD_DIR)/kernel/bsd/syscalls.o: $(SYSCALL_GENERATED)
 
 # Targets
 .PHONY: all iso limine_bootloader qemu initrd clean test-ipc test-syscalls

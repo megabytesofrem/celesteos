@@ -7,84 +7,12 @@
 #include <ipc/mach_message.h>
 #include <ipc/mach_traps.h>
 
-struct sys_mach_msg_overwrite_trap_args {
-    mach_msg_header_t * msg;
-    mach_msg_option_t option;
-    mach_msg_size_t send_size;
-    mach_msg_size_t rcv_size;
-    mach_port_name_t rcv_name;
-    mach_msg_timeout_t timeout;
-    mach_port_name_t notify;
-    mach_msg_header_t * rcv_msg;
-    mach_msg_size_t rcv_limit;
-};
+void sys_exit(int rval);
 
-struct sys_mach_msg_trap_args {
-    mach_msg_header_t * msg;
-    mach_msg_option_t option;
-    mach_msg_size_t send_size;
-    mach_msg_size_t rcv_size;
-    mach_port_name_t rcv_name;
-    mach_msg_timeout_t timeout;
-    mach_port_name_t notify;
-};
+int sys_fork(void);
 
-struct sys_host_self_trap_args {
-    unsigned char unused;
-};
+intptr_t sys_read(int fd, void * buf, size_t nbyte);
 
-struct sys_task_self_trap_args {
-    unsigned char unused;
-};
-
-struct sys_thread_self_trap_args {
-    unsigned char unused;
-};
-
-struct sys_mach_reply_port_args {
-    unsigned char unused;
-};
-
-struct sys_mach_port_make_send_trap_args {
-    mach_port_name_t receive_name;
-    mach_port_name_t * send_name;
-};
-
-struct sys_mach_port_deallocate_trap_args {
-    mach_port_name_t name;
-};
-
-struct sys_mach_port_allocate_trap_args {
-    mach_port_right_t right;
-    mach_port_name_t * name;
-};
-
-struct sys_exit_args {
-    int rval;
-};
-
-void sys_exit(const struct sys_exit_args *args);
-
-struct sys_fork_args {
-    unsigned char unused;
-};
-
-int sys_fork(const struct sys_fork_args *args);
-
-struct sys_read_args {
-    int fd;
-    void * buf;
-    size_t nbyte;
-};
-
-intptr_t sys_read(const struct sys_read_args *args);
-
-struct sys_write_args {
-    int fd;
-    const void * buf;
-    size_t nbyte;
-};
-
-intptr_t sys_write(const struct sys_write_args *args);
+intptr_t sys_write(int fd, const void * buf, size_t nbyte);
 
 #endif /* CELESTEOS_SYS_ENTER_H */
