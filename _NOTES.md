@@ -9,6 +9,16 @@
 - [x] Mach/BSD syscall stubs
 - [x] Wired up basic IPC for the kernel (ports, message passing)
 
+## Next steps
+- Move BSD into a separate userspace process, bsd_server, so the kernel won't die if BSD crashes
+- Move macho-loading into a separate userspace loader, dyld, to handle Mach-O binaries
+- Write a userspace dyld loader (will require reading up on Mach-O format)
+- Implement userspace process management (BSD fork, exec, wait, exit)
+- Implement userspace threading and synchronization primitives (BSD pthread, mutexes, condition variables)
+- Write device drivers for AHCI, ATAPI, SATA, NVME, USB devices
+- Write a basic ext2 filesystem driver
+- Write a HFS+ filesystem driver, allow us to mount DMG images
+
 ## Useful Links
 - **Apple official kernel documentation**: https://developer.apple.com/documentation/kernel/
 - **Apple XNU source code (Snow Leopard)**: https://github.com/apple-oss-distributions/xnu/tree/rel/xnu-1504
