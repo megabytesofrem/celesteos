@@ -324,6 +324,7 @@ def generate_dispatch(calls)
         BANNER,
         '#include "sys_enter.h"',
         "#include <kernel/memory/pmap.h>",
+        "#include <errno.h>",
         "#include <libkernel.h>",
         ""
     ]
@@ -346,7 +347,7 @@ def generate_dispatch(calls)
             lines.concat([
                 "    if (sys_#{call.name} == NULL) {",
                 "        klog(KLOG_WARN, \"sys_dispatch: unimplemented BSD syscall: #{call.name}\\n\");",
-                "        return -1;",
+                "        return -EINVAL;",
                 "    }"
             ])
         end
@@ -423,12 +424,12 @@ def generate_dispatch(calls)
         "        } else {",
         '            klog(KLOG_WARN, "sys_dispatch: unhandled BSD syscall: 0x%x\\n", (unsigned int)number);',
         "        }",
-        "        return -1;",
+        "        return -EINVAL;",
         "    }",
         "    size_t needed = entry->argument_count > 6 ? entry->argument_count - 6 : 0;",
         "    if (frame == NULL) {",
         '        klog(KLOG_ERROR, "sys_dispatch: missing frame for %s\\n", entry->name);',
-        "        return -1;",
+        "        return -EINVAL;",
         "    }",
         "    uint64_t stack_args[SYS_MAX_STACK_ARGS] = {0};",
         "    if (needed != 0 &&",
@@ -436,7 +437,7 @@ def generate_dispatch(calls)
         "         pmap_copy_from_user(stack_args, frame->rsp + sizeof(uint64_t),",
         "                             needed * sizeof(uint64_t)) != 0)) {",
         '        klog(KLOG_WARN, "sys_dispatch: invalid user stack for %s\\n", entry->name);',
-        "        return -1;",
+        "        return -EINVAL;",
         "    }",
         "    return entry->handler(frame, stack_args);",
         "}",

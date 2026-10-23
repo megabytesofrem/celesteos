@@ -2,12 +2,14 @@
 
 #include <kernel/gdt.h>
 #include <kernel/sys_dispatch.h>
+
+#include <errno.h>
 #include <libkernel.h>
 
 int syscall_init(uintptr_t kernel_stack_top) {
     if (kernel_stack_top == 0) {
         klog(KLOG_ERROR, "kmain: Kernel syscall stack is not initialized.\n");
-        return -1;
+        return -EINVAL;
     }
 
     // Initialize the kernel stack top for system calls

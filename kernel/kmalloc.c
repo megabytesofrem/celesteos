@@ -1,5 +1,6 @@
 #include "kmalloc.h"
 
+#include <errno.h>
 #include <libkernel.h>
 #include <stdint.h>
 
@@ -15,14 +16,14 @@ static const uintptr_t heap_limit = 0xFFFF908000000000ULL;
 
 int heap_initialize(vm_map_t *kernel_vm_map) {
     if (!kernel_vm_map || heap_start) {
-        return -1;
+        return -EINVAL;
     }
 
     // Ask the kernels vm_map structure to allocate and back the initial heap page.
     void *initial_heap_page;
     if (vm_map_alloc(kernel_vm_map, heap_curr_virt, VM_PROT_READ | VM_PROT_WRITE,
                      &initial_heap_page) != 0) {
-        return -1;
+        return -ENOMEM;
     }
 
     // Initialize the heap start with the allocated initial heap page.

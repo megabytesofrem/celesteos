@@ -14,9 +14,13 @@
 
 thread_t *g_current_thread;
 
-void *kmalloc(size_t size) { return malloc(size); }
+void *kmalloc(size_t size) {
+    return malloc(size);
+}
 
-void kfree(void *ptr) { free(ptr); }
+void kfree(void *ptr) {
+    free(ptr);
+}
 
 void klog(enum log_level level, const char *format, ...) {
     (void)level;
@@ -25,7 +29,7 @@ void klog(enum log_level level, const char *format, ...) {
 
 int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
     if (destination == NULL || (size != 0 && source == 0)) {
-        return -1;
+        return -EINVAL;
     }
     memcpy(destination, (const void *)source, size);
     return 0;
@@ -33,7 +37,7 @@ int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
 
 int pmap_copy_to_user(uintptr_t destination, const void *source, size_t size) {
     if (source == NULL || (size != 0 && destination == 0)) {
-        return -1;
+        return -EINVAL;
     }
     memcpy((void *)destination, source, size);
     return 0;
@@ -71,7 +75,7 @@ int main(void) {
     struct {
         mach_msg_header_t header;
         uint64_t payload;
-    } received = {0};
+    } received = { 0 };
     assert(mach_msg_receive(&received.header, MACH_RCV_MSG, sizeof(received.header), receive_name,
                             0) == MACH_RCV_TOO_LARGE);
     assert(mach_msg_receive(&received.header, MACH_RCV_MSG, sizeof(received), receive_name, 0) ==

@@ -1,5 +1,6 @@
 #include "pmm.h"
 
+#include <errno.h>
 #include <limits.h>
 
 static uint8_t *bitmap;
@@ -7,11 +8,17 @@ static size_t total_pages;
 static size_t used_pages;
 static uint64_t higher_half_base;
 
-static void set_bit(size_t page) { bitmap[page / 8] |= (uint8_t)(1U << (page % 8)); }
+static void set_bit(size_t page) {
+    bitmap[page / 8] |= (uint8_t)(1U << (page % 8));
+}
 
-static void clear_bit(size_t page) { bitmap[page / 8] &= (uint8_t)~(1U << (page % 8)); }
+static void clear_bit(size_t page) {
+    bitmap[page / 8] &= (uint8_t)~(1U << (page % 8));
+}
 
-static bool test_bit(size_t page) { return (bitmap[page / 8] & (uint8_t)(1U << (page % 8))) != 0; }
+static bool test_bit(size_t page) {
+    return (bitmap[page / 8] & (uint8_t)(1U << (page % 8))) != 0;
+}
 
 void pmm_initialize(struct limine_memmap_response *memmap, uint64_t hhdm_base_offset) {
     uint64_t highest_address = 0;
@@ -117,12 +124,12 @@ int pmm_alloc_page(void **out_page) {
             return 0;
         }
     }
-    return -1;
+    return -ENOMEM;
 }
 
 int pmm_alloc_pages(size_t count, void **out_pages) {
     if (count == 0) {
-        return -1;
+        return -EINVAL;
     }
     if (count == 1) {
         return pmm_alloc_page(out_pages);
@@ -148,7 +155,7 @@ int pmm_alloc_pages(size_t count, void **out_pages) {
             free_run = 0;
         }
     }
-    return -1;
+    return -ENOMEM;
 }
 
 int pmm_free_page(void *phys_addr) {
@@ -171,9 +178,21 @@ int pmm_free_pages(void *phys_addr, size_t count) {
     return 0;
 }
 
-size_t pmm_get_total_pages(void) { return total_pages; }
-size_t pmm_get_used_pages(void) { return used_pages; }
-size_t pmm_get_free_pages(void) { return total_pages - used_pages; }
-size_t pmm_get_total_memory(void) { return total_pages * PMM_PAGE_SIZE; }
-size_t pmm_get_used_memory(void) { return used_pages * PMM_PAGE_SIZE; }
-size_t pmm_get_free_memory(void) { return (total_pages - used_pages) * PMM_PAGE_SIZE; }
+size_t pmm_get_total_pages(void) {
+    return total_pages;
+}
+size_t pmm_get_used_pages(void) {
+    return used_pages;
+}
+size_t pmm_get_free_pages(void) {
+    return total_pages - used_pages;
+}
+size_t pmm_get_total_memory(void) {
+    return total_pages * PMM_PAGE_SIZE;
+}
+size_t pmm_get_used_memory(void) {
+    return used_pages * PMM_PAGE_SIZE;
+}
+size_t pmm_get_free_memory(void) {
+    return (total_pages - used_pages) * PMM_PAGE_SIZE;
+}
