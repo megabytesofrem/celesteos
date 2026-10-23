@@ -22,7 +22,7 @@
 #include <stdint.h>
 
 // Boot logo
-#include <kernel/drivers/boot_logo.h>
+#include <boot_logo.h>
 
 static void halt_forever(void) {
     for (;;) {
