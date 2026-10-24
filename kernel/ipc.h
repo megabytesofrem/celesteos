@@ -1,5 +1,5 @@
-#ifndef IPC_H
-#define IPC_H 1
+#ifndef CELESTEOS_KERNEL_IPC_H
+#define CELESTEOS_KERNEL_IPC_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -24,4 +24,4 @@ typedef struct {
     cap_handle_t capability;
 } handle_t;
 
-#endif
+#endif // CELESTEOS_KERNEL_IPC_H

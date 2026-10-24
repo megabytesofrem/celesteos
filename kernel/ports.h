@@ -1,3 +1,6 @@
+#ifndef CELESTEOS_KERNEL_PORTS_H
+#define CELESTEOS_KERNEL_PORTS_H
+
 #include <stdint.h>
 
 /**
@@ -65,3 +68,5 @@ static inline void debug_write(const char *str) {
         outb(0xE9, *str++);
     }
 }
+
+#endif /* CELESTEOS_KERNEL_PORTS_H */

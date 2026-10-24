@@ -1,5 +1,5 @@
-#ifndef PIC_H
-#define PIC_H
+#ifndef CELESTEOS_KERNEL_PIC_H
+#define CELESTEOS_KERNEL_PIC_H
 
 #include <stdint.h>
 
@@ -44,4 +44,4 @@ void pic_mask_irq(uint8_t irq);
  * Unmask (enable) the specified IRQ on the PIC.
  */
 void pic_unmask_irq(uint8_t irq);
-#endif /* PIC_H */
+#endif /* CELESTEOS_KERNEL_PIC_H */

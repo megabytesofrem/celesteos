@@ -1,5 +1,5 @@
-#ifndef TSS_H
-#define TSS_H
+#ifndef CELESTEOS_KERNEL_TSS_H
+#define CELESTEOS_KERNEL_TSS_H
 
 #include <stdint.h>
 
@@ -29,4 +29,4 @@ void tss_init(void);
  */
 void tss_prepare_user(void);
 
-#endif /* TSS_H */
+#endif /* CELESTEOS_KERNEL_TSS_H */

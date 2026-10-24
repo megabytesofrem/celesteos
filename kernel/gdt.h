@@ -1,5 +1,5 @@
-#ifndef GDT_H
-#define GDT_H
+#ifndef CELESTEOS_KERNEL_GDT_H
+#define CELESTEOS_KERNEL_GDT_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -41,12 +41,12 @@
 /* Descriptors */
 #define GDT_KERNEL_CODE                                                                            \
     (GDT_ACCESS_PRESENT | GDT_ACCESS_RING0 | GDT_ACCESS_DESCRIPTOR | GDT_ACCESS_EXECUTABLE |       \
-     GDT_ACCESS_RW)
+        GDT_ACCESS_RW)
 #define GDT_KERNEL_DATA                                                                            \
     (GDT_ACCESS_PRESENT | GDT_ACCESS_RING0 | GDT_ACCESS_DESCRIPTOR | GDT_ACCESS_RW)
 #define GDT_USER_CODE                                                                              \
     (GDT_ACCESS_PRESENT | GDT_ACCESS_RING3 | GDT_ACCESS_DESCRIPTOR | GDT_ACCESS_EXECUTABLE |       \
-     GDT_ACCESS_RW)
+        GDT_ACCESS_RW)
 #define GDT_USER_DATA                                                                              \
     (GDT_ACCESS_PRESENT | GDT_ACCESS_RING3 | GDT_ACCESS_DESCRIPTOR | GDT_ACCESS_RW)
 
@@ -111,4 +111,4 @@ extern void load_gdt(const gdt_pointer_t *gdt_ptr, uint16_t cs, uint16_t ds);
  */
 extern void load_tss(uint16_t tss_selector);
 
-#endif /* GDT_H */
+#endif /* CELESTEOS_KERNEL_GDT_H */

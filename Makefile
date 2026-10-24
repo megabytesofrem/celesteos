@@ -16,7 +16,7 @@ TARGET_ELF := $(BUILD_DIR)/celesteos.elf
 TARGET_ISO := $(BUILD_DIR)/celesteos.iso
 
 # Include directories
-INCLUDES := -I. -Iinclude -Ikernel -Ikernel/asm
+INCLUDES := -I. -Iinclude -Ikernel -Ilib -Ikernel/asm
 
 # Compiler & assembler flags
 CFLAGS := -std=c17 \
@@ -45,7 +45,10 @@ LIBGCC := $(shell $(CC) -print-libgcc-file-name)
 C_SRCS := kernel/kmain.c \
 	kernel/gdt.c \
 	kernel/idt.c \
-	kernel/pic.c
+	kernel/pic.c \
+	kernel/fb.c \
+	lib/klog.c \
+	lib/string.c \
 
 ASM_SRCS := kernel/asm/entry.s \
 	kernel/asm/load_gdt.s \
