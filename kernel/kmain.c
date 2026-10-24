@@ -1,6 +1,7 @@
 #include <limine.h>
 
 #include <kernel/gdt.h>
+#include <kernel/idt.h>
 #include <kernel/tss.h>
 
 static void halt_forever(void) {
@@ -19,12 +20,14 @@ __attribute__((
     LIMINE_REQUESTS_START_MARKER;
 
 // Limine Requests End Marker
-__attribute__((used,
-               section(".limine_requests_end"))) static volatile uint64_t limine_requests_end[] =
+__attribute__((
+    used, section(".limine_requests_end"))) static volatile uint64_t limine_requests_end[] =
     LIMINE_REQUESTS_END_MARKER;
 
 void kmain(void) {
     gdt_init();
+    idt_init();
+    isr_install();
 
     halt_forever();
 }

@@ -12,6 +12,12 @@ if [[ "$LIMINE_DIR" != /* ]]; then
 fi
 LIMINE_BRANCH=v11.x-binary
 
+# A Make target may have created the directory before this script runs.
+if [[ -d "$LIMINE_DIR" ]] &&
+    [[ -z "$(find "$LIMINE_DIR" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
+    rmdir "$LIMINE_DIR"
+fi
+
 if [[ ! -e "$LIMINE_DIR" ]]; then
     mkdir -p "$(dirname -- "$LIMINE_DIR")"
     git clone --depth=1 --branch="$LIMINE_BRANCH" --single-branch \
