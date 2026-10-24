@@ -1,5 +1,8 @@
 #include <limine.h>
 
+#include <kernel/gdt.h>
+#include <kernel/tss.h>
+
 static void halt_forever(void) {
     for (;;) {
         __asm__ volatile("hlt");
@@ -21,5 +24,7 @@ __attribute__((used,
     LIMINE_REQUESTS_END_MARKER;
 
 void kmain(void) {
+    gdt_init();
+
     halt_forever();
 }

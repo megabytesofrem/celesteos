@@ -7,11 +7,18 @@ ISO := $(BUILD_DIR)/celesteos.iso
 LIMINE_DIR ?= $(BUILD_DIR)/limine
 QEMU ?= qemu-system-x86_64
 QEMUFLAGS ?= -m 2G
-SOURCES := $(shell find kernel lib servers -type f -name '*.c' -print)
-OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(SOURCES))
-DEPFILES := $(OBJECTS:.o=.d)
+NASM ?= nasm
+NASMFLAGS ?= -f elf64
+C_SOURCES := $(shell find kernel lib servers -type f -name '*.c' -print)
+ASM_SOURCES := $(shell find kernel lib servers -type f \( -name '*.s' -o -name '*.asm' -o -name '*.nasm' \) -print)
+C_OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(C_SOURCES))
+ASM_OBJECTS := $(patsubst %.s,$(BUILD_DIR)/%.o,$(filter %.s,$(ASM_SOURCES))) \
+	$(patsubst %.asm,$(BUILD_DIR)/%.o,$(filter %.asm,$(ASM_SOURCES))) \
+	$(patsubst %.nasm,$(BUILD_DIR)/%.o,$(filter %.nasm,$(ASM_SOURCES)))
+OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS)
+DEPFILES := $(C_OBJECTS:.o=.d)
 
-CPPFLAGS := -Iinclude
+CPPFLAGS := -I. -Iinclude
 CFLAGS := -std=gnu11 -O2 -Wall -Wextra -Werror \
 	-ffreestanding -fno-stack-protector -fno-pic -fno-pie \
 	-fno-asynchronous-unwind-tables -fno-unwind-tables \
@@ -51,6 +58,18 @@ $(KERNEL): $(OBJECTS) linker.ld
 $(BUILD_DIR)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
+
+$(BUILD_DIR)/%.o: %.s
+	@mkdir -p $(@D)
+	$(NASM) $(NASMFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: %.asm
+	@mkdir -p $(@D)
+	$(NASM) $(NASMFLAGS) $< -o $@
+
+$(BUILD_DIR)/%.o: %.nasm
+	@mkdir -p $(@D)
+	$(NASM) $(NASMFLAGS) $< -o $@
 
 clean:
 	rm -rf $(BUILD_DIR)
