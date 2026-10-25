@@ -41,7 +41,7 @@ const tss_t *tss_get(void);
  * kernel stack top. The stack must remain mapped in every address space
  * using this TSS.
  */
-int tss_prepare_user(uint64_t kernel_stack_top);
+int tss_set_kernel_stack(uint64_t kernel_stack_top);
 
 /**
  * Jump to user mode (ring 3) using the provided entry point, user stack, and page table.

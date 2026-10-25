@@ -50,10 +50,12 @@ C_SRCS := kernel/kmain.c \
 	kernel/fb.c \
 	kernel/pmm.c \
 	kernel/pmap.c \
+	kernel/ipc/scheduler.c \
 	lib/klog.c \
 	lib/string.c
 
 ASM_SRCS := kernel/asm/entry.s \
+	kernel/asm/ctx_switch.s \
 	kernel/asm/interrupts.s \
 	kernel/asm/load_gdt.s \
 	kernel/asm/tss_switch.s

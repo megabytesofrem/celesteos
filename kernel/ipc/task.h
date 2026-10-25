@@ -26,7 +26,8 @@ typedef struct capability_entry {
 
 typedef struct task {
     uint64_t pid;
-    uint64_t cr3_page_table;
+    /* HHDM virtual address of the task's PML4 */
+    struct page_table *cr3_page_table;
 
     struct capability_entry *handles[MAX_HANDLES_PER_TASK];
     uint64_t thread_count;

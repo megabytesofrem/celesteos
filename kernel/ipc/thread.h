@@ -16,7 +16,7 @@ typedef struct thread {
     uint64_t tid;
     thread_state_t state;
 
-    uint64_t rsp;
+    uint64_t *rsp;
     uint64_t rip;
     uint64_t rflags;
 

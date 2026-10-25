@@ -30,14 +30,14 @@ void tss_init(void) {
     klog(KLOG_INFO, "tss: #PF stack top set to 0x%p.\n", k_tss.ist[TSS_IST_PAGE_FAULT - 1]);
     klog(KLOG_INFO, "tss: I/O map base set to 0x%p.\n", k_tss.io_map_base);
     klog(KLOG_INFO, "tss: TSS initialization complete.\n");
-    tss_prepare_user((uintptr_t)bootstrap_stack + sizeof(bootstrap_stack));
+    tss_set_kernel_stack((uintptr_t)bootstrap_stack + sizeof(bootstrap_stack));
 }
 
 const tss_t *tss_get(void) {
     return &k_tss;
 }
 
-int tss_prepare_user(uint64_t kernel_stack_top) {
+int tss_set_kernel_stack(uint64_t kernel_stack_top) {
     if (kernel_stack_top < UINT64_C(0xFFFF800000000000) || (kernel_stack_top & 0xF) != 0) {
         return -EINVAL;
     }
@@ -57,7 +57,7 @@ int tss_jump_to_usermode(uintptr_t entry_point, uintptr_t user_stack_top, page_t
     }
 
     uintptr_t kstack_top = (uintptr_t)bootstrap_stack + sizeof(bootstrap_stack);
-    tss_prepare_user(kstack_top);
+    tss_set_kernel_stack(kstack_top);
 
     // Switch CR3 to the user page table
     if (pmap_switch_pml4(pml4) != 0) {

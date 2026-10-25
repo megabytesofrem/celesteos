@@ -31,17 +31,13 @@ void scheduler_dequeue(thread_t *thread);
  */
 void schedule(void);
 
-/**
- * Directly yields the remainder of the active thread's time slice to a
- * specific target thread. Essential for fast L4 Rendezvous IPC switching.
- */
-void scheduler_yield_to(thread_t *target);
+void perform_switch(thread_t *prev, thread_t *next);
 
 /**
- * Low-level assembly context switch interface implemented in switch.s.
+ * Low-level assembly context switch interface implemented in ctx_switch.s.
  * Saves current callee-saved registers, updates old_rsp, loads new_rsp,
  * and restores saved state into CPU.
  */
-extern void swtch(uint64_t **old_rsp, uint64_t *new_rsp);
+extern void ctx_switch(uint64_t **old_rsp, uint64_t *new_rsp);
 
 #endif // CELESTEOS_SCHEDULER_H

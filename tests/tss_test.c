@@ -61,15 +61,19 @@ int main(void) {
     }
 
     const uint64_t invalid[] = {
-        0, 0x1000, UINT64_C(0x0000800000000000), UINT64_C(0xFFFF7FFFFFFFFFF0),
-        UINT64_C(0xFFFF800000000001), UINT64_MAX,
+        0,
+        0x1000,
+        UINT64_C(0x0000800000000000),
+        UINT64_C(0xFFFF7FFFFFFFFFF0),
+        UINT64_C(0xFFFF800000000001),
+        UINT64_MAX,
     };
     for (size_t i = 0; i < sizeof(invalid) / sizeof(invalid[0]); ++i) {
-        assert(tss_prepare_user(invalid[i]) == -EINVAL);
+        assert(tss_set_kernel_stack(invalid[i]) == -EINVAL);
         assert(tss->rsp0 == bootstrap_top);
     }
 
-    assert(tss_prepare_user(UINT64_C(0xFFFFFFFF80004000)) == 0);
+    assert(tss_set_kernel_stack(UINT64_C(0xFFFFFFFF80004000)) == 0);
     assert(tss->rsp0 == UINT64_C(0xFFFFFFFF80004000));
     assert(tss->ist[TSS_IST_DOUBLE_FAULT - 1] == double_fault_top);
     assert(tss->ist[TSS_IST_PAGE_FAULT - 1] == page_fault_top);

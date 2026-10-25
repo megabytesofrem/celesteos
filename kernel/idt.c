@@ -42,20 +42,20 @@ const char *exception_messages[] = {
 // clang-format on
 
 /* Kernel Interrupt Descriptor Table (IDT) */
-static __attribute__((aligned(16))) idt_entry_t k_idt[256];
+static __attribute__((aligned(16))) idt_entry_t g_idt[256];
 
-static idt_pointer_t k_idt_ptr;
+static idt_pointer_t g_idt_ptr;
 
 void idt_init(void) {
     _Static_assert(sizeof(idt_entry_t) == 16, "idt_entry_t must be exactly 16 bytes!");
-    _Static_assert(sizeof(k_idt) == 4096, "idt array must be exactly 4096 bytes!");
+    _Static_assert(sizeof(g_idt) == 4096, "idt array must be exactly 4096 bytes!");
 
     // Clear all interrupts
     __asm__ volatile("cli" : : : "memory");
 
     // Initialize all IDT entries to zero
     for (int i = 0; i < 256; ++i) {
-        k_idt[i] = (idt_entry_t){
+        g_idt[i] = (idt_entry_t){
             .offset_low = 0,
             .selector = 0,
             .ist = 0,
@@ -73,7 +73,7 @@ void idt_init(void) {
     idt_set_entry_ist(14, isr14, 0x8E, TSS_IST_PAGE_FAULT);
 
     // Load the IDT
-    idt_load(&k_idt_ptr);
+    idt_load(&g_idt_ptr);
 }
 
 void idt_set_entry(int entry, idt_handler_t handler, int type_attr) {
@@ -91,24 +91,24 @@ void idt_set_entry(int entry, idt_handler_t handler, int type_attr) {
     };
 
     // Set the entry in the IDT
-    k_idt[entry] = entry_struct;
+    g_idt[entry] = entry_struct;
 }
 
 void idt_set_entry_ist(int entry, idt_handler_t handler, int type_attr, int ist_index) {
     uintptr_t addr = (uintptr_t)handler;
 
-    k_idt[entry] = (idt_entry_t){ .offset_low = (uint16_t)(addr & 0xFFFF),
-        .selector = 0x08,        /* Kernel Code Segment */
-        .ist = ist_index & 0x07, /* Bits 0..2 hold IST index (1-7) */
-        .type_attr = type_attr,  /* e.g., 0x8E for Present, Ring 0 */
-        .offset_middle = (uint16_t)((addr >> 16) & 0xFFFF),
-        .offset_high = (uint32_t)((addr >> 32) & 0xFFFFFFFF),
-        .zero = 0x0 };
+    g_idt[entry] = (idt_entry_t){ .offset_low = (uint16_t)(addr & 0xFFFF),
+                                  .selector = 0x08,        /* Kernel Code Segment */
+                                  .ist = ist_index & 0x07, /* Bits 0..2 hold IST index (1-7) */
+                                  .type_attr = type_attr,  /* e.g., 0x8E for Present, Ring 0 */
+                                  .offset_middle = (uint16_t)((addr >> 16) & 0xFFFF),
+                                  .offset_high = (uint32_t)((addr >> 32) & 0xFFFFFFFF),
+                                  .zero = 0x0 };
 }
 
 void idt_load(struct idt_pointer_t *ptr) {
-    ptr->base = (uint64_t)k_idt;
-    ptr->limit = sizeof(k_idt) - 1;
+    ptr->base = (uint64_t)g_idt;
+    ptr->limit = sizeof(g_idt) - 1;
 
     // Load the IDT
     __asm__ volatile("lidtq %0" : : "m"(*ptr) : "memory");
@@ -171,7 +171,7 @@ void isr_install(void) {
 
     // Remap both PICs before allowing interrupts on vectors 32-47.
     pic_remap(0x20, 0x28);
-    idt_load(&k_idt_ptr);
+    idt_load(&g_idt_ptr);
     __asm__ volatile("sti" : : : "memory");
 
     return;
