@@ -19,31 +19,13 @@ The IPC mechanism operates on thread control blocks (TCBs), which store the stat
 
 ### Phase 1: Core CPU & Memory Primitives
 - [x] GDT, IDT, and TSS setup (Ring 0 / Ring 3 descriptors)
-- [ ] Physical Memory Allocator (Bitmap / Frame allocator for 4KB pages)
-- [ ] Page Table Manager (`pmap_map` / `pmap_unmap` for PML4 tables)
+- [X] Physical Memory Allocator (Bitmap / Frame allocator for 4KB pages)
+- [X] Page Table Manager (`pmap_map` / `pmap_unmap` for PML4 tables)
 - [ ] Local APIC & IOAPIC initialization (Disable legacy 8259 PIC)
 
 ### Phase 2: Execution & Traps
-- [ ] Assembly Trap Stub (`syscall` / `sysret` entry point & ISR wrappers)
+- [X] Assembly Trap Stub (`syscall` / `sysret` entry point & ISR wrappers)
 - [ ] Task Control Blocks (TCB) & Thread Scheduler (Round-robin context switching)
-
-The single-CPU round-robin interface is scaffolded in
-[`kernel/ipc/scheduler.h`](kernel/ipc/scheduler.h); there is no scheduler implementation
-or timer-driven context switching yet. The interface covers ready queues, IPC
-blocking/wakeup, yielding, and tick accounting. Its operations require interrupts
-disabled, and IRQ return support must be added before enabling preemption.
-
-[`kernel/tss.c`](kernel/tss.c) supplies the boot CPU's 64-bit TSS, bootstrap
-ring-0 stack, and separate double-fault/page-fault IST stacks. `gdt_init` installs
-the TSS descriptor and loads TR before the IDT is enabled. Future context switches
-must call `tss_prepare_user(kernel_stack_top)` with interrupts disabled to update
-RSP0, checking its return value. Kernel stacks and the TSS must remain mapped in
-all user address spaces. User port I/O is disabled by omitting the I/O bitmap;
-user entry code must also keep RFLAGS.IOPL at zero. SMP will require a separate
-TSS and stacks per CPU.
-
-Run `make test-tss` for host-side layout, descriptor encoding, stack setup, and
-RSP0 validation tests (the privileged GDT/TR loads are mocked).
 
 ### Phase 3: L4 Primitives & IPC
 - [ ] Capability Table & Handle Array management
@@ -54,3 +36,11 @@ RSP0 validation tests (the privileged GDT/TR loads are mocked).
 - [ ] Static 64-bit ELF Loader (`PT_LOAD` segment mapper)
 - [ ] Spawn Root Task / Pager (Thread 1) into Ring 3
 - [ ] Core Userland Servers (`alloc_server`, `vfs_server`, `driver_server`)
+
+## Scheduler
+
+The single-CPU round-robin interface is scaffolded in
+[`kernel/ipc/scheduler.h`](kernel/ipc/scheduler.h); there is no scheduler implementation
+or timer-driven context switching yet. The interface covers ready queues, IPC
+blocking/wakeup, yielding, and tick accounting. Its operations require interrupts
+disabled, and IRQ return support must be added before enabling preemption.

@@ -65,7 +65,6 @@ void kmain(void) {
 
     /* Initialize kernel mode framebuffer */
     fb_init(&global_framebuffer, fb);
-    klog(KLOG_INFO, "kmain: Framebuffer initialized successfully.\n");
 
     if (hhdm_request.response == NULL || memmap_request.response == NULL) {
         klog(KLOG_ERROR, "kmain: Limine HHDM/memory mapping not available!\n");
@@ -73,6 +72,13 @@ void kmain(void) {
     }
 
     /* Minimal boot sequence */
+
+    // Print kernel banner
+    kputs(" .---. .----..-.   .----. .----..---. .----..----.  .----. \n");
+    kputs("/  ___}| {_  | |   | {_  { {__ {_   _}| {_ /  {}  \\{ {__  \n");
+    kputs("\\     }| {__ | `--.| {__ .-._} } | |  | {__\\      /.-._} }\n");
+    kputs(" `---' `----'`----'`----'`----'  `-'  `----'`----' `----' \n");
+
     gdt_init();
     idt_init();
     isr_install();
