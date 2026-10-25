@@ -185,9 +185,8 @@ void isr_handler(struct cpu_registers *regs) {
                               ? exception_messages[regs->int_no]
                               : "Unknown Exception";
 
+    // Print the exception message
     (void)message;
-
-    /* TODO: implement logging */
 
     for (;;) {
         __asm__ volatile("cli; hlt" : : : "memory");

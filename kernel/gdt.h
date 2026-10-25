@@ -1,5 +1,5 @@
-#ifndef CELESTEOS_KERNEL_GDT_H
-#define CELESTEOS_KERNEL_GDT_H
+#ifndef CELESTEOS_GDT_H
+#define CELESTEOS_GDT_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -111,4 +111,4 @@ extern void load_gdt(const gdt_pointer_t *gdt_ptr, uint16_t cs, uint16_t ds);
  */
 extern void load_tss(uint16_t tss_selector);
 
-#endif /* CELESTEOS_KERNEL_GDT_H */
+#endif /* CELESTEOS_GDT_H */

@@ -1,5 +1,5 @@
-#ifndef CELESTEOS_KERNEL_TSS_H
-#define CELESTEOS_KERNEL_TSS_H
+#ifndef CELESTEOS_TSS_H
+#define CELESTEOS_TSS_H
 
 #include <stdint.h>
 
@@ -15,7 +15,7 @@ typedef struct task_state_segment {
     uint16_t io_map_base;
 } tss_t;
 
-extern tss_t KERNEL_TSS;
+extern tss_t k_tss;
 
 /**
  * Initialize the Task State Segment (TSS) for the kernel, and setup
@@ -29,4 +29,4 @@ void tss_init(void);
  */
 void tss_prepare_user(void);
 
-#endif /* CELESTEOS_KERNEL_TSS_H */
+#endif /* CELESTEOS_TSS_H */

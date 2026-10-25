@@ -1,5 +1,5 @@
-#ifndef CELESTEOS_KERNEL_FB_H
-#define CELESTEOS_KERNEL_FB_H
+#ifndef CELESTEOS_FB_H
+#define CELESTEOS_FB_H
 
 #include <limine.h>
 
@@ -38,4 +38,4 @@ void fb_putchar(struct framebuffer_state *fb, char c, uint32_t fg_color, uint32_
 void fb_print(struct framebuffer_state *fb, const char *str, uint32_t fg_color, uint32_t bg_color);
 void fb_scroll(struct framebuffer_state *fb);
 
-#endif /* CELESTEOS_KERNEL_FB_H */
+#endif /* CELESTEOS_FB_H */

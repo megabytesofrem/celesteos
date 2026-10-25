@@ -1,5 +1,5 @@
-#ifndef CELESTEOS_KERNEL_PORTS_H
-#define CELESTEOS_KERNEL_PORTS_H
+#ifndef CELESTEOS_PORTS_H
+#define CELESTEOS_PORTS_H
 
 #include <stdint.h>
 
@@ -69,4 +69,4 @@ static inline void debug_write(const char *str) {
     }
 }
 
-#endif /* CELESTEOS_KERNEL_PORTS_H */
+#endif /* CELESTEOS_PORTS_H */

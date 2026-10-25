@@ -1,5 +1,5 @@
-#ifndef CELESTEOS_KERNEL_IDT_H
-#define CELESTEOS_KERNEL_IDT_H
+#ifndef CELESTEOS_IDT_H
+#define CELESTEOS_IDT_H
 
 #include <stdint.h>
 
@@ -122,4 +122,4 @@ void isr_install(void);
 void isr_handler(struct cpu_registers *regs);
 void irq_handler(struct cpu_registers *regs);
 
-#endif /* CELESTEOS_KERNEL_IDT_H */
+#endif /* CELESTEOS_IDT_H */

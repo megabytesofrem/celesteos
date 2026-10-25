@@ -47,8 +47,10 @@ C_SRCS := kernel/kmain.c \
 	kernel/idt.c \
 	kernel/pic.c \
 	kernel/fb.c \
+	kernel/pmm.c \
+	kernel/pmap.c \
 	lib/klog.c \
-	lib/string.c \
+	lib/string.c
 
 ASM_SRCS := kernel/asm/entry.s \
 	kernel/asm/load_gdt.s \
