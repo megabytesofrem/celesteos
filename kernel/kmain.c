@@ -5,7 +5,6 @@
 #include <kernel/idt.h>
 #include <kernel/pmap.h>
 #include <kernel/pmm.h>
-#include <kernel/tss.h>
 #include <klog.h>
 
 static void halt_forever(void) {
@@ -30,7 +29,8 @@ __attribute__((
     .response = NULL,
 };
 
-__attribute__((used,
+__attribute__((
+    used,
     section(".limine_requests"))) static volatile struct limine_memmap_request memmap_request = {
     .id = LIMINE_MEMMAP_REQUEST_ID,
     .revision = 0,
@@ -45,8 +45,8 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
     };
 
 // Limine Requests End Marker
-__attribute__((
-    used, section(".limine_requests_end"))) static volatile uint64_t limine_requests_end[] =
+__attribute__((used,
+               section(".limine_requests_end"))) static volatile uint64_t limine_requests_end[] =
     LIMINE_REQUESTS_END_MARKER;
 
 void kmain(void) {
@@ -85,6 +85,8 @@ void kmain(void) {
         halt_forever();
     }
     klog(KLOG_INFO, "kmain: Page map initialized successfully.\n");
+
+    /* TODO: Usermode jump */
 
     halt_forever();
 }

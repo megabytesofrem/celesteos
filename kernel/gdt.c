@@ -1,5 +1,7 @@
 #include "gdt.h"
 
+#include <kernel/tss.h>
+
 /* Kernel Global Descriptor Table (GDT) */
 static gdt_t k_gdt;
 static gdt_pointer_t k_gdt_ptr;
@@ -21,7 +23,7 @@ gdt_entry_t gdt_entry_create(uint8_t access, uint8_t granularity) {
     return entry;
 }
 
-void gdt_init() {
+void gdt_init(void) {
     /* 0x00: Null descriptor */
     k_gdt.null_descriptor = gdt_entry_null();
 
@@ -37,13 +39,19 @@ void gdt_init() {
     /* 0x20: User data */
     k_gdt.user_data = gdt_entry_create(GDT_USER_DATA, GDT_GRANULARITY_LONG);
 
-    /* Set Task State Segment (TSS) */
-    /* TODO: Needs page mapping first */
+    tss_init();
+    uintptr_t tss_base = (uintptr_t)tss_get();
+    uint64_t tss_limit = sizeof(tss_t) - 1;
+    /* Available 64-bit TSS, present at ring 0, with byte granularity. */
+    k_gdt.tss_low = (tss_limit & 0xFFFF) | ((tss_base & 0xFFFFFF) << 16) | (UINT64_C(0x89) << 40) |
+                    (((tss_limit >> 16) & 0xF) << 48) | (((tss_base >> 24) & 0xFF) << 56);
+    k_gdt.tss_high = tss_base >> 32;
 
     k_gdt_ptr.limit = sizeof(k_gdt) - 1;
     k_gdt_ptr.base = (uint64_t)&k_gdt;
 
     load_gdt(&k_gdt_ptr, GDT_KERNEL_CS, GDT_KERNEL_DS);
+    load_tss(GDT_TSS);
 
     return;
 }

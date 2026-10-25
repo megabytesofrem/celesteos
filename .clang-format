@@ -6,8 +6,7 @@ UseTab: Never
 ColumnLimit: 100
 BreakBeforeBraces: Attach
 Cpp11BracedListStyle: false
-AlignAfterOpenBracket: DontAlign
-BinPackArguments: false
+AlignAfterOpenBracket: Align
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AlignTrailingComments: true

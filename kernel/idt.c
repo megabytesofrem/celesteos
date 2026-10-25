@@ -1,6 +1,7 @@
 #include "idt.h"
 
 #include <kernel/pic.h>
+#include <kernel/tss.h>
 #include <stdint.h>
 
 // clang-format off
@@ -66,10 +67,10 @@ void idt_init(void) {
     }
 
     // Set up the #DF handler (Double Fault) with IST index 1
-    idt_set_entry_ist(8, isr8, 0x8E, 1);
+    idt_set_entry_ist(8, isr8, 0x8E, TSS_IST_DOUBLE_FAULT);
 
     // Set up the #PF handler (Page Fault) with IST index 2
-    idt_set_entry_ist(14, isr14, 0x8E, 2);
+    idt_set_entry_ist(14, isr14, 0x8E, TSS_IST_PAGE_FAULT);
 
     // Load the IDT
     idt_load(&k_idt_ptr);
@@ -125,13 +126,13 @@ void isr_install(void) {
     idt_set_entry(5, isr5, 0x8f);
     idt_set_entry(6, isr6, 0x8f);
     idt_set_entry(7, isr7, 0x8f);
-    idt_set_entry_ist(8, isr8, 0x8e, 1);
+    idt_set_entry_ist(8, isr8, 0x8e, TSS_IST_DOUBLE_FAULT);
     idt_set_entry(9, isr9, 0x8f);
     idt_set_entry(10, isr10, 0x8f);
     idt_set_entry(11, isr11, 0x8f);
     idt_set_entry(12, isr12, 0x8f);
     idt_set_entry(13, isr13, 0x8f);
-    idt_set_entry_ist(14, isr14, 0x8e, 2);
+    idt_set_entry_ist(14, isr14, 0x8e, TSS_IST_PAGE_FAULT);
     idt_set_entry(15, isr15, 0x8f);
     idt_set_entry(16, isr16, 0x8f);
     idt_set_entry(17, isr17, 0x8f);

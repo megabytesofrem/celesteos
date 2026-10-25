@@ -44,6 +44,7 @@ LIBGCC := $(shell $(CC) -print-libgcc-file-name)
 
 C_SRCS := kernel/kmain.c \
 	kernel/gdt.c \
+	kernel/tss.c \
 	kernel/idt.c \
 	kernel/pic.c \
 	kernel/fb.c \
@@ -53,19 +54,26 @@ C_SRCS := kernel/kmain.c \
 	lib/string.c
 
 ASM_SRCS := kernel/asm/entry.s \
+	kernel/asm/interrupts.s \
 	kernel/asm/load_gdt.s \
-	kernel/asm/interrupts.s
+	kernel/asm/tss_switch.s
 
 OBJS := $(addprefix $(BUILD_DIR)/,$(C_SRCS:.c=.o)) \
 	$(addprefix $(BUILD_DIR)/,$(ASM_SRCS:.s=.o))
 DEPS := $(addprefix $(BUILD_DIR)/,$(C_SRCS:.c=.d))
 
 # Targets
-.PHONY: all kernel iso limine qemu run clean
+.PHONY: all kernel iso limine qemu run clean test-tss
 
 all: iso
 
 kernel: $(TARGET_ELF)
+
+test-tss:
+	@mkdir -p $(BUILD_DIR)/tests
+	$(CC) -std=c17 -Wall -Wextra -Werror -I. -Iinclude \
+		tests/tss_test.c kernel/tss.c kernel/gdt.c -o $(BUILD_DIR)/tests/tss_test
+	$(BUILD_DIR)/tests/tss_test
 
 limine:
 	LIMINE_DIR="$(LIMINE_DIR)" $(BASH) ./build_limine.sh

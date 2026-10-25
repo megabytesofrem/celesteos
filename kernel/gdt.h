@@ -41,12 +41,12 @@
 /* Descriptors */
 #define GDT_KERNEL_CODE                                                                            \
     (GDT_ACCESS_PRESENT | GDT_ACCESS_RING0 | GDT_ACCESS_DESCRIPTOR | GDT_ACCESS_EXECUTABLE |       \
-        GDT_ACCESS_RW)
+     GDT_ACCESS_RW)
 #define GDT_KERNEL_DATA                                                                            \
     (GDT_ACCESS_PRESENT | GDT_ACCESS_RING0 | GDT_ACCESS_DESCRIPTOR | GDT_ACCESS_RW)
 #define GDT_USER_CODE                                                                              \
     (GDT_ACCESS_PRESENT | GDT_ACCESS_RING3 | GDT_ACCESS_DESCRIPTOR | GDT_ACCESS_EXECUTABLE |       \
-        GDT_ACCESS_RW)
+     GDT_ACCESS_RW)
 #define GDT_USER_DATA                                                                              \
     (GDT_ACCESS_PRESENT | GDT_ACCESS_RING3 | GDT_ACCESS_DESCRIPTOR | GDT_ACCESS_RW)
 
@@ -96,7 +96,7 @@ _Static_assert(offsetof(gdt_t, tss_low) == 0x28, "TSS descriptor must match sele
 /**
  * Initialize the Global Descriptor Table (GDT).
  */
-void gdt_init();
+void gdt_init(void);
 
 gdt_entry_t gdt_entry_null();
 gdt_entry_t gdt_entry_create(uint8_t access, uint8_t granularity);

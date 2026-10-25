@@ -54,6 +54,7 @@ XMM00=0000000000000000 0000000000000000 XMM01=0000000000000000 0000000000000000
 XMM02=0000000000000000 0000000000000000 XMM03=0000000000000000 0000000000000000
 XMM04=0000000000000000 0000000000000000 XMM05=0000000000000000 0000000000000000
 XMM06=0000000000000000 0000000000000000 XMM07=0000000000000000 0000000000000000
+Servicing hardware INT=0x08
 Servicing hardware INT=0x0e
 Servicing hardware INT=0x0e
 Servicing hardware INT=0x08
@@ -61,14 +62,10 @@ Servicing hardware INT=0x0e
 Servicing hardware INT=0x0e
 Servicing hardware INT=0x0e
 Servicing hardware INT=0x0e
-Servicing hardware INT=0x08
-Servicing hardware INT=0x09
-Servicing hardware INT=0x09
-Servicing hardware INT=0x09
-Servicing hardware INT=0x09
-Servicing hardware INT=0x08
-Servicing hardware INT=0x08
 Servicing hardware INT=0x08
 Servicing hardware INT=0x08
 Servicing hardware INT=0x08
 Servicing hardware INT=0x09
+Servicing hardware INT=0x08
+Servicing hardware INT=0x09
+Servicing hardware INT=0x08

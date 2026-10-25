@@ -45,7 +45,7 @@ typedef void (*idt_handler_t)(void);
 /**
  * Initialize the Interrupt Descriptor Table (IDT).
  */
-void idt_init(void);
+void idt_init();
 
 /**
  * Set an entry in the IDT to point to a specific interrupt handler.
