@@ -54,14 +54,14 @@ C_SRCS := kernel/kmain.c \
 	lib/klog.c \
 	lib/string.c
 
-ASM_SRCS := kernel/asm/entry.s \
-	kernel/asm/ctx_switch.s \
-	kernel/asm/interrupts.s \
-	kernel/asm/load_gdt.s \
-	kernel/asm/tss_switch.s
+ASM_SRCS := kernel/asm/entry.asm \
+	kernel/asm/ctx_switch.asm \
+	kernel/asm/interrupts.asm \
+	kernel/asm/load_gdt.asm \
+	kernel/asm/tss_switch.asm
 
 OBJS := $(addprefix $(BUILD_DIR)/,$(C_SRCS:.c=.o)) \
-	$(addprefix $(BUILD_DIR)/,$(ASM_SRCS:.s=.o))
+	$(addprefix $(BUILD_DIR)/,$(ASM_SRCS:.asm=.o))
 DEPS := $(addprefix $(BUILD_DIR)/,$(C_SRCS:.c=.d))
 
 # Targets
@@ -69,19 +69,22 @@ DEPS := $(addprefix $(BUILD_DIR)/,$(C_SRCS:.c=.d))
 
 all: iso
 
+# Kernel build target
 kernel: $(TARGET_ELF)
 
+# Tests
 test-tss:
 	@mkdir -p $(BUILD_DIR)/tests
 	$(CC) -std=c17 -Wall -Wextra -Werror -I. -Iinclude \
 		tests/tss_test.c kernel/tss.c kernel/gdt.c -o $(BUILD_DIR)/tests/tss_test
 	$(BUILD_DIR)/tests/tss_test
 
+# Limine bootloader
 limine:
 	LIMINE_DIR="$(LIMINE_DIR)" $(BASH) ./build_limine.sh
 
+# ISO image: depends on the kernel ELF and Limine bootloader
 iso: $(TARGET_ISO)
-
 $(TARGET_ISO): $(TARGET_ELF) limine.conf | limine
 	@command -v $(XORRISO) >/dev/null || { echo "Error: $(XORRISO) is required to build the bootable ISO." >&2; exit 1; }
 	mkdir -p $(ISO_DIR)/boot/limine $(ISO_DIR)/EFI/BOOT
@@ -96,6 +99,7 @@ $(TARGET_ISO): $(TARGET_ELF) limine.conf | limine
 		--protective-msdos-label $(ISO_DIR) -o $(TARGET_ISO)
 	$(LIMINE_DIR)/limine bios-install $(TARGET_ISO)
 
+# QEMU run target
 qemu: iso
 	$(QEMU) -cdrom $(TARGET_ISO) \
 		-m 512M \

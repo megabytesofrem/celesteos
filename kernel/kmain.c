@@ -3,6 +3,7 @@
 #include <kernel/fb.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
+#include <kernel/ipc/scheduler.h>
 #include <kernel/pmap.h>
 #include <kernel/pmm.h>
 #include <klog.h>
@@ -91,6 +92,9 @@ void kmain(void) {
         halt_forever();
     }
     klog(KLOG_INFO, "kmain: Page map initialized successfully.\n");
+
+    scheduler_init();
+    klog(KLOG_INFO, "kmain: Scheduler initialized successfully.\n");
 
     /* TODO: Usermode jump */
 

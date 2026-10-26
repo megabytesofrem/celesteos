@@ -44,3 +44,32 @@ The single-CPU round-robin interface is scaffolded in
 or timer-driven context switching yet. The interface covers ready queues, IPC
 blocking/wakeup, yielding, and tick accounting. Its operations require interrupts
 disabled, and IRQ return support must be added before enabling preemption.
+
+## Service Calls
+CelesteOS only provides the bare minimum service calls needed to support userland servers and basic IPC functionality. This includes service calls for thread management, memory management, and inter-process communication.
+
+Service calls are implemented in `kernel/svc.h` as syscalls; however they are tiny and only communicate with userland and IPC mechanisms.
+
+### 1: `svc_send_msg(target_tid, message, recv_buffer)`
+- **Purpose**: The client-side half of L4 Rendezvous IPC. Sends a synchronous IPC message to the target thread and blocks until a reply is received.
+- **Registers passed**: Target thread (`RDI`), message (`RSI`), receive buffer (`RDX`)
+
+### 2: `svc_reply_wait(client_tid, message, recv_buffer)`
+- **Purpose**: The server-side half of L4 Rendezvous IPC. Sends a reply to the client thread and waits for the next IPC message.
+- **Registers passed**: Client thread (`RDI`), message (`RSI`), receive buffer (`RDX`)
+
+### 3: `svc_vm_map(target_task, virt_addr, phys_addr, flags)`
+- **Purpose**: Maps a physical page into the virtual address space (page table) of the target task.
+- **Registers passed**: Target task (`RDI`), virtual address (`RSI`), physical address (`RDX`), flags (`RCX`)
+
+### 4: `svc_vm_unmap(target_task, virt_addr)`
+- **Purpose**: Unmaps a virtual page from the virtual address space (page table) of the target task.
+- **Registers passed**: Target task (`RDI`), virtual address (`RSI`)
+
+### 5: `svc_thread_create(target_task, entry_point, user_stack_top)`
+- **Purpose**: Creates a new thread in the static thread pool `g_threads`, sets up its kernel and user context, and assigns it to the target task.
+- **Registers passed**: Target task (`RDI`), entry point (`RSI`), user stack top (`RDX`)
+
+### 6: `svc_thread_yield(target_tid)`
+- **Purpose**: Yields the CPU from the current thread to the specified target thread. Triggers a manual schedule pass. If `target_tid` is passed, it donates the current thread's time slice to the target (via `scheduler_yield_to`), otherwise it uses a standard round-robin `schedule()`.
+- **Registers passed**: Target thread (`RDI`)
