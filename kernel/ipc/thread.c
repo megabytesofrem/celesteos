@@ -59,6 +59,9 @@ thread_t *thread_create(struct task *parent_task, void *entry_point, void *user_
         return NULL;
     }
 
+    // Create the kobject for this thread
+    thread->kobj = kobject_create(KOBJ_TYPE_THREAD);
+
     thread->parent_task = parent_task;
     thread->rip = (uintptr_t)entry_point;
     thread->user_rsp = (uintptr_t)user_stack_top;

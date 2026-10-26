@@ -4,8 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef int64_t thread_id_t;
-typedef int64_t task_id_t;
+typedef int64_t handle_t;
+
+#define INVALID_HANDLE ((handle_t) - 1)
 
 typedef enum {
     SVC_SEND_MSG,
@@ -16,6 +17,9 @@ typedef enum {
     SVC_THREAD_YIELD
 } svc_number_t;
 
+/**
+ * Capability descriptor for a service.
+ */
 typedef enum {
     SVC_CAP_MEMORY_MAP,   /* Map memory into the address space of the reciever */
     SVC_CAP_MEMORY_GRANT, /* Transfer memory ownership to another task */
@@ -41,14 +45,14 @@ typedef struct svc_capability {
 typedef struct svc_message {
     svc_message_tag_t tag;
     uintptr_t registers[4];           /* Array of registers being sent */
-    svc_capability_t capabilities[8]; /* Array of capabilities being sent */
+    svc_capability_t capabilities[8]; /* Capability descriptors */
 } svc_message_t;
 
-int svc_send_msg(thread_id_t target_tid, svc_message_t *message, svc_message_t *recv_buffer);
-int svc_reply_wait(thread_id_t client_tid, svc_message_t *message, svc_message_t *recv_buffer);
-int svc_vm_map(task_id_t target_task, void *virt_addr, void *phys_addr, int flags);
-int svc_vm_unmap(task_id_t target_task, void *virt_addr);
-int svc_thread_create(task_id_t target_task, void *entry_point, void *user_stack_top);
-int svc_thread_yield(thread_id_t target_tid);
+int svc_send_msg(handle_t target, svc_message_t *message, svc_message_t *recv_buffer);
+int svc_reply_wait(handle_t client, svc_message_t *message, svc_message_t *recv_buffer);
+int svc_vm_map(handle_t target, void *virt_addr, void *phys_addr, int flags);
+int svc_vm_unmap(handle_t target, void *virt_addr);
+int svc_thread_create(handle_t target, void *entry_point, void *user_stack_top);
+int svc_thread_yield(handle_t target);
 
 #endif // CELESTEOS_SVC_H

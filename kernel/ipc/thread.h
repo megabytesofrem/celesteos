@@ -1,6 +1,8 @@
 #ifndef CELESTEOS_THREAD_H
 #define CELESTEOS_THREAD_H
 
+#include "kobject.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -18,6 +20,9 @@ typedef enum {
 } thread_state_t;
 
 typedef struct thread {
+    /* Kernel object header */
+    kobject_t kobj;
+
     thread_id_t tid;
     thread_state_t state;
 
