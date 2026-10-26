@@ -7,7 +7,10 @@
 
 #include <kernel/tss.h>
 
+/* Pointer to the currently running thread */
 static thread_t *g_current_thread;
+
+/* Ready queue for threads */
 static wait_queue_t g_thread_queue;
 
 void scheduler_init(void) {

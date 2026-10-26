@@ -50,6 +50,7 @@ C_SRCS := kernel/kmain.c \
 	kernel/fb.c \
 	kernel/pmm.c \
 	kernel/pmap.c \
+	kernel/ipc/thread.c \
 	kernel/ipc/scheduler.c \
 	lib/klog.c \
 	lib/string.c
