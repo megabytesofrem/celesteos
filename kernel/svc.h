@@ -8,6 +8,9 @@ typedef int64_t handle_t;
 
 #define INVALID_HANDLE ((handle_t) - 1)
 
+/**
+ * Service call numbers
+ */
 typedef enum {
     SVC_SEND_MSG,
     SVC_REPLY_WAIT,
@@ -18,7 +21,7 @@ typedef enum {
 } svc_number_t;
 
 /**
- * Capability descriptor for a service.
+ * Capability descriptor for a service call.
  */
 typedef enum {
     SVC_CAP_MEMORY_MAP,   /* Map memory into the address space of the reciever */
@@ -47,12 +50,5 @@ typedef struct svc_message {
     uintptr_t registers[4];           /* Array of registers being sent */
     svc_capability_t capabilities[8]; /* Capability descriptors */
 } svc_message_t;
-
-int svc_send_msg(handle_t target, svc_message_t *message, svc_message_t *recv_buffer);
-int svc_reply_wait(handle_t client, svc_message_t *message, svc_message_t *recv_buffer);
-int svc_vm_map(handle_t target, void *virt_addr, void *phys_addr, int flags);
-int svc_vm_unmap(handle_t target, void *virt_addr);
-int svc_thread_create(handle_t target, void *entry_point, void *user_stack_top);
-int svc_thread_yield(handle_t target);
 
 #endif // CELESTEOS_SVC_H
