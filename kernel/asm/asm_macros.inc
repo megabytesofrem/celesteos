@@ -38,40 +38,40 @@
 %endmacro
 
 ; -----------------------------------------------------------------------------------
-; IF / ELSE / ENDIF macros for conditional assembly
+; IF / ELSE / ENDIF macros for runtime conditional branches
 ;
 ; Usage:
-;   IF <value1>, <operator>, <value2>
-;       ; code to execute if condition is true
+;   IF <condition>
+;       ; code executed when the condition is true
 ;   ELSE
-;       ; code to execute if condition is false
+;       ; code executed when the condition is false
+;   ENDIF
+; Or:
+;   IF <value1>, <condition>, <value2>
+;       ; code executed when value1 <condition> value2
 ;   ENDIF
 ; -----------------------------------------------------------------------------------
 %macro IF 1-3
     %push if_stack
-    
+
     %if %0 == 1
-        ; ---------------------------------------------------------------------------
-        ; 1 Argument Provided (e.g., IF c, IF z, IF nc)
-        ; We jump directly if the condition flag is NOT set!
-        ; ---------------------------------------------------------------------------
-        j%-1 ..@else_label
+        j%-1 %$if_body
     %elif %0 == 3
-        ; ---------------------------------------------------------------------------
-        ; 3 Arguments Provided (e.g., IF rax, e, 0)
-        ; Compare the values, then invert %2 for the jump.
-        ; ---------------------------------------------------------------------------
         cmp %1, %3
-        j%-2 ..@else_label
+        j%-2 %$if_body
     %else
         %error "IF macro requires either 1 argument (flag) or 3 arguments (val1, op, val2)"
     %endif
+
+    jmp %$else_label
+    %$if_body:
 %endmacro
+
 %macro ELSE 0
     %ifctx if_stack
-        jmp ..@end_if_label         ; jump over the ELSE block when IF condition was true
-        ..@else_label:              ; target for the initial failed IF jump
-        %repl if_else_stack         ; convert stack context from IF to IF_ELSE
+        jmp %$end_if
+        %$else_label:
+        %repl if_else_stack
     %else
         %error "ELSE used without a matching IF"
     %endif
@@ -79,11 +79,11 @@
 
 %macro ENDIF 0
     %ifctx if_stack
-        ..@end_if_label:              ; target for the end of the IF/ELSE block
-        %pop                          ; pop the IF context from the macro stack
+        %$else_label:
+        %pop
     %elifctx if_else_stack
-        ..@end_if_label:              ; target for the end of the IF/ELSE block
-        %pop                          ; pop the IF_ELSE context from the macro stack
+        %$end_if:
+        %pop
     %else
         %error "ENDIF used without a matching IF"
     %endif
@@ -94,22 +94,24 @@
 ;
 ; Usage:
 ;   FOR <loop_var>, <start_value>, <end_value>
-;       ; code to execute for each iteration
+;       ; code executed for each value, inclusive
 ;   ENDFOR
 ; -----------------------------------------------------------------------------------
 %macro FOR 3
-    %push for_stack                  ; push a new context onto the macro stack
-    mov %1, %2                       ; initialize the loop variable
-    ..@for_label:                    ; start of the FOR loop
-    cmp %1, %3                       ; compare the loop variable with the end value
-    j%-2 ..@end_for_label            ; jump to end label if FOR condition is false
+    %push for_stack
+    %define %$for_var %1
+    mov %1, %2
+    %$for_begin:
+    cmp %1, %3
+    jg %$for_end
 %endmacro
 
 %macro ENDFOR 0
     %ifctx for_stack
-        jmp ..@for_label                 ; jump back to the start of the FOR loop
-        ..@end_for_label:               ; target for the end of the FOR loop
-        %pop                           ; pop the FOR context from the macro stack
+        inc %$for_var
+        jmp %$for_begin
+        %$for_end:
+        %pop
     %else
         %error "ENDFOR used without a matching FOR"
     %endif
@@ -119,21 +121,24 @@
 ; WHILE / ENDWHILE macros for loop assembly
 ;
 ; Usage:
-;   WHILE <value1>, <value2>
-;       ; code to execute while condition is true
+;   WHILE <value1>, <condition>, <value2>
+;       ; code executed while value1 <condition> value2 is true
 ;   ENDWHILE
 ; -----------------------------------------------------------------------------------
-%macro WHILE 2
-    %push while_stack                  ; push a new context onto the macro stack
-    cmp %1, %2                         ; compare the two values for the WHILE condition
-    j%-2 ..@end_while_label            ; jump to end label if WHILE condition is false
+%macro WHILE 3
+    %push while_stack
+    %$while_begin:
+    cmp %1, %3
+    j%-2 %$while_body
+    jmp %$while_end
+    %$while_body:
 %endmacro
 
 %macro ENDWHILE 0
     %ifctx while_stack
-        jmp ..@while_label             ; jump back to the start of the WHILE loop
-        ..@end_while_label:             ; target for the end of the WHILE loop
-        %pop                            ; pop the WHILE context from the macro stack
+        jmp %$while_begin
+        %$while_end:
+        %pop
     %else
         %error "ENDWHILE used without a matching WHILE"
     %endif
