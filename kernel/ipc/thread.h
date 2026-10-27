@@ -6,8 +6,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* Maximum number of threads alive at any given time */
 #define MAX_THREADS 1024
 
+typedef struct thread thread_t;
 typedef int64_t thread_id_t;
 typedef int64_t task_id_t;
 
@@ -22,6 +24,7 @@ typedef enum {
 typedef struct thread {
     /* Kernel object header */
     kobject_t kobj;
+    spinlock_t lock;
 
     thread_id_t tid;
     thread_state_t state;
@@ -44,6 +47,10 @@ typedef struct thread {
     struct thread *prev;
 } thread_t;
 
+/* Global thread array and thread pool (needs the complete thread_t above) */
+extern thread_t g_threads[MAX_THREADS];
+extern kobject_pool_t g_thread_pool;
+
 thread_id_t next_thread_id(void);
 
 /**
@@ -55,12 +62,10 @@ thread_id_t next_thread_id(void);
 void thread_sys_init(void);
 
 /**
- * Allocate a thread slot from the thread pool.
- */
-thread_t *thread_alloc_slot(void);
-
-/**
  * Create a new thread within the specified parent task.
+ *
+ * The new thread is not runnable until it is passed to scheduler_enqueue().
+ * The caller owns the returned reference and drops it with kobject_release().
  */
 thread_t *thread_create(struct task *parent_task, void *entry_point, void *user_stack_top);
 

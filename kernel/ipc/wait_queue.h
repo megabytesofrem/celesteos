@@ -1,3 +1,9 @@
+/**
+ * File: wait_queue.h
+ *
+ * Purpose: Defines a wait queue for managing threads that are waiting for events.
+ */
+
 #ifndef CELESTEOS_WAIT_QUEUE_H
 #define CELESTEOS_WAIT_QUEUE_H
 

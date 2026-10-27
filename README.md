@@ -38,6 +38,8 @@ CelesteOS has the concepts of kobjects (kernel objects), capabilities, threads a
 
 **Kobject**: A kobject is the general notion of a kernel-managed resource (whether that is a thread, task, IPC endpoint, page object, etc.)
 
+**KObject Pool**: A kobject pool is a pool that tracks allocated kernel objects with static backing storage, allowing efficient allocation and deallocation of kernel objects in ring 0.
+
 **Tasks**: A task is an abstraction representing a single unit of execution, typically encompassing one or more threads and associated resources. Tasks are the primary entities that interact with the kernel and other tasks via IPC.
 
 **Threads**: A thread is the basic unit of CPU execution within a task. Each thread has its own execution context, including registers and stack, but shares the task's resources such as memory and capabilities.
@@ -45,6 +47,61 @@ CelesteOS has the concepts of kobjects (kernel objects), capabilities, threads a
 **Capabilities**: A capability is a token or reference that grants a task certain rights to interact with a kernel-managed resource (kobject). Capabilities are used to control access to threads, tasks, memory regions, IPC endpoints, and other kernel objects.
 
 **IPC Endpoints**: An IPC endpoint is a kernel object that represents a communication channel for inter-process communication. Tasks use IPC endpoints to send and receive messages synchronously.
+
+## KObject API
+Each subsystem that manages kernel objects must implement a set of operations defined in `kobject_ops_t`, which includes the destructor for the kernel object and any other relevant operations.
+
+Below is an example documenting the kobject API.
+```c
+#include <kernel/ipc/kobject.h>
+
+struct my_kobject_data {
+    int value;
+    char field[64];
+}; 
+
+typedef struct my_kobject {
+    kobject_t obj;
+
+    /* Data that this kobject manages */
+    struct my_kobject_data data;
+} my_kobject_t;
+
+my_kobject_t g_my_kobject[MY_KOBJECT_POOL_SIZE];
+kobject_pool_t g_my_kobject_pool;
+
+static void my_kobject_construct(kobject_t *obj, kobject_data_t data);
+static void my_kobject_destroy(kobject_t *obj);
+
+static const kobject_ops_t my_kobject_ops = {
+    .name = "my_kobject",
+    .construct = my_kobject_construct,
+    .destroy = my_kobject_destroy,
+};
+
+static void my_kobject_construct(kobject_t *obj, kobject_data_t data) {
+    my_kobject_t *my_obj = (my_kobject_t *)obj;
+
+    my_obj->data = *(struct my_kobject_data *)data;
+}
+
+static void my_kobject_destroy(kobject_t *obj) {
+    my_kobject_t *my_obj = (my_kobject_t *)obj;
+
+    /* Perform any necessary cleanup */
+    my_obj->data.value = 0;
+    memset(my_obj->data.field, 0, sizeof(my_obj->data.field));
+}
+
+static void my_subsystem_sys_init(void) {
+    /* Initialize the static object pool for my_kobject_t */
+    kobject_pool_init(&g_my_kobject_pool, 
+                       g_my_kobject,
+                       sizeof(my_kobject_t),
+                       MY_KOBJECT_POOL_SIZE,
+                       &my_kobject_ops);
+}
+```
 
 ## Services
 

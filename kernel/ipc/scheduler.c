@@ -1,3 +1,10 @@
+/**
+ * File: scheduler.c
+ *
+ * Purpose: Implements the thread scheduler for CelesteOS, managing thread
+ * execution and context switching.
+ */
+
 #include "scheduler.h"
 #include "task.h"
 #include "wait_queue.h"

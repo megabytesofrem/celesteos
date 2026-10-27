@@ -21,6 +21,7 @@ INCLUDES := -I. -Iinclude -Ikernel -Ilib -Ikernel/asm
 # Compiler & assembler flags
 CFLAGS := -std=c17 \
 	-O2 \
+	-g \
 	-ffreestanding \
 	-fno-stack-protector \
 	-fno-pic \
@@ -50,8 +51,10 @@ C_SRCS := kernel/kmain.c \
 	kernel/fb.c \
 	kernel/pmm.c \
 	kernel/pmap.c \
-	kernel/ipc/thread.c \
+	kernel/ipc/kobject.c \
 	kernel/ipc/scheduler.c \
+	kernel/ipc/task.c \
+	kernel/ipc/thread.c \
 	lib/klog.c \
 	lib/string.c
 
@@ -66,7 +69,7 @@ OBJS := $(addprefix $(BUILD_DIR)/,$(C_SRCS:.c=.o)) \
 DEPS := $(addprefix $(BUILD_DIR)/,$(C_SRCS:.c=.d))
 
 # Targets
-.PHONY: all kernel iso limine qemu run clean test-tss
+.PHONY: all kernel iso limine qemu qemu-debug run clean test-tss
 
 all: iso
 
@@ -111,6 +114,18 @@ qemu: iso
 		-D qemu.log
 
 run: qemu
+
+# Start QEMU paused, waiting for a debugger on tcp:1234
+qemu-debug: iso
+	$(QEMU) -cdrom $(TARGET_ISO) \
+		-m 512M \
+		-gdb tcp:127.0.0.1:1234 \
+		-S \
+		-pidfile $(BUILD_DIR)/qemu.pid \
+		-debugcon stdio \
+		-no-reboot -no-shutdown \
+		-d int,cpu_reset \
+		-D qemu.log
 
 # Compile C sources
 $(BUILD_DIR)/%.o: %.c Makefile

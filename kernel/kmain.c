@@ -94,7 +94,7 @@ void kmain(void) {
     klog(KLOG_INFO, "kmain: Page map initialized successfully.\n");
 
     scheduler_init();
-    klog(KLOG_INFO, "kmain: Scheduler initialized successfully.\n");
+    klog(KLOG_INFO, "kmain: IPC scheduler initialized successfully.\n");
 
     /* TODO: Usermode jump */
 
