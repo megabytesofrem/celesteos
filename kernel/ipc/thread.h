@@ -47,7 +47,7 @@ typedef struct thread {
     struct thread *prev;
 } thread_t;
 
-/* Global thread array and thread pool (needs the complete thread_t above) */
+/* Global thread array and thread pool */
 extern thread_t g_threads[MAX_THREADS];
 extern kobject_pool_t g_thread_pool;
 
