@@ -1,7 +1,6 @@
 [bits 64]
 section .text
 
-; Make this global so we can use it in C/C++
 global load_gdt
 global load_tss
 
@@ -9,19 +8,19 @@ global load_tss
 ; load_gdt - Load the Global Descriptor Table (GDT) and update segment registers
 ;
 ; Arguments:
-;   rdi - Pointer to the GDT descriptor
-;   dx  - Data segment selector
-;   rsi - Code segment selector
+;   RDI - Pointer to the GDT descriptor
+;   DX  - Data segment selector
+;   RSI - Code segment selector
 ;
 ; Behaviour:
-;   Loads the GDT from the pointer in rdi
-;   Updates the data segment registers with dx
-;   Reloads the code segment register with rsi
+;   Loads the GDT from the pointer in RDI
+;   Updates the data segment registers with DX
+;   Reloads the code segment register with RSI
 ; -----------------------------------------------------------------------------------
 load_gdt:
-    lgdt [rdi]                  ; load GDT pointer from the address in rdi
+    lgdt [rdi]                  ; load GDT pointer from the address in RDI
 
-    ; Update data segment registers
+    ; Update data segment registers by loading the selector from DX
     mov ds, dx
     mov es, dx
     mov fs, dx
@@ -30,7 +29,7 @@ load_gdt:
 
     ; Reload code segment register
     push rsi                    ; push code segment selector
-    lea rax, [rel .reload_cs]   ; load address of the reload_cs label into rax
+    lea rax, [rel .reload_cs]   ; load address of the reload_cs label into RAX
     push rax                    ; push target return address
     retfq                       ; far return reloads CS and jumps to .reload_cs
 .reload_cs:
@@ -38,15 +37,15 @@ load_gdt:
     ret
     
 ; -----------------------------------------------------------------------------------
-; Load the Task State Segment (TSS) with the given segment selector in rdi
+; Load the Task State Segment (TSS) with the given segment selector in RDI
 ;
 ; Arguments:
-;   rdi - TSS segment selector 
+;   RDI - TSS segment selector 
 ;
 ; Behaviour:
 ;   Loads the TSS with the segment selector provided in rdi
-;   Calls ltr with the lower 16 bits of rdi (di) to load the task register with the TSS
+;   Calls ltr with the lower 16 bits of RDI (DI) to load the task register with the TSS
 ; -----------------------------------------------------------------------------------
 load_tss:
-    ltr di
+    ltr di                      ; ltr only takes the lower 16 bits of RDI to load the task register
     ret

@@ -1,8 +1,11 @@
 [bits 64]
 section .text
 
-%include "common.inc"
+%include "asm_macros.inc"
 
+; -----------------------------------------------------------------------------------
+; ISRs
+; -----------------------------------------------------------------------------------
 global isr0 ; Divide by zero exception
 global isr1 ; Debug exception
 global isr2 ; Non-maskable interrupt
@@ -36,7 +39,9 @@ global isr29 ; Reserved
 global isr30 ; Reserved
 global isr31 ; Reserved
 
+; -----------------------------------------------------------------------------------
 ; IRQs
+; -----------------------------------------------------------------------------------
 global irq0  ; PIC timer interrupt
 global irq1  ; Keyboard (PS/2)
 global irq2  ; Cascade (used internally by the PIC)
@@ -74,6 +79,17 @@ irq%1:
   jmp irq_common_stub
 %endmacro
 
+; -----------------------------------------------------------------------------------
+; Common ISR and IRQ stubs
+;
+; Stack layout upon entry to the common ISR/IRQ stub:
+;   [RSP + 40] SS
+;   [RSP + 32] RSP
+;   [RSP + 24] RFLAGS
+;   [RSP + 16] CS
+;   [RSP + 8]  RIP
+;   [RSP + 0]  Error code (if applicable)
+; -----------------------------------------------------------------------------------
 isr_common_stub:
   pushall           ; push all registers
   mov rax, cr2
@@ -106,7 +122,9 @@ irq_common_stub:
   add rsp, 16       ; remove error code and interrupt number from stack
   iretq             ; return from interrupt
 
-; Define the ISRs
+; -----------------------------------------------------------------------------------
+; Define the ISRs (Interrupt Service Routines)
+; -----------------------------------------------------------------------------------
 DEFINE_ISR 0        ; Divide by zero exception
 DEFINE_ISR 1        ; Debug exception
 DEFINE_ISR 2        ; Non-maskable interrupt
@@ -140,7 +158,9 @@ DEFINE_ISR 29       ; Reserved
 DEFINE_ISR 30       ; Reserved
 DEFINE_ISR 31       ; Reserved
 
-; Define the IRQs
+; -----------------------------------------------------------------------------------
+; Define the IRQs (Interrupt Requests)
+; -----------------------------------------------------------------------------------
 DEFINE_IRQ 0, 32   ; Timer interrupt
 DEFINE_IRQ 1, 33   ; Keyboard interrupt
 DEFINE_IRQ 2, 34   ; Cascade interrupt (used internally by the PIC)

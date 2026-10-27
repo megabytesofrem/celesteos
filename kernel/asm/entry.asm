@@ -4,12 +4,15 @@ section .text
 global _start
 extern kmain
 
+; --------------------------------------------------------
+; _start - Entry point for the kernel
+; --------------------------------------------------------
 _start:
-    cli          ; Clear interrupts
-    cld          ; Clear direction flag
+    cli          ; clear interrupts
+    cld          ; clear direction flag
 
-    and rsp, -16 ; Align stack to 16-byte boundary
-    call kmain
+    and rsp, -16 ; align stack to 16-byte boundary
+    call kmain   ; call kmain
 
 .hang:
     cli

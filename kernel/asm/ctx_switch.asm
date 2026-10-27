@@ -7,8 +7,8 @@ global ctx_switch
 ; ctx_switch - Thread context switch routine
 ;
 ; Arguments:
-;   rdi - Pointer to current thread's stack pointer storage (RSP)
-;   rsi - Next thread's stack pointer
+;   RDI - Pointer to current thread's stack pointer storage (RSP)
+;   RSI - Next thread's stack pointer
 ;
 ; Behaviour:
 ;   Saves the current thread's callee-saved registers onto the stack
