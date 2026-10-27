@@ -39,7 +39,7 @@ CFLAGS := -std=c17 \
 	-MMD -MP \
 	$(INCLUDES)
 
-NASMFLAGS ?= -f elf64 -g -F dwarf
+NASMFLAGS ?= -f elf64 -g -F dwarf -Ikernel/asm/
 LDFLAGS := -T linker.ld -nostdlib -static -z max-page-size=0x1000
 LIBGCC := $(shell $(CC) -print-libgcc-file-name)
 
@@ -62,7 +62,8 @@ ASM_SRCS := kernel/asm/entry.asm \
 	kernel/asm/ctx_switch.asm \
 	kernel/asm/interrupts.asm \
 	kernel/asm/load_gdt.asm \
-	kernel/asm/tss_switch.asm
+	kernel/asm/tss_switch.asm \
+	kernel/asm/spinlock.asm
 
 OBJS := $(addprefix $(BUILD_DIR)/,$(C_SRCS:.c=.o)) \
 	$(addprefix $(BUILD_DIR)/,$(ASM_SRCS:.asm=.o))

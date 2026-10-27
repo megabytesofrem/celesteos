@@ -47,12 +47,26 @@
 ;       ; code to execute if condition is false
 ;   ENDIF
 ; -----------------------------------------------------------------------------------
-%macro IF 3
-    %push if_stack                  ; push a new context onto the macro stack
-    cmp %1, %3                      ; compare the two values for the IF condition
-    j%-2 ..@else_label              ; jump to ELSE label if IF condition is false
+%macro IF 1-3
+    %push if_stack
+    
+    %if %0 == 1
+        ; ---------------------------------------------------------------------------
+        ; 1 Argument Provided (e.g., IF c, IF z, IF nc)
+        ; We jump directly if the condition flag is NOT set!
+        ; ---------------------------------------------------------------------------
+        j%-1 ..@else_label
+    %elif %0 == 3
+        ; ---------------------------------------------------------------------------
+        ; 3 Arguments Provided (e.g., IF rax, e, 0)
+        ; Compare the values, then invert %2 for the jump.
+        ; ---------------------------------------------------------------------------
+        cmp %1, %3
+        j%-2 ..@else_label
+    %else
+        %error "IF macro requires either 1 argument (flag) or 3 arguments (val1, op, val2)"
+    %endif
 %endmacro
-
 %macro ELSE 0
     %ifctx if_stack
         jmp ..@end_if_label         ; jump over the ELSE block when IF condition was true
