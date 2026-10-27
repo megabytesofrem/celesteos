@@ -1,6 +1,8 @@
 [bits 64]
 section .text
 
+%include "common.inc"
+
 global isr0 ; Divide by zero exception
 global isr1 ; Debug exception
 global isr2 ; Non-maskable interrupt
@@ -55,43 +57,7 @@ global irq15 ; Secondary ATA hard disk
 extern isr_handler
 extern irq_handler
 
-%macro pushall 0
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    push rsi
-    push rdi
-    push rbp
-    push r8
-    push r9
-    push r10
-    push r11
-    push r12
-    push r13
-    push r14
-    push r15
-%endmacro
-
-%macro popall 0
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop r11
-    pop r10
-    pop r9
-    pop r8
-    pop rbp
-    pop rdi
-    pop rsi
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
-%endmacro
-
-%macro define_isr 1
+%macro DEFINE_ISR 1
 isr%1:
   cli
 %if %1 != 8 && %1 != 10 && %1 != 11 && %1 != 12 && %1 != 13 && %1 != 14 && %1 != 17 && %1 != 21 && %1 != 29 && %1 != 30
@@ -101,7 +67,7 @@ isr%1:
   jmp isr_common_stub
 %endmacro
 
-%macro define_irq 2
+%macro DEFINE_IRQ 2
 irq%1:
   push byte 0
   push byte %2
@@ -141,53 +107,53 @@ irq_common_stub:
   iretq             ; return from interrupt
 
 ; Define the ISRs
-define_isr 0        ; Divide by zero exception
-define_isr 1        ; Debug exception
-define_isr 2        ; Non-maskable interrupt
-define_isr 3        ; Breakpoint exception
-define_isr 4        ; Overflow exception
-define_isr 5        ; Bound range exceeded exception
-define_isr 6        ; Invalid opcode exception
-define_isr 7        ; Device not available exception
-define_isr 8        ; Double fault exception
-define_isr 9        ; Coprocessor segment overrun
-define_isr 10       ; Invalid TSS exception
-define_isr 11       ; Segment not present
-define_isr 12       ; Stack segment fault
-define_isr 13       ; General protection fault
-define_isr 14       ; Page fault
-define_isr 15       ; Reserved
-define_isr 16       ; x87 FPU floating-point error
-define_isr 17       ; Alignment check
-define_isr 18       ; Machine check
-define_isr 19       ; SIMD floating-point exception
-define_isr 20       ; Virtualization exception
-define_isr 21       ; Security exception
-define_isr 22       ; Reserved
-define_isr 23       ; Reserved
-define_isr 24       ; Reserved
-define_isr 25       ; Reserved
-define_isr 26       ; Reserved
-define_isr 27       ; Reserved
-define_isr 28       ; Reserved
-define_isr 29       ; Reserved
-define_isr 30       ; Reserved
-define_isr 31       ; Reserved
+DEFINE_ISR 0        ; Divide by zero exception
+DEFINE_ISR 1        ; Debug exception
+DEFINE_ISR 2        ; Non-maskable interrupt
+DEFINE_ISR 3        ; Breakpoint exception
+DEFINE_ISR 4        ; Overflow exception
+DEFINE_ISR 5        ; Bound range exceeded exception
+DEFINE_ISR 6        ; Invalid opcode exception
+DEFINE_ISR 7        ; Device not available exception
+DEFINE_ISR 8        ; Double fault exception
+DEFINE_ISR 9        ; Coprocessor segment overrun
+DEFINE_ISR 10       ; Invalid TSS exception
+DEFINE_ISR 11       ; Segment not present
+DEFINE_ISR 12       ; Stack segment fault
+DEFINE_ISR 13       ; General protection fault
+DEFINE_ISR 14       ; Page fault
+DEFINE_ISR 15       ; Reserved
+DEFINE_ISR 16       ; x87 FPU floating-point error
+DEFINE_ISR 17       ; Alignment check
+DEFINE_ISR 18       ; Machine check
+DEFINE_ISR 19       ; SIMD floating-point exception
+DEFINE_ISR 20       ; Virtualization exception
+DEFINE_ISR 21       ; Security exception
+DEFINE_ISR 22       ; Reserved
+DEFINE_ISR 23       ; Reserved
+DEFINE_ISR 24       ; Reserved
+DEFINE_ISR 25       ; Reserved
+DEFINE_ISR 26       ; Reserved
+DEFINE_ISR 27       ; Reserved
+DEFINE_ISR 28       ; Reserved
+DEFINE_ISR 29       ; Reserved
+DEFINE_ISR 30       ; Reserved
+DEFINE_ISR 31       ; Reserved
 
 ; Define the IRQs
-define_irq 0, 32   ; Timer interrupt
-define_irq 1, 33   ; Keyboard interrupt
-define_irq 2, 34   ; Cascade interrupt (used internally by the PIC)
-define_irq 3, 35   ; COM2 serial port
-define_irq 4, 36   ; COM1 serial port
-define_irq 5, 37   ; LPT2 parallel port
-define_irq 6, 38   ; Floppy disk controller
-define_irq 7, 39   ; LPT1 parallel port
-define_irq 8, 40   ; Real-time clock
-define_irq 9, 41   ; ACPI interrupt
-define_irq 10, 42  ; Reserved
-define_irq 11, 43  ; Reserved
-define_irq 12, 44  ; PS/2 mouse
-define_irq 13, 45  ; FPU / Coprocessor / Inter-processor
-define_irq 14, 46  ; Primary ATA hard disk
-define_irq 15, 47  ; Secondary ATA hard disk
+DEFINE_IRQ 0, 32   ; Timer interrupt
+DEFINE_IRQ 1, 33   ; Keyboard interrupt
+DEFINE_IRQ 2, 34   ; Cascade interrupt (used internally by the PIC)
+DEFINE_IRQ 3, 35   ; COM2 serial port
+DEFINE_IRQ 4, 36   ; COM1 serial port
+DEFINE_IRQ 5, 37   ; LPT2 parallel port
+DEFINE_IRQ 6, 38   ; Floppy disk controller
+DEFINE_IRQ 7, 39   ; LPT1 parallel port
+DEFINE_IRQ 8, 40   ; Real-time clock
+DEFINE_IRQ 9, 41   ; ACPI interrupt
+DEFINE_IRQ 10, 42  ; Reserved
+DEFINE_IRQ 11, 43  ; Reserved
+DEFINE_IRQ 12, 44  ; PS/2 mouse
+DEFINE_IRQ 13, 45  ; FPU / Coprocessor / Inter-processor
+DEFINE_IRQ 14, 46  ; Primary ATA hard disk
+DEFINE_IRQ 15, 47  ; Secondary ATA hard disk

@@ -3,11 +3,20 @@ section .text
 
 global ctx_switch
 
-; Thread context switch routine
+; -----------------------------------------------------------------------------------
+; ctx_switch - Thread context switch routine
 ;
 ; Arguments:
 ;   rdi - Pointer to current thread's stack pointer storage (RSP)
 ;   rsi - Next thread's stack pointer
+;
+; Behaviour:
+;   Saves the current thread's callee-saved registers onto the stack
+;   Stores the current thread's stack pointer into the location pointed by rdi
+;   Loads the next thread's stack pointer from the location pointed by rsi
+;   Restores the next thread's callee-saved registers from the stack
+;   Returns to the next thread's execution context
+; -----------------------------------------------------------------------------------
 ctx_switch: 
     ; Save current threads callee-saved registers
     push rbp
