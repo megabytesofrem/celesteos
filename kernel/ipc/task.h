@@ -1,10 +1,12 @@
 #ifndef CELESTEOS_TASK_H
 #define CELESTEOS_TASK_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include "kobject.h"
+#include <kernel/svc.h>
 
 #define MAX_HANDLES_PER_TASK 256
 #define MAX_TASKS 1024
@@ -16,14 +18,24 @@
 
 typedef struct handle_entry {
     kobject_t *kobj;
+
+    /* Hold the capability rights for this handle entry */
     uint32_t rights;
-    void *target;
+
+    /*
+     * Hold the generation number for this handle entry.
+     * Each time the handle is released and the slot is reused, we increment it.
+     */
+    uint64_t generation;
 } handle_entry_t;
 
 typedef struct task {
     kobject_t kobj;
+    spinlock_t handle_lock;
 
+    /* Hold the process ID for this task */
     uint64_t pid;
+
     /* HHDM virtual address of the task's PML4 */
     struct page_table *cr3_page_table;
 
@@ -57,20 +69,21 @@ task_t *task_current(void);
 /**
  * Insert a new handle into the task's handle table with the specified rights.
  *
- * Returns a pointer to the newly inserted handle entry, or NULL if the table is full.
+ * The task takes a reference to kobj. Returns INVALID_HANDLE if insertion fails.
  */
-handle_entry_t *task_insert_handle(task_t *task, kobject_t *kobj, uint32_t rights);
+handle_t task_insert_handle(task_t *task, kobject_t *kobj, uint32_t rights);
 
 /**
- * Lookup the kobject associated with a handle in the task's handle table, checking
- * that the handle is valid and the caller has the necessary rights.
+ * Look up a handle, checking that it is valid and grants all required rights.
+ * The returned kobject has a retained reference; the caller must release it.
  */
-kobject_t *task_lookup_handle(task_t *task, handle_entry_t *handle);
+kobject_t *task_lookup_handle(task_t *task, handle_t handle, uint32_t required_rights);
 
 /**
  * Release a handle from the task's handle table.
+ * Returns true if the handle was valid and released.
  */
-void task_release_handle(task_t *task, handle_entry_t *handle);
+bool task_release_handle(task_t *task, handle_t handle);
 
 /**
  * Attach a thread to the specified task.

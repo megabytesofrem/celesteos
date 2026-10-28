@@ -185,17 +185,17 @@ sys_dispatch:
     pop rdi                            ; restore the first syscall argument
 
     ; Handle the service call
-    cmp r11, SVC_SEND_MSG
+    cmp rdi, SVC_SEND_MSG
     je .svc_send_msg                    ; dispatch to SVC_SEND_MSG
-    cmp r11, SVC_REPLY_WAIT
+    cmp rdi, SVC_REPLY_WAIT
     je .svc_reply_wait                  ; dispatch to SVC_REPLY_WAIT
-    cmp r11, SVC_VM_MAP
+    cmp rdi, SVC_VM_MAP
     je .svc_vm_map                      ; dispatch to SVC_VM_MAP
-    cmp r11, SVC_VM_UNMAP
+    cmp rdi, SVC_VM_UNMAP
     je .svc_vm_unmap                    ; dispatch to SVC_VM_UNMAP
-    cmp r11, SVC_THREAD_CREATE
+    cmp rdi, SVC_THREAD_CREATE
     je .svc_thread_create               ; dispatch to SVC_THREAD_CREATE
-    cmp r11, SVC_THREAD_YIELD
+    cmp rdi, SVC_THREAD_YIELD
     je .svc_thread_yield                ; dispatch to SVC_THREAD_YIELD
 
     ; Unknown syscall handler
