@@ -4,6 +4,8 @@
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/ipc/scheduler.h>
+#include <kernel/ipc/task.h>
+#include <kernel/ipc/thread.h>
 #include <kernel/pmap.h>
 #include <kernel/pmm.h>
 #include <klog.h>
@@ -93,8 +95,14 @@ void kmain(void) {
     }
     klog(KLOG_INFO, "kmain: Page map initialized successfully.\n");
 
+    task_sys_init();
+    klog(KLOG_INFO, "kmain: Task subsystem initialized successfully.\n");
+
+    thread_sys_init();
+    klog(KLOG_INFO, "kmain: Thread subsystem initialized successfully.\n");
+
     scheduler_init();
-    klog(KLOG_INFO, "kmain: IPC scheduler initialized successfully.\n");
+    klog(KLOG_INFO, "kmain: Scheduler initialized successfully.\n");
 
     /* TODO: Usermode jump */
 

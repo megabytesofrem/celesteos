@@ -9,27 +9,26 @@ A small operating system developed as a hobby inspired by the L4 microkernel and
 | servers/  | stores userspace servers (IPC communication)                        |
 | lib/      | stores the tiny libc used in-kernel                                 |
 
-## Checklist
+## What works
+- [x] Core CPU & Memory Primitives (GDT, IDT, TSS, PMM, Page Map)
+- [x] Bitmap and frame allocator for physical memory management in-kernel
+- [x] Task control blocks and threads, managed by the kernel's scheduler
+- [x] Scheduler and context switching for kernel threads (Round-robin style time-slicing)
+- [x] Synchronous Rendezvous IPC (`sys_svc_send_msg`, `sys_svc_reply_wait`)
 
-### Phase 1: Core CPU & Memory Primitives
-- [x] GDT, IDT, and TSS setup (Ring 0 / Ring 3 descriptors)
-- [x] Physical Memory Allocator (Bitmap / Frame allocator for 4KB pages)
-- [x] Page Table Manager (`pmap_map` / `pmap_unmap` for PML4 tables)
-- [ ] Local APIC & IOAPIC initialization (Disable legacy 8259 PIC)
+## What needs to be implemented (the boring stuff)
+- [ ] ELF loading (`PT_LOAD` segment mapper)
+- [ ] Userland bootstrap and server initialization
+- [ ] Userland malloc/free implementation: the kernel has no heap allocation
+- [ ] EXT2 and EXT4 file system support
+- [ ] Userland bring up servers (`root0`, `vfs`, etc)
+- [ ] POSIX compatibility layer: standard POSIX APIs, all sandboxed under `/system/posix/`
 
-### Phase 2: Execution & Traps
-- [x] Assembly Trap Stub (`syscall` / `sysret` entry point & ISR wrappers)
-- [x] Task Control Blocks (TCB) & Thread Scheduler (Round-robin context switching)
-
-### Phase 3: L4 Primitives & IPC
-- [x] Capability Table & Handle Array management
-- [-] Synchronous Rendezvous IPC (`sys_ipc_send`, `sys_ipc_recv`, `sys_ipc_call`)
-- [-] Userland Page Fault (`#PF`) & Hardware IRQ delegation to IPC
-
-### Phase 4: Userland Bootstrap & Servers
-- [ ] Static 64-bit ELF Loader (`PT_LOAD` segment mapper)
-- [ ] Spawn Root Task / Pager (Thread 1) into Ring 3
-- [ ] Core Userland Servers (`alloc_server`, `vfs_server`, `driver_server`)
+## Fun stuff to explore later
+- [ ] Userland LISP or JS interpreter, able to communicate via IPC with the kernel and other tasks
+- [ ] Wire up a fly connectome model and let it loose within a userland server — all over IPC
+- [ ] Build a display server, inspired by the X Window System, draw some windows
+- [ ] Build a network stack and implement basic networking protocols (TCP/IP, UDP)
 
 ## IPC
 CelesteOS implements a minimal set of IPC primitives based on L4-style synchronous rendezvous. Its IPC mechanisms are inspired by Mesosphère (https://github.com/Atmosphere-NX/Atmosphere/tree/master).
