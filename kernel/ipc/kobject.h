@@ -29,7 +29,7 @@ typedef void *kobject_data_t;
 typedef struct kobject_ops {
     const char *name;
 
-    void (*construct)(kobject_t *obj, kobject_data_t data);
+    void (*create)(kobject_t *obj, kobject_data_t data);
     void (*destroy)(kobject_t *obj);
 } kobject_ops_t;
 
@@ -65,11 +65,11 @@ void kobject_pool_init(kobject_pool_t *pool, void *base, size_t stride, size_t c
 kobject_t *kobject_alloc(kobject_pool_t *pool, kobject_type_t type);
 
 /**
- * Construct a kobject from the specified object pool and initialize it with the provided data.
+ * Create a kobject from the specified object pool and initialize it with the provided data.
  *
  * Calls `kobject_alloc` internally, and then the constructor defined on the object.
  */
-kobject_t *kobject_construct(kobject_pool_t *pool, kobject_type_t type, kobject_data_t data);
+kobject_t *kobject_create(kobject_pool_t *pool, kobject_type_t type, kobject_data_t data);
 
 /**
  * Retain a reference to the specified object.

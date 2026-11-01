@@ -20,6 +20,8 @@ static thread_t *g_current_thread;
 /* Ready queue for threads */
 static wait_queue_t g_thread_queue;
 
+static void perform_switch(thread_t *prev, thread_t *next);
+
 void scheduler_init(void) {
     g_current_thread = NULL;
     wait_queue_init(&g_thread_queue);
@@ -70,7 +72,43 @@ void schedule(void) {
     perform_switch(prev, next);
 }
 
-void perform_switch(thread_t *prev, thread_t *next) {
+void scheduler_switch_to(thread_t *thread) {
+    if (!thread || thread == g_current_thread) {
+        return;
+    }
+
+    // If the previous thread was blocked, it wont be THREAD_RUNNING, so perform_switch
+    // won't re-enqueue it into the ready queue.
+    // If it was already running (non-blocking yield), re-enqueue it into the ready queue.
+    thread_t *prev = g_current_thread;
+
+    if (prev && prev->state == THREAD_RUNNING) {
+        prev->state = THREAD_READY;
+        wait_queue_enqueue(&g_thread_queue, prev);
+    }
+
+    // IPC Fast pass: Bypass the ready queue and switch directly to the target thread.
+    perform_switch(g_current_thread, thread);
+}
+
+void scheduler_yield(void) {
+    // If there are no threads ready to run, we have nothing to switch to
+    if (wait_queue_is_empty(&g_thread_queue)) {
+        // Option A: If g_current_thread is blocked, fall back to an idle thread loop.
+        // Option B: Just return if current thread can still run.
+        if (g_current_thread && g_current_thread->state == THREAD_RUNNING) {
+            return;
+        }
+        // Halt until an IRQ wakes a thread up if current is blocked
+        asm volatile("sti; hlt");
+        return;
+    }
+
+    // Otherwise, there are threads ready to run, so invoke the scheduler to pick the next one.
+    schedule();
+}
+
+static void perform_switch(thread_t *prev, thread_t *next) {
     if (!next || prev == next) {
         return;
     }

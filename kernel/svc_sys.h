@@ -22,7 +22,7 @@ typedef struct __attribute__((packed)) svc_cpu_frame {
 /* Service call system interface */
 
 int sys_svc_send_msg(handle_t target, svc_message_t *message, svc_message_t *recv_buffer);
-int sys_svc_reply_wait(handle_t client, svc_message_t *message, svc_message_t *recv_buffer);
+int sys_svc_reply_wait(handle_t client, svc_message_t *reply, svc_message_t *recv_buffer);
 int sys_svc_vm_map(handle_t target, void *virt_addr, void *phys_addr, int flags);
 int sys_svc_vm_unmap(handle_t target, void *virt_addr);
 int sys_svc_thread_create(handle_t target, void *entry_point, void *user_stack_top);

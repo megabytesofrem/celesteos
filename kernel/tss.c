@@ -1,6 +1,6 @@
 #include "tss.h"
 
-#include <errno.h>
+#include <error.h>
 #include <klog.h>
 #include <string.h>
 
@@ -39,7 +39,7 @@ const tss_t *tss_get(void) {
 
 int tss_set_kernel_stack(uint64_t kernel_stack_top) {
     if (kernel_stack_top < UINT64_C(0xFFFF800000000000) || (kernel_stack_top & 0xF) != 0) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     k_tss.rsp0 = kernel_stack_top;
@@ -53,7 +53,7 @@ int tss_jump_to_usermode(uintptr_t entry_point, uintptr_t user_stack_top, page_t
 
     if (!entry_point || !user_stack_top || !pml4) {
         klog(KLOG_ERROR, "task: Invalid user mode jump arguments!\n");
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     uintptr_t kstack_top = (uintptr_t)bootstrap_stack + sizeof(bootstrap_stack);
@@ -62,7 +62,7 @@ int tss_jump_to_usermode(uintptr_t entry_point, uintptr_t user_stack_top, page_t
     // Switch CR3 to the user page table
     if (pmap_switch_pml4(pml4) != 0) {
         klog(KLOG_ERROR, "task: Failed to switch to user page table!\n");
-        return -ENOMEM;
+        return ERR_NO_MEMORY;
     }
 
     klog(KLOG_INFO, "task: Dropping to ring 3 (rip=0x%p, rsp=0x%p).\n", (void *)entry_point,

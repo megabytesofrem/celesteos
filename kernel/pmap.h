@@ -1,7 +1,7 @@
 #ifndef CELESTEOS_PMAP_H
 #define CELESTEOS_PMAP_H
 
-#include <errno.h>
+#include <error.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -27,7 +27,7 @@ typedef struct pte {
 
 static inline int pte_set_address(pte_t *entry, uint64_t phys_addr) {
     if (!entry) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     entry->value = (entry->value & ~0x000FFFFFFFFFF000ULL) | (phys_addr & 0x000FFFFFFFFFF000ULL);
@@ -36,7 +36,7 @@ static inline int pte_set_address(pte_t *entry, uint64_t phys_addr) {
 
 static inline uint64_t pte_get_address(pte_t *entry) {
     if (!entry) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     return entry->value & 0x000FFFFFFFFFF000ULL;
@@ -44,7 +44,7 @@ static inline uint64_t pte_get_address(pte_t *entry) {
 
 static inline uint64_t pte_get_phys_address(pte_t *entry) {
     if (!entry) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     return entry->value & 0x000FFFFFFFFFF000ULL;
@@ -52,7 +52,7 @@ static inline uint64_t pte_get_phys_address(pte_t *entry) {
 
 static inline int pte_set_flags(pte_t *entry, uint64_t flags) {
     if (!entry) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     entry->value |= flags;
@@ -61,7 +61,7 @@ static inline int pte_set_flags(pte_t *entry, uint64_t flags) {
 
 static inline int pte_clear_flags(pte_t *entry, uint64_t flags) {
     if (!entry) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     entry->value &= ~flags;

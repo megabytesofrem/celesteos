@@ -1,3 +1,9 @@
+/**
+ * File: task.h
+ *
+ * Purpose: Defines the task object and its operations.
+ */
+
 #ifndef CELESTEOS_TASK_H
 #define CELESTEOS_TASK_H
 
@@ -43,10 +49,9 @@ typedef struct task {
     uint64_t thread_count;
 } task_t;
 
-/* Global task array, task pool, and current task */
+/* Global task array and task pool */
 extern task_t g_tasks[MAX_TASKS];
 extern kobject_pool_t g_task_pool;
-extern task_t *g_current_task;
 
 /**
  * Initialize the task subsystem.

@@ -35,9 +35,13 @@ void thread_sys_init(void) {
     kobject_pool_init(&g_thread_pool, g_threads, sizeof(thread_t), MAX_THREADS, &g_thread_ops);
 }
 
+thread_t *thread_current(void) {
+    return scheduler_get_current();
+}
+
 static void thread_start(void) {
     // Get the currently running thread from the scheduler
-    thread_t *thread = scheduler_get_current();
+    thread_t *thread = thread_current();
 
     if (!thread) {
         __builtin_trap();

@@ -31,7 +31,16 @@ void scheduler_dequeue(thread_t *thread);
  */
 void schedule(void);
 
-void perform_switch(thread_t *prev, thread_t *next);
+/**
+ * Switch directly to the specified target thread, bypassing the ready queue.
+ */
+void scheduler_switch_to(thread_t *thread);
+
+/**
+ * Yields the CPU from the current thread, allowing the scheduler to pick the next
+ * READY thread.
+ */
+void scheduler_yield(void);
 
 /**
  * Low-level assembly context switch interface implemented in ctx_switch.s.

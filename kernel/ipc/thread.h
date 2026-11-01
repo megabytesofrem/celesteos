@@ -1,3 +1,9 @@
+/**
+ * File: thread.h
+ *
+ * Purpose: Defines the thread object and its operations.
+ */
+
 #ifndef CELESTEOS_THREAD_H
 #define CELESTEOS_THREAD_H
 
@@ -41,6 +47,7 @@ typedef struct thread {
     struct task *parent_task;
 
     thread_id_t ipc_partner_tid;
+    void *ipc_recv_buf;
     uint64_t ipc_msg_payload[6];
 
     struct thread *next;
@@ -52,6 +59,11 @@ extern thread_t g_threads[MAX_THREADS];
 extern kobject_pool_t g_thread_pool;
 
 thread_id_t next_thread_id(void);
+
+/**
+ * Return the currently executing thread.
+ */
+thread_t *thread_current(void);
 
 /**
  * Initialize the thread subsystem.

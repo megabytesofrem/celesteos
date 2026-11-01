@@ -1,6 +1,6 @@
 #include "pmap.h"
 
-#include <errno.h>
+#include <error.h>
 #include <kernel/pmm.h>
 #include <string.h>
 
@@ -60,7 +60,7 @@ uint64_t pmap_get_pml4_phys(void) {
 
 int pmap_map(page_table_t *table, uint64_t virt_addr, uint64_t phys_addr, uint64_t flags) {
     if (!table) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     size_t pml4_index = (size_t)((virt_addr >> 39) & 0x1FF);
@@ -70,15 +70,15 @@ int pmap_map(page_table_t *table, uint64_t virt_addr, uint64_t phys_addr, uint64
 
     page_table_t *pdpt = get_or_create_level(table, pml4_index, flags); // PDPT
     if (!pdpt) {
-        return -ENOMEM;
+        return ERR_INVALID_STATE;
     }
     page_table_t *pd = get_or_create_level(pdpt, pdpt_index, flags); // PD
     if (!pd) {
-        return -ENOMEM;
+        return ERR_INVALID_STATE;
     }
     page_table_t *pt = get_or_create_level(pd, pd_index, flags); // PT
     if (!pt) {
-        return -ENOMEM;
+        return ERR_INVALID_STATE;
     }
 
     // Get the page table entry for the given virtual address
@@ -92,7 +92,7 @@ int pmap_map(page_table_t *table, uint64_t virt_addr, uint64_t phys_addr, uint64
 
 int pmap_unmap(page_table_t *table, uint64_t virt_addr) {
     if (!table) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
     size_t pml4_index = (size_t)((virt_addr >> 39) & 0x1FF);
     size_t pdpt_index = (size_t)((virt_addr >> 30) & 0x1FF);
@@ -101,25 +101,25 @@ int pmap_unmap(page_table_t *table, uint64_t virt_addr) {
 
     pte_t *entry = &table->entries[pml4_index];
     if (!pte_is_present(entry)) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
     page_table_t *pdpt = (page_table_t *)(uintptr_t)(pte_get_address(entry) + higher_half_base);
 
     entry = &pdpt->entries[pdpt_index];
     if (!pte_is_present(entry)) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
     page_table_t *pd = (page_table_t *)(uintptr_t)(pte_get_address(entry) + higher_half_base);
 
     entry = &pd->entries[pd_index];
     if (!pte_is_present(entry)) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
     page_table_t *pt = (page_table_t *)(uintptr_t)(pte_get_address(entry) + higher_half_base);
 
     entry = &pt->entries[pt_index];
     if (!pte_is_present(entry)) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
     entry->value = 0;
 
@@ -154,12 +154,12 @@ page_table_t *pmap_create_user_pml4(uint64_t hhdm_base) {
 int pmap_switch_pml4(page_table_t *new_pml4) {
     uintptr_t pml4_virtual = (uintptr_t)new_pml4;
     if (new_pml4 == NULL || pml4_virtual < higher_half_base) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     uint64_t pml4_physical = pml4_virtual - higher_half_base;
     if ((pml4_physical & (PMAP_PAGE_SIZE - 1)) != 0) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     __asm__ volatile("mov %0, %%cr3" : : "r"(pml4_physical) : "memory");
@@ -215,7 +215,7 @@ int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
     // address and size are within this limit and the source buffer is valid.
     const uintptr_t user_limit = UINT64_C(1) << 47;
     if (source >= user_limit || size > user_limit - source || (size != 0 && destination == NULL)) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     // Save the current CR3 and get the root page table
@@ -240,7 +240,7 @@ int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
             // Get the page table entry for the current level
             pte_t *entry = &table->entries[(source >> shift) & 0x1FF];
             if (!pte_is_present(entry) || !pte_is_user(entry) || !pte_is_read_write(entry)) {
-                return -EINVAL;
+                return ERR_INVALID_ARG;
             }
 
             // If we reach the last level (PT) or encounter a huge page, calculate the physical
@@ -251,7 +251,7 @@ int pmap_copy_from_user(void *destination, uintptr_t source, size_t size) {
                 break;
             }
             if (shift == 39 && pte_is_huge_page(entry)) {
-                return -EINVAL;
+                return ERR_INVALID_ARG;
             }
             table = (page_table_t *)(pte_get_address(entry) + higher_half_base);
         }
@@ -279,7 +279,7 @@ int pmap_copy_to_user(uintptr_t destination, const void *source, size_t size) {
     const uintptr_t user_limit = UINT64_C(1) << 47;
     if (destination >= user_limit || size > user_limit - destination ||
         (size != 0 && source == NULL)) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     // Save the current CR3 register and get the root page table for the active address space.
@@ -298,7 +298,7 @@ int pmap_copy_to_user(uintptr_t destination, const void *source, size_t size) {
         for (unsigned int shift = 39;; shift -= 9) {
             pte_t *entry = &table->entries[(destination >> shift) & 0x1FF];
             if (!pte_is_present(entry) || !pte_is_user(entry) || !pte_is_read_write(entry)) {
-                return -EINVAL;
+                return ERR_INVALID_ARG;
             }
             if (shift == 12 || ((shift == 30 || shift == 21) && pte_is_huge_page(entry))) {
                 uintptr_t offset_mask = (UINT64_C(1) << shift) - 1;
@@ -306,7 +306,7 @@ int pmap_copy_to_user(uintptr_t destination, const void *source, size_t size) {
                 break;
             }
             if (shift == 39 && pte_is_huge_page(entry)) {
-                return -EINVAL;
+                return ERR_INVALID_ARG;
             }
             table = (page_table_t *)(pte_get_address(entry) + higher_half_base);
         }

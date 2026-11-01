@@ -4,10 +4,10 @@
  * Purpose: A task in the scheduler of CelesteOS.
  */
 #include "task.h"
+#include "thread.h"
 
 task_t g_tasks[MAX_TASKS];
 kobject_pool_t g_task_pool;
-task_t *g_current_task;
 
 #define HANDLE_INDEX_BITS 8
 #define HANDLE_INDEX_MASK ((UINT64_C(1) << HANDLE_INDEX_BITS) - 1)
@@ -52,8 +52,6 @@ static bool task_decode_handle(handle_t handle, size_t *index, uint64_t *generat
 }
 
 void task_sys_init(void) {
-    g_current_task = NULL;
-
     kobject_pool_init(&g_task_pool, g_tasks, sizeof(task_t), MAX_TASKS, &g_task_ops);
 }
 
@@ -91,7 +89,8 @@ task_t *task_create(void) {
 }
 
 task_t *task_current(void) {
-    return g_current_task;
+    thread_t *thread = thread_current();
+    return thread ? thread->parent_task : NULL;
 }
 
 handle_t task_insert_handle(task_t *task, kobject_t *kobj, uint32_t rights) {
@@ -133,7 +132,12 @@ kobject_t *task_lookup_handle(task_t *task, handle_t handle, uint32_t required_r
         (entry->rights & required_rights) == required_rights) {
         kobj = entry->kobj;
         kobject_retain(kobj);
+
+        // FIXME: This should return an error code, and store kobject_t in a out
+        // parameter probably named kobj_out or similar, rather than just
+        // returning the kobject directly (or NULL on failure).
     }
+
     spinlock_release(&task->handle_lock);
     return kobj;
 }

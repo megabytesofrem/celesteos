@@ -55,12 +55,12 @@ kobject_t *kobject_alloc(kobject_pool_t *pool, kobject_type_t type) {
     return obj;
 }
 
-kobject_t *kobject_construct(kobject_pool_t *pool, kobject_type_t type, kobject_data_t data) {
+kobject_t *kobject_create(kobject_pool_t *pool, kobject_type_t type, kobject_data_t data) {
     kobject_t *obj = kobject_alloc(pool, type);
 
     // Call the constructor for the object if it exists
-    if (obj && pool->ops && pool->ops->construct) {
-        pool->ops->construct(obj, data);
+    if (obj && pool->ops && pool->ops->create) {
+        pool->ops->create(obj, data);
     }
     return obj;
 }

@@ -1,6 +1,6 @@
 #include "pmm.h"
 
-#include <errno.h>
+#include <error.h>
 
 static uint8_t *bitmap;
 static size_t total_pages;
@@ -26,7 +26,7 @@ int pmm_init(struct limine_memmap_response *memmap, uint64_t hhdm_base_offset) {
     uint8_t *new_bitmap = NULL;
 
     if (memmap == NULL || memmap->entries == NULL || memmap->entry_count == 0) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     for (uint64_t i = 0; i < memmap->entry_count; ++i) {
@@ -34,7 +34,7 @@ int pmm_init(struct limine_memmap_response *memmap, uint64_t hhdm_base_offset) {
         if (entry != NULL && entry->type == LIMINE_MEMMAP_USABLE) {
             uint64_t end_address = entry->base + entry->length;
             if (end_address < entry->base) {
-                return -EOVERFLOW;
+                return ERR_OVERFLOW;
             }
             if (end_address > highest_address) {
                 highest_address = end_address;
@@ -43,15 +43,15 @@ int pmm_init(struct limine_memmap_response *memmap, uint64_t hhdm_base_offset) {
     }
 
     if (highest_address / PHYS_PAGE_SIZE > SIZE_MAX) {
-        return -EOVERFLOW;
+        return ERR_OVERFLOW;
     }
     size_t new_total_pages = (size_t)(highest_address / PHYS_PAGE_SIZE);
     if (new_total_pages > SIZE_MAX - 7) {
-        return -EOVERFLOW;
+        return ERR_OVERFLOW;
     }
     size_t new_bitmap_size = (new_total_pages + 7) / 8;
     if (new_bitmap_size > SIZE_MAX - (PHYS_PAGE_SIZE - 1)) {
-        return -EOVERFLOW;
+        return ERR_OVERFLOW;
     }
 
     bitmap_pages = (new_bitmap_size + PHYS_PAGE_SIZE - 1) / PHYS_PAGE_SIZE;
@@ -66,7 +66,7 @@ int pmm_init(struct limine_memmap_response *memmap, uint64_t hhdm_base_offset) {
         }
     }
     if (new_bitmap == NULL) {
-        return -ENOMEM;
+        return ERR_NO_MEMORY;
     }
 
     for (size_t i = 0; i < new_bitmap_size; ++i) {
@@ -97,7 +97,7 @@ int pmm_init(struct limine_memmap_response *memmap, uint64_t hhdm_base_offset) {
 
     uint64_t bitmap_phys = (uint64_t)(uintptr_t)bitmap - higher_half_base;
     for (uint64_t addr = bitmap_phys; addr < bitmap_phys + aligned_bitmap_size;
-        addr += PHYS_PAGE_SIZE) {
+         addr += PHYS_PAGE_SIZE) {
         size_t page = (size_t)(addr / PHYS_PAGE_SIZE);
         if (page < total_pages && !test_bit(page)) {
             set_bit(page);
@@ -115,7 +115,7 @@ int pmm_init(struct limine_memmap_response *memmap, uint64_t hhdm_base_offset) {
 
 int pmm_alloc_page(void **page) {
     if (page == NULL) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     for (size_t i = 0; i < total_pages; ++i) {
@@ -128,12 +128,12 @@ int pmm_alloc_page(void **page) {
     }
 
     // No free pages available
-    return -ENOMEM;
+    return ERR_NO_MEMORY;
 }
 
 int pmm_alloc_pages(size_t count, void **out_pages) {
     if (count == 0) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
     if (count == 1) {
         return pmm_alloc_page(out_pages);
@@ -169,18 +169,18 @@ int pmm_alloc_pages(size_t count, void **out_pages) {
     }
 
     // No contiguous run of free pages found
-    return -ENOMEM;
+    return ERR_NO_MEMORY;
 }
 
 int pmm_free_page(void *page) {
     if (page == NULL) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     size_t page_index = ((uintptr_t)page - higher_half_base) / PHYS_PAGE_SIZE;
     if (page_index >= total_pages) {
         // Page index is out of range
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     if (page_index < total_pages && test_bit(page_index)) {
@@ -194,7 +194,7 @@ int pmm_free_page(void *page) {
 
 int pmm_free_pages(void *start_page, size_t count) {
     if (start_page == NULL) {
-        return -EINVAL;
+        return ERR_INVALID_ARG;
     }
 
     for (size_t i = 0; i < count; ++i) {
@@ -203,7 +203,7 @@ int pmm_free_pages(void *start_page, size_t count) {
 
         // Check against overflow
         if (i > (UINTPTR_MAX - (uintptr_t)start_page) / PHYS_PAGE_SIZE) {
-            return -EOVERFLOW;
+            return ERR_OVERFLOW;
         }
 
         // Free the individual page using pmm_free_page

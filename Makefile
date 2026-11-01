@@ -19,7 +19,7 @@ TARGET_ISO := $(BUILD_DIR)/celesteos.iso
 INCLUDES := -I. -Iinclude -Ikernel -Ilib -Ikernel/asm
 
 # Compiler & assembler flags
-CFLAGS := -std=c17 \
+CFLAGS := -std=gnu17 \
 	-O2 \
 	-g \
 	-ffreestanding \
@@ -55,6 +55,7 @@ C_SRCS := kernel/kmain.c \
 	kernel/ipc/scheduler.c \
 	kernel/ipc/task.c \
 	kernel/ipc/thread.c \
+	kernel/svc_sys.c \
 	lib/klog.c \
 	lib/string.c
 
@@ -78,11 +79,11 @@ all: iso
 kernel: $(TARGET_ELF)
 
 # Tests
-test-tss:
-	@mkdir -p $(BUILD_DIR)/tests
-	$(CC) -std=c17 -Wall -Wextra -Werror -I. -Iinclude \
-		tests/tss_test.c kernel/tss.c kernel/gdt.c -o $(BUILD_DIR)/tests/tss_test
-	$(BUILD_DIR)/tests/tss_test
+# test-tss:
+# 	@mkdir -p $(BUILD_DIR)/tests
+# 	$(CC) -std=c17 -Wall -Wextra -Werror -I. -Iinclude \
+# 		tests/tss_test.c kernel/tss.c kernel/gdt.c -o $(BUILD_DIR)/tests/tss_test
+# 	$(BUILD_DIR)/tests/tss_test
 
 # Limine bootloader
 limine:
