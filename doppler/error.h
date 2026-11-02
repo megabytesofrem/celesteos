@@ -1,0 +1,12 @@
+#ifndef DOPPLER_ERROR_H
+#define DOPPLER_ERROR_H
+
+typedef enum {
+    ERR_NONE = 0,
+    ERR_UNEXPECTED_CHAR,
+    ERR_UNTERMINATED_STRING,
+    ERR_INVALID_NUMBER,
+    ERR_UNKNOWN
+} dp_error_type;
+
+#endif // DOPPLER_ERROR_H

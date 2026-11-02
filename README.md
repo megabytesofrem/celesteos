@@ -8,12 +8,12 @@ An incredibly small nano/exokernel operating system.
 | kernel/   | stores the core microkernel and the minimum systems in kernel space |
 | libos/    | the operating system, as a library (userland)                       |
 | lib/      | stores the tiny libc used in-kernel                                 |
-| uhs/      | stores the micro-haskell compiler                                   |
+| doppler/  | stores the doppler compiler and toolchain                           |
 
 ## Design Principles
 - The kernel should do absolutely nothing but route IPC and the minimal necessary system management.
-- LibOS: The operating system is implemented as a library in userland, providing essential services and abstractions while keeping the kernel minimal. LibOS is spawned by `root0` and written in Haskell, compiling to CVM bytecode.
-- μhs: An extremely minimal and stripped down dialect of Haskell, designed to target the CVM (Celeste Virtual Machine) and for bare-metal development. All drivers should be written in μhs.
+- LibOS: The operating system is implemented as a library in userland, providing essential services and abstractions while keeping the kernel minimal.
+- Doppler: The doppler compiler and toolchain, used for compiling Doppler code to C ahead-of-time. Doppler is a message passing language designed specifically for CelesteOS.
 
 ## What works
 - [x] Core CPU & Memory Primitives (GDT, IDT, TSS, PMM, Page Map)
@@ -31,7 +31,6 @@ An incredibly small nano/exokernel operating system.
 - [ ] POSIX compatibility layer: standard POSIX APIs, all sandboxed under `/system/posix/`
 
 ## Fun stuff to explore later
-- [ ] Userland Haskell interpreter, able to communicate via IPC with the kernel and other tasks [PRIORITY]
 - [ ] Wire up a fly connectome model and let it loose within a userland server — all over IPC
 - [ ] Build a display server, inspired by the X Window System, draw some windows
 - [ ] Build a network stack and implement basic networking protocols (TCP/IP, UDP)
@@ -41,11 +40,7 @@ An incredibly small nano/exokernel operating system.
 - Kernel setups a bootstrap physical memory manager (PMM) and page map for virtual memory management
 - Kernel initializes the task scheduler and creates the initial kernel thread
 - Kernel immediately jumps to userspace and executes `root0`
-- `root0` is responsible for calling exactly one service: `exec1`
-- `exec1` is an in-memory bytecode interpreter for compiled Haskell bytecode.
-
-## μhs
-The userspace is to be written entirely in μhs, the minimal Haskell dialect designed for CelesteOS. The specification for the μhs compiler can be found in `UHS_SPEC.md`.
+- `root0` is responsible for setting up userland services
 
 ## Raw IPC primitives
 CelesteOS implements a minimal set of IPC primitives based on L4-style synchronous rendezvous. Its IPC mechanisms are inspired by Mesosphère (https://github.com/Atmosphere-NX/Atmosphere/tree/master).
