@@ -8,12 +8,11 @@ An incredibly small nano/exokernel operating system.
 | kernel/   | stores the core microkernel and the minimum systems in kernel space |
 | libos/    | the operating system, as a library (userland)                       |
 | lib/      | stores the tiny libc used in-kernel                                 |
-| doppler/  | stores the doppler compiler and toolchain                           |
 
 ## Design Principles
 - The kernel should do absolutely nothing but route IPC and the minimal necessary system management.
 - LibOS: The operating system is implemented as a library in userland, providing essential services and abstractions while keeping the kernel minimal.
-- Doppler: The doppler compiler and toolchain, used for compiling Doppler code to C ahead-of-time. Doppler is a message passing language designed specifically for CelesteOS.
+- Tau: The Tau compiler, used for compiling Tau code to C ahead-of-time. Tau is a sister project to CelesteOS and can be found at https://github.com/megabytesofrem/tau-lang.
 
 ## What works
 - [x] Core CPU & Memory Primitives (GDT, IDT, TSS, PMM, Page Map)
