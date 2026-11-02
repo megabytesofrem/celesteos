@@ -24,6 +24,7 @@ typedef enum {
     TOK_BANG,        /* !a */
     TOK_PLUS_PLUS,   /* a++, only postfix */
     TOK_MINUS_MINUS, /* a--, only postfix */
+    TOK_CARET,       /* ^, specifies RC owned pointer */
     TOK_DOT,
     TOK_COMMA,
     TOK_SEMICOLON,

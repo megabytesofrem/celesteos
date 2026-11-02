@@ -99,6 +99,29 @@ dp_error_type lexer_next(lexer_state *state, dp_token *token) {
         accept(state, TOK_STAR, token);
         return ERR_NONE;
     case '/':
+        // Check if a comment starts with "//" or "/*"
+        if (state->input[state->pos + 1] == '/') {
+            // Single-line comment, skip until end of line
+            state->pos += 2;
+            while (state->input[state->pos] != '\0' && state->input[state->pos] != '\n') {
+                lexer_advance(state);
+            }
+            skip_ws(state);
+            return lexer_next(state, token);
+        } else if (state->input[state->pos + 1] == '*') {
+            // Multi-line comment, skip until closing "*/"
+            state->pos += 2;
+            while (state->input[state->pos] != '\0') {
+                if (state->input[state->pos] == '*' && state->input[state->pos + 1] == '/') {
+                    state->pos += 2;
+                    break;
+                }
+                lexer_advance(state);
+            }
+            skip_ws(state);
+            return lexer_next(state, token);
+        }
+
         accept(state, TOK_SLASH, token);
         return ERR_NONE;
     case '%':
@@ -149,6 +172,9 @@ dp_error_type lexer_next(lexer_state *state, dp_token *token) {
         return ERR_NONE;
     case ',':
         accept(state, TOK_COMMA, token);
+        return ERR_NONE;
+    case '^':
+        accept(state, TOK_CARET, token);
         return ERR_NONE;
     case ';':
         accept(state, TOK_SEMICOLON, token);

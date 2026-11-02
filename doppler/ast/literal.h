@@ -1,7 +1,7 @@
 #ifndef DOPPLER_AST_LITERAL_H
 #define DOPPLER_AST_LITERAL_H
 
-#include "ast_expression.h"
+#include "expression.h"
 
 typedef struct {
     ast_expression base;
