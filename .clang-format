@@ -5,8 +5,10 @@ TabWidth: 4
 UseTab: Never
 ColumnLimit: 100
 BreakBeforeBraces: Attach
-Cpp11BracedListStyle: false
-AlignAfterOpenBracket: Align
+Cpp11BracedListStyle: true
+AlignAfterOpenBracket: DontAlign
+BreakAfterOpenBracketBracedList: true
+BreakBeforeCloseBracketBracedList: true
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AlignTrailingComments: true

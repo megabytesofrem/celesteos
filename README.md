@@ -2,24 +2,30 @@
 An incredibly small nano/exokernel operating system.
 
 ## Architecture
-| Directory | Note                                                                |
-| --------- | ------------------------------------------------------------------- |
-| include/  | stores shared headers for both kernel and user space                |
-| kernel/   | stores the core microkernel and the minimum systems in kernel space |
-| libos/    | the operating system, as a library (userland)                       |
-| lib/      | stores the tiny libc used in-kernel                                 |
+| Directory      | Note                                                         |
+| -------------- | -------------------------------------------------------------|
+| include/       | Shared headers for kernel and user space                     |
+| celesteos/ke/  | Kernel executive (core kernel functionality)                 |
+| celesteos/ps/  | Process Subsystem (tasks, threads, scheduler, endpoints)     |
+| celesteos/ob/  | Object Manager (kernel object management)                    |
+| celesteos/svc/ | System Services (userland service implementations)           |
+| lib/           | Small C library used in-kernel                               |
 
 ## Design Principles
 - The kernel should do absolutely nothing but route IPC and the minimal necessary system management.
 - LibOS: The operating system is implemented as a library in userland, providing essential services and abstractions while keeping the kernel minimal.
 - Tau: The Tau compiler, used for compiling Tau code to C ahead-of-time. Tau is a sister project to CelesteOS and can be found at https://github.com/megabytesofrem/tau-lang.
 
+## Ideas to explore
+- Registry for centralized configuration of settings stored at `/Settings/User` because I despise how UNIX does it with `~/.config`
+- Object Manager namespaces e.g `/Devices/Disks/Disk0/Par1`, `/Devices/Disks/Disk0/Par2`
+
 ## What works
 - [x] Core CPU & Memory Primitives (GDT, IDT, TSS, PMM, Page Map)
 - [x] Bitmap and frame allocator for physical memory management in-kernel
 - [x] Task control blocks and threads, managed by the kernel's scheduler
 - [x] Scheduler and context switching for kernel threads (Round-robin style time-slicing)
-- [x] Synchronous Rendezvous IPC (`sys_svc_send_msg`, `sys_svc_reply_wait`)
+- [x] Synchronous Rendezvous IPC (`KeSvcSendMessage`, `KeSvcReplyWait`)
 
 ## What needs to be implemented (the boring stuff)
 - [ ] ELF loading (`PT_LOAD` segment mapper)
@@ -27,7 +33,7 @@ An incredibly small nano/exokernel operating system.
 - [ ] Userland malloc/free implementation: the kernel has no heap allocation
 - [ ] EXT2 and EXT4 file system support
 - [ ] Userland bring up servers (`root0`, `vfs`, etc)
-- [ ] POSIX compatibility layer: standard POSIX APIs, all sandboxed under `/system/posix/`
+- [ ] POSIX compatibility layer: standard POSIX APIs, all sandboxed under `/System/posix/`
 
 ## Fun stuff to explore later
 - [ ] Wire up a fly connectome model and let it loose within a userland server — all over IPC
@@ -44,102 +50,99 @@ An incredibly small nano/exokernel operating system.
 ## Raw IPC primitives
 CelesteOS implements a minimal set of IPC primitives based on L4-style synchronous rendezvous. Its IPC mechanisms are inspired by Mesosphère (https://github.com/Atmosphere-NX/Atmosphere/tree/master).
 
-CelesteOS has the concepts of kobjects (kernel objects), capabilities, threads and tasks. 
+CelesteOS has the concepts of kernel objects, capabilities, threads, and tasks.
 
-**Kobject**: A kobject is the general notion of a kernel-managed resource (whether that is a thread, task, IPC endpoint, page object, etc.)
+**Kernel object**: An `ObHeader` is the common header for a kernel-managed resource such as a thread, task, IPC endpoint, or page object.
 
-**KObject Pool**: A kobject pool is a pool that tracks allocated kernel objects with static backing storage, allowing efficient allocation and deallocation of kernel objects in ring 0.
+**Object pool**: An `ObObjectPool` tracks objects in fixed-size static backing storage, allowing allocation and reclamation without a kernel heap.
 
 **Tasks**: A task is an abstraction representing a single unit of execution, typically encompassing one or more threads and associated resources. Tasks are the primary entities that interact with the kernel and other tasks via IPC.
 
 **Threads**: A thread is the basic unit of CPU execution within a task. Each thread has its own execution context, including registers and stack, but shares the task's resources such as memory and capabilities.
 
-**Capabilities**: A capability is a token or reference that grants a task certain rights to interact with a kernel-managed resource (kobject). Capabilities are used to control access to threads, tasks, memory regions, IPC endpoints, and other kernel objects.
+**Capabilities**: A capability is a generation-checked handle that grants a task specific access rights to a kernel-managed resource. Capabilities are used to control access to threads, tasks, memory regions, IPC endpoints, and other kernel objects.
 
 **IPC Endpoints**: An IPC endpoint is a kernel object that represents a communication channel for inter-process communication. Tasks use IPC endpoints to send and receive messages synchronously.
 
-## KObject API
-Each subsystem that manages kernel objects must implement a set of operations defined in `kobject_ops_t`, which includes the destructor for the kernel object and any other relevant operations.
+## Object API
+Object pools are initialized with `ObObjectPoolInit` and an `ObOperations` table. Objects embed `ObHeader` as their first member; `ObCreateInPool`, `ObRetain`, and `ObRelease` manage allocation and references.
 
-Below is an example documenting the kobject API.
+Subsystem constructors and destructors use the shared object callback signatures:
 ```c
-#include <kernel/ipc/kobject.h>
+#include <ob/obheader.h>
+#include <ob/obcreation.h>
 
-struct my_kobject_data {
+struct MyObjectData {
     int value;
     char field[64];
-}; 
-
-typedef struct my_kobject {
-    kobject_t obj;
-
-    /* Data that this kobject manages */
-    struct my_kobject_data data;
-} my_kobject_t;
-
-my_kobject_t g_my_kobject[MY_KOBJECT_POOL_SIZE];
-kobject_pool_t g_my_kobject_pool;
-
-static void my_kobject_construct(kobject_t *obj, kobject_data_t data);
-static void my_kobject_destroy(kobject_t *obj);
-
-static const kobject_ops_t my_kobject_ops = {
-    .name = "my_kobject",
-    .construct = my_kobject_construct,
-    .destroy = my_kobject_destroy,
 };
 
-static void my_kobject_construct(kobject_t *obj, kobject_data_t data) {
-    my_kobject_t *my_obj = (my_kobject_t *)obj;
+typedef struct MyObject {
+    ObHeader object;
 
-    my_obj->data = *(struct my_kobject_data *)data;
+    /* Data that this kobject manages */
+    struct MyObjectData data;
+} MyObject;
+
+static MyObject g_myObjects[MY_OBJECT_POOL_SIZE];
+static ObObjectPool g_myObjectPool;
+
+static void MyObjectCreate(ObHeader *object, ObObjectData data);
+static void MyObjectDestroy(ObHeader *object);
+
+static const ObOperations g_myObjectOperations = {
+    .name = "my_kobject",
+    .create = MyObjectCreate,
+    .destroy = MyObjectDestroy,
+};
+
+static void MyObjectCreate(ObHeader *object, ObObjectData data) {
+    MyObject *myObject = (MyObject *)object;
+
+    myObject->data = *(struct MyObjectData *)data;
 }
 
-static void my_kobject_destroy(kobject_t *obj) {
-    my_kobject_t *my_obj = (my_kobject_t *)obj;
+static void MyObjectDestroy(ObHeader *object) {
+    MyObject *myObject = (MyObject *)object;
 
     /* Perform any necessary cleanup */
-    my_obj->data.value = 0;
-    memset(my_obj->data.field, 0, sizeof(my_obj->data.field));
+    myObject->data.value = 0;
+    memset(myObject->data.field, 0, sizeof(myObject->data.field));
 }
 
-static void my_subsystem_sys_init(void) {
-    /* Initialize the static object pool for my_kobject_t */
-    kobject_pool_init(&g_my_kobject_pool, 
-                       g_my_kobject,
-                       sizeof(my_kobject_t),
-                       MY_KOBJECT_POOL_SIZE,
-                       &my_kobject_ops);
+static void MySubsystemInitialize(void) {
+    /* Initialize the static object pool for MyObject */
+    ObObjectPoolInit(&g_myObjectPool, g_myObjects, sizeof(MyObject), MY_OBJECT_POOL_SIZE,
+                     &g_myObjectOperations);
 }
 ```
 
 ## Service Calls
 
-Service calls are implemented in `kernel/svc.h` as syscalls; however they are tiny and only communicate with userland and IPC mechanisms.
+Service-call numbers and message structures are declared in `celesteos/ke/svc.h`; kernel handlers are declared in `celesteos/ke/svc_sys.h`.
 
-Service calls are similar to L4 IPC calls, with the distinct difference that we never pass thread or task IDs directly; instead, we always use opaque handles (`handle_t`) to refer to kernel-managed resources (within the target context).
+Service calls use opaque `KeSvcHandle` values rather than passing thread or task IDs directly.
 
-### 1: `sys_svc_send_msg(target, message, recv_buffer)`
+### 1: `KeSvcSendMessage(target, message, recvBuffer)`
 - **Purpose**: The client-side half of L4 Rendezvous IPC. Sends a synchronous IPC message to the target handle and blocks until a reply is received.
 - **Registers passed**: Target handle (`RDI`), message (`RSI`), receive buffer (`RDX`)
 
-### 2: `sys_svc_reply_wait(client, message, recv_buffer)`
+### 2: `KeSvcReplyWait(client, message, recvBuffer)`
 - **Purpose**: The server-side half of L4 Rendezvous IPC. Sends a reply to the client handle and waits for the next IPC message.
 - **Registers passed**: Client handle (`RDI`), message (`RSI`), receive buffer (`RDX`)
 
-### 3: `sys_svc_vm_map(target, virt_addr, phys_addr, flags)`
-- **Purpose**: Maps a physical page into the virtual address space (page table) of the target.
+### 3: `KeSvcVMMap(target, virtAddr, physAddr, flags)`
+- **Purpose**: Reserved for mapping a physical page into the target address space; currently returns an error because it is not implemented.
 - **Registers passed**: Target handle (`RDI`), virtual address (`RSI`), physical address (`RDX`), flags (`RCX`)
 
-### 4: `sys_svc_vm_unmap(target, virt_addr)`
-- **Purpose**: Unmaps a virtual page from the virtual address space (page table) of the target.
+### 4: `KeSvcVMUnmap(target, virtAddr)`
+- **Purpose**: Reserved for unmapping a virtual page; currently returns an error because it is not implemented.
 - **Registers passed**: Target handle (`RDI`), virtual address (`RSI`)
 
-### 5: `sys_svc_thread_create(target, entry_point, user_stack_top)`
-- **Purpose**: Creates a new thread in the static thread pool `g_threads`, sets up its kernel and user context, and assigns it to the target handle.
+### 5: `KeSvcCreateThread(target, entryPoint, userStackTop)`
+- **Purpose**: Creates a thread in the task referenced by the target handle and queues it for scheduling.
 - **Registers passed**: Target handle (`RDI`), entry point (`RSI`), user stack top (`RDX`)
 
-### 6: `sys_svc_thread_yield(target)`
-- **Purpose**: Yields the CPU from the current thread to the specified target handle. Triggers a manual schedule pass. If `target` is passed, it donates the current thread's time slice to the target (via `scheduler_yield_to`), otherwise it uses a standard round-robin `schedule()`.
+### 6: `KeSvcYieldThread(target)`
+- **Purpose**: Yields the CPU to the specified thread handle, or to the scheduler when passed `INVALID_HANDLE`.
 - **Registers passed**: Target handle (`RDI`)
-

@@ -10,13 +10,17 @@ BASH    := bash
 BUILD_DIR := build
 ISO_DIR   := $(BUILD_DIR)/iso_root
 LIMINE_DIR ?= $(BUILD_DIR)/limine
+CELESTEOS_DIR := celesteos
+KERNEL_DIR := $(CELESTEOS_DIR)/ke
+OBJECT_DIR := $(CELESTEOS_DIR)/ob
+PROCESS_DIR := $(CELESTEOS_DIR)/ps
 
 # Output files
 TARGET_ELF := $(BUILD_DIR)/celesteos.elf
 TARGET_ISO := $(BUILD_DIR)/celesteos.iso
 
 # Include directories
-INCLUDES := -I. -Iinclude -Ikernel -Ilib -Ikernel/asm
+INCLUDES := -I. -Iinclude -I$(CELESTEOS_DIR) -I$(KERNEL_DIR) -Ilib -I$(KERNEL_DIR)/asm
 
 # Compiler & assembler flags
 CFLAGS := -std=gnu17 \
@@ -39,32 +43,34 @@ CFLAGS := -std=gnu17 \
 	-MMD -MP \
 	$(INCLUDES)
 
-NASMFLAGS ?= -f elf64 -g -F dwarf -Ikernel/asm/
+NASMFLAGS ?= -f elf64 -g -F dwarf -I$(KERNEL_DIR)/asm/
 LDFLAGS := -T linker.ld -nostdlib -static -z max-page-size=0x1000
 LIBGCC := $(shell $(CC) -print-libgcc-file-name)
 
-C_SRCS := kernel/kmain.c \
-	kernel/gdt.c \
-	kernel/tss.c \
-	kernel/idt.c \
-	kernel/pic.c \
-	kernel/fb.c \
-	kernel/pmm.c \
-	kernel/pmap.c \
-	kernel/ipc/kobject.c \
-	kernel/ipc/scheduler.c \
-	kernel/ipc/task.c \
-	kernel/ipc/thread.c \
-	kernel/svc_sys.c \
-	lib/klog.c \
+C_SRCS := $(KERNEL_DIR)/kmain.c \
+	$(KERNEL_DIR)/gdt.c \
+	$(KERNEL_DIR)/tss.c \
+	$(KERNEL_DIR)/idt.c \
+	$(KERNEL_DIR)/pic.c \
+	$(KERNEL_DIR)/fb.c \
+	$(KERNEL_DIR)/pmm.c \
+	$(KERNEL_DIR)/page.c \
+	$(OBJECT_DIR)/obcreation.c \
+	$(PROCESS_DIR)/pstask.c \
+	$(PROCESS_DIR)/psthread.c \
+	$(PROCESS_DIR)/sched.c \
+	$(PROCESS_DIR)/endpoint.c \
+	$(KERNEL_DIR)/log.c \
+	$(KERNEL_DIR)/svc_sys.c \
 	lib/string.c
 
-ASM_SRCS := kernel/asm/entry.asm \
-	kernel/asm/ctx_switch.asm \
-	kernel/asm/interrupts.asm \
-	kernel/asm/load_gdt.asm \
-	kernel/asm/tss_switch.asm \
-	kernel/asm/spinlock.asm
+ASM_SRCS := $(KERNEL_DIR)/asm/entry.asm \
+	$(KERNEL_DIR)/asm/call_syscall.asm \
+	$(KERNEL_DIR)/asm/ctx_switch.asm \
+	$(KERNEL_DIR)/asm/interrupts.asm \
+	$(KERNEL_DIR)/asm/load_gdt.asm \
+	$(KERNEL_DIR)/asm/tss_switch.asm \
+	$(KERNEL_DIR)/asm/spinlock.asm
 
 OBJS := $(addprefix $(BUILD_DIR)/,$(C_SRCS:.c=.o)) \
 	$(addprefix $(BUILD_DIR)/,$(ASM_SRCS:.asm=.o))
@@ -82,7 +88,7 @@ kernel: $(TARGET_ELF)
 # test-tss:
 # 	@mkdir -p $(BUILD_DIR)/tests
 # 	$(CC) -std=c17 -Wall -Wextra -Werror -I. -Iinclude \
-# 		tests/tss_test.c kernel/tss.c kernel/gdt.c -o $(BUILD_DIR)/tests/tss_test
+# 		tests/tss_test.c $(KERNEL_DIR)/tss.c $(KERNEL_DIR)/gdt.c -o $(BUILD_DIR)/tests/tss_test
 # 	$(BUILD_DIR)/tests/tss_test
 
 # Limine bootloader
