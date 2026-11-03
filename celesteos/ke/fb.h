@@ -18,7 +18,7 @@ typedef struct KeFramebufferState {
     size_t cursorY;
 } KeFramebufferState;
 
-extern KeFramebufferState g_keFramebuffer;
+extern KeFramebufferState gKeFramebuffer;
 
 bool KeFbIsInitialized(const KeFramebufferState *framebuffer);
 void KeFbSetBold(KeFramebufferState *framebuffer, bool bold);

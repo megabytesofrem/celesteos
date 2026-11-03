@@ -33,15 +33,15 @@ typedef enum {
 
 typedef struct {
     uint16_t label;
-    uint8_t register_count;   /* Number of registers being sent*/
-    uint8_t capability_count; /* Number of capabilities being sent*/
+    uint8_t registerCount;   /* Number of registers being sent*/
+    uint8_t capabilityCount; /* Number of capabilities being sent*/
     uint32_t flags;
 } SvcMessageTag;
 
 typedef struct {
     uint32_t type;       /* Capability type */
-    uintptr_t base_addr; /* Base address of the capability */
-    size_t size_pages;   /* Size of the capability in pages */
+    uintptr_t baseAddr; /* Base address of the capability */
+    size_t sizePages;   /* Size of the capability in pages */
     uint32_t rights;     /* Rights associated with the capability */
 } SvcCapability;
 

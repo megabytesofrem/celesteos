@@ -44,7 +44,7 @@ void PsSchedulerSwitchTo(PsThread *thread);
 
 /**
  * Low-level assembly context switch interface implemented in ctx_switch.s.
- * Saves current callee-saved registers, updates old_rsp, loads new_rsp,
+ * Saves current callee-saved registers, updates oldRsp, loads newRsp,
  * and restores saved state into CPU.
  */
 extern void ctx_switch(uint64_t **oldRsp, uint64_t *newRsp);

@@ -15,28 +15,27 @@ typedef struct PsThreadCreateData {
     uintptr_t userStack;
 } PsThreadCreateData;
 
-static PsThread g_threads[MAX_THREADS];
-static ObObjectPool g_threadPool;
-static _Atomic PsThreadId g_nextThreadId;
+static PsThread gThreads[MAX_THREADS];
+static ObObjectPool gThreadPool;
+static _Atomic PsThreadId gNextThreadId;
 
 static void PsThreadCreateObject(ObHeader *object, ObObjectData data);
 static void PsThreadDestroyObject(ObHeader *object);
 static void PsThreadStart(void) __attribute__((noreturn));
 
-static const ObOperations g_threadOperations = {
+static const ObOperations gThreadOperations = {
     .name = "thread",
     .create = PsThreadCreateObject,
     .destroy = PsThreadDestroyObject,
 };
 
 void PsThreadSubsystemInit(void) {
-    ObObjectPoolInit(
-        &g_threadPool, g_threads, sizeof(g_threads[0]), MAX_THREADS, &g_threadOperations);
-    atomic_store_explicit(&g_nextThreadId, 0, memory_order_relaxed);
+    ObObjectPoolInit(&gThreadPool, gThreads, sizeof(gThreads[0]), MAX_THREADS, &gThreadOperations);
+    atomic_store_explicit(&gNextThreadId, 0, memory_order_relaxed);
 }
 
 PsThreadId PsNextThreadId(void) {
-    return atomic_fetch_add_explicit(&g_nextThreadId, 1, memory_order_relaxed) + 1;
+    return atomic_fetch_add_explicit(&gNextThreadId, 1, memory_order_relaxed) + 1;
 }
 
 PsThread *PsCurrentThread(void) {
@@ -103,5 +102,5 @@ PsThread *PsCreateThread(PsTask *parentTask, void *entryPoint, void *userStack) 
         .entryPoint = (uintptr_t)entryPoint,
         .userStack = (uintptr_t)userStack,
     };
-    return (PsThread *)ObCreateInPool(&g_threadPool, ObObjectTypeThread, &createData);
+    return (PsThread *)ObCreateInPool(&gThreadPool, ObObjectTypeThread, &createData);
 }

@@ -4,21 +4,21 @@
 
 #define MAX_ENDPOINTS 256
 
-static PsEndpoint g_endpoints[MAX_ENDPOINTS];
-static ObObjectPool g_endpointPool;
+static PsEndpoint gEndpoints[MAX_ENDPOINTS];
+static ObObjectPool gEndpointPool;
 
 static void PsCreateEndpointObject(ObHeader *object, ObObjectData data);
 static void PsDestroyEndpointObject(ObHeader *object);
 
-static const ObOperations g_endpointOperations = {
+static const ObOperations gEndpointOperations = {
     .name = "endpoint",
     .create = PsCreateEndpointObject,
     .destroy = PsDestroyEndpointObject,
 };
 
 void PsEndpointSubsystemInit(void) {
-    ObObjectPoolInit(
-        &g_endpointPool, g_endpoints, sizeof(g_endpoints[0]), MAX_ENDPOINTS, &g_endpointOperations);
+    ObObjectPoolInit(&gEndpointPool, gEndpoints, sizeof(gEndpoints[0]), MAX_ENDPOINTS,
+        &gEndpointOperations);
 }
 
 void PsCreateEndpoint(PsEndpoint *endpoint, ObObjectData data) {
@@ -44,5 +44,5 @@ static void PsDestroyEndpointObject(ObHeader *object) {
 }
 
 PsEndpoint *PsEndpointCreate(void) {
-    return (PsEndpoint *)ObCreateInPool(&g_endpointPool, ObObjectTypeEndpoint, NULL);
+    return (PsEndpoint *)ObCreateInPool(&gEndpointPool, ObObjectTypeEndpoint, NULL);
 }

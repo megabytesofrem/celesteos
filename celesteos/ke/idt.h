@@ -21,17 +21,17 @@ typedef struct KeCPUFrame {
     uint64_t rbx;
     uint64_t rax;
 
-    uint64_t int_no, err_code;
+    uint64_t intNo, errCode;
     uint64_t rip, cs, rflags, rsp, ss;
 } KeCPUFrame;
 
 typedef struct __attribute__((packed)) KeIDTEntry {
-    uint16_t offset_low;
+    uint16_t offsetLow;
     uint16_t selector;
     uint8_t ist;
-    uint8_t type_attr;
-    uint16_t offset_middle;
-    uint32_t offset_high;
+    uint8_t typeAttr;
+    uint16_t offsetMiddle;
+    uint32_t offsetHigh;
     uint32_t zero;
 } KeIDTEntry;
 
@@ -50,13 +50,13 @@ void KeInitIDT();
 /**
  * Set an entry in the IDT to point to a specific interrupt handler.
  */
-void KeIDTSetEntry(int entry, KeIDTHandler handler, int type_attr);
+void KeIDTSetEntry(int entry, KeIDTHandler handler, int typeAttr);
 
 /**
  * Set an entry in the IDT to point to a specific interrupt handler with a
  * given Interrupt Stack Table (IST) index.
  */
-void KeIDTSetEntryIST(int entry, KeIDTHandler handler, int type_attr, int ist_index);
+void KeIDTSetEntryIST(int entry, KeIDTHandler handler, int typeAttr, int istIndex);
 
 void KeLoadIDT(KeIDTPointer *ptr);
 

@@ -55,14 +55,14 @@ endstruc
 
 ; ------------------------------------------------------------------------------------------
 section .bss
-user_stack:                 resq 1           ; user stack pointer
+userStack:                  resq 1           ; user stack pointer
 
 global KeSyscallKernelStack
 KeSyscallKernelStack:       resq 1           ; kernel stack pointer
 
 ; ------------------------------------------------------------------------------------------
 section .data
-dispatch_msg:               db "svc: Dispatching service call: %d", 0
+dispatchMsg:                db "svc: Dispatching service call: %d", 0
 
 section .text
 
@@ -74,7 +74,7 @@ section .text
     ; as x86 grows downwards
     push r11                            ; R11 holds user RFLAGS
     push rcx                            ; RCX holds user return address (RIP)
-    push qword [rel user_stack]         ; save user stack pointer by pushing 16 bytes (quadword)
+    push qword [rel userStack]          ; save user stack pointer by pushing 16 bytes (quadword)
     push rbp                            ; save base pointer
     push r15
     push r14
@@ -107,7 +107,7 @@ section .text
     pop r14
     pop r15
     pop rbp
-    pop qword [rel user_stack]          ; restore user stack pointer
+    pop qword [rel userStack]           ; restore user stack pointer
     pop rcx                             ; restore user return address (RIP)
     pop r11                             ; restore user RFLAGS
 %endmacro
@@ -127,14 +127,14 @@ section .text
 ;   RDI, RSI, RDX, R10, R8, R9 - syscall arguments (if any)
 ;
 ; Behaviour:
-;   Saves the current user stack pointer into user_stack and switches to the kernel stack (rsp = syscall_kernel_stack).
+;   Saves the current user stack pointer and switches to KeSyscallKernelStack.
 ;   Pushes all general purpose registers (x86 grows downwards, so inverse order is used) to build a CPU frame
 ;   Calls sys_dispatch with the syscall number and a pointer to the CPU frame
 ;   Restores all registers and returns to user mode using iretq
 ; ------------------------------------------------------------------------------------------
 KeCallSystemService:
     ; Save the current user stack pointer
-    mov [rel user_stack], rsp
+    mov [rel userStack], rsp
     ; Switch to the kernel stack
     mov rsp, [rel KeSyscallKernelStack]
 
@@ -157,7 +157,7 @@ KeCallSystemService:
 
     ; Return to user mode with the existing GDT segment selectors
     push qword 0x23                     ; user data segment selector
-    push qword [rel user_stack]         ; user stack pointer
+    push qword [rel userStack]          ; user stack pointer
     push r11                            ; user RFLAGS
     push qword 0x1B                     ; user code segment selector
     push rcx                            ; user return address (RIP)
@@ -180,8 +180,8 @@ KeSvcDispatch:
     push rdi                            ; save the first syscall argument on the stack
     push rsi                            ; save the CPU frame pointer on the stack
 
-    ; KeLog(KE_LOG_INFO, "svc: Dispatching service call: %d", syscall_number)
-    log KE_LOG_INFO, dispatch_msg, rdi
+    ; KeLog(KE_LOG_INFO, "svc: Dispatching service call: %d", service number)
+    log KE_LOG_INFO, dispatchMsg, rdi
 
     pop rsi                            ; restore the CPU frame pointer
     pop rdi                            ; restore the first syscall argument

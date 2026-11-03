@@ -6,24 +6,24 @@
 #include <ps/pstask.h>
 #include <ps/wait_queue.h>
 
-static PsThread *g_currentThread;
-static PsWaitQueue g_readyQueue;
-static uint64_t *g_bootRsp;
+static PsThread *gCurrentThread;
+static PsWaitQueue gReadyQueue;
+static uint64_t *gBootRsp;
 
 static void PsSchedulerPerformSwitch(PsThread *previousThread, PsThread *nextThread);
 
 void PsSchedulerInit(void) {
-    g_currentThread = NULL;
-    g_bootRsp = NULL;
-    PsWaitQueueInit(&g_readyQueue);
+    gCurrentThread = NULL;
+    gBootRsp = NULL;
+    PsWaitQueueInit(&gReadyQueue);
 }
 
 PsThread *PsSchedulerCurrentThread(void) {
-    return g_currentThread;
+    return gCurrentThread;
 }
 
 void PsSchedulerEnqueueThread(PsThread *thread) {
-    if (!thread || thread == g_currentThread || thread->state == PsThreadStateReady) {
+    if (!thread || thread == gCurrentThread || thread->state == PsThreadStateReady) {
         return;
     }
 
@@ -32,7 +32,7 @@ void PsSchedulerEnqueueThread(PsThread *thread) {
         ObRetain(&thread->object);
         thread->schedulerReferenceHeld = true;
     }
-    PsWaitQueueEnqueue(&g_readyQueue, thread);
+    PsWaitQueueEnqueue(&gReadyQueue, thread);
 }
 
 void PsSchedulerDequeueThread(PsThread *thread) {
@@ -40,7 +40,7 @@ void PsSchedulerDequeueThread(PsThread *thread) {
         return;
     }
 
-    PsWaitQueueDequeue(&g_readyQueue, thread);
+    PsWaitQueueDequeue(&gReadyQueue, thread);
     thread->state = PsThreadStateInactive;
     if (thread->schedulerReferenceHeld) {
         thread->schedulerReferenceHeld = false;
@@ -49,51 +49,51 @@ void PsSchedulerDequeueThread(PsThread *thread) {
 }
 
 void PsSchedulerSchedule(void) {
-    PsThread *nextThread = PsWaitQueuePop(&g_readyQueue);
+    PsThread *nextThread = PsWaitQueuePop(&gReadyQueue);
     if (!nextThread) {
         return;
     }
 
-    PsThread *previousThread = g_currentThread;
+    PsThread *previousThread = gCurrentThread;
     if (previousThread && previousThread->state == PsThreadStateRunning) {
         previousThread->state = PsThreadStateReady;
-        PsWaitQueueEnqueue(&g_readyQueue, previousThread);
+        PsWaitQueueEnqueue(&gReadyQueue, previousThread);
     }
     PsSchedulerPerformSwitch(previousThread, nextThread);
 }
 
 void PsSchedulerSwitchTo(PsThread *thread) {
-    if (!thread || thread == g_currentThread) {
+    if (!thread || thread == gCurrentThread) {
         return;
     }
 
     if (thread->state == PsThreadStateReady) {
-        PsWaitQueueDequeue(&g_readyQueue, thread);
+        PsWaitQueueDequeue(&gReadyQueue, thread);
     }
 
-    PsThread *previousThread = g_currentThread;
+    PsThread *previousThread = gCurrentThread;
     if (previousThread && previousThread->state == PsThreadStateRunning) {
         previousThread->state = PsThreadStateReady;
-        PsWaitQueueEnqueue(&g_readyQueue, previousThread);
+        PsWaitQueueEnqueue(&gReadyQueue, previousThread);
     }
     PsSchedulerPerformSwitch(previousThread, thread);
 }
 
 void PsSchedulerYield(void) {
-    PsThread *currentThread = g_currentThread;
+    PsThread *currentThread = gCurrentThread;
     if (!currentThread) {
         return;
     }
 
     while (currentThread->state != PsThreadStateRunning) {
-        if (PsWaitQueueIsEmpty(&g_readyQueue)) {
+        if (PsWaitQueueIsEmpty(&gReadyQueue)) {
             __asm__ volatile("sti; hlt" : : : "memory");
             continue;
         }
         PsSchedulerSchedule();
     }
 
-    if (!PsWaitQueueIsEmpty(&g_readyQueue)) {
+    if (!PsWaitQueueIsEmpty(&gReadyQueue)) {
         PsSchedulerSchedule();
     }
 }
@@ -103,7 +103,7 @@ static void PsSchedulerPerformSwitch(PsThread *previousThread, PsThread *nextThr
         return;
     }
 
-    g_currentThread = nextThread;
+    gCurrentThread = nextThread;
     nextThread->state = PsThreadStateRunning;
 
     if (KeTssSetKernelStack(
@@ -117,6 +117,6 @@ static void PsSchedulerPerformSwitch(PsThread *previousThread, PsThread *nextThr
         __builtin_trap();
     }
 
-    uint64_t **savedRsp = previousThread ? &previousThread->rsp : &g_bootRsp;
+    uint64_t **savedRsp = previousThread ? &previousThread->rsp : &gBootRsp;
     ctx_switch(savedRsp, nextThread->rsp);
 }

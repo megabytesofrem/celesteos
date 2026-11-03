@@ -21,11 +21,11 @@ typedef struct __attribute__((packed)) KeSvcCPUFrame {
 
 /* Service call system interface */
 
-int KeSvcSendMessage(KeSvcHandle target, SvcMessage *message, SvcMessage *recv_buffer);
-int KeSvcReplyWait(KeSvcHandle client, SvcMessage *reply, SvcMessage *recv_buffer);
-int KeSvcVMMap(KeSvcHandle target, void *virt_addr, void *phys_addr, int flags);
-int KeSvcVMUnmap(KeSvcHandle target, void *virt_addr);
-int KeSvcCreateThread(KeSvcHandle target, void *entry_point, void *user_stack_top);
+int KeSvcSendMessage(KeSvcHandle target, SvcMessage *message, SvcMessage *recvBuffer);
+int KeSvcReplyWait(KeSvcHandle client, SvcMessage *reply, SvcMessage *recvBuffer);
+int KeSvcVMMap(KeSvcHandle target, void *virtAddr, void *physAddr, int flags);
+int KeSvcVMUnmap(KeSvcHandle target, void *virtAddr);
+int KeSvcCreateThread(KeSvcHandle target, void *entryPoint, void *userStackTop);
 int KeSvcYieldThread(KeSvcHandle target);
 int KeSvcUnknownService(KeSvcHandle target);
 

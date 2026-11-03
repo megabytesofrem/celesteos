@@ -61,12 +61,12 @@
  * An entry in the Global Descriptor Table (GDT).
  */
 typedef struct __attribute__((packed)) KeGDTEntry {
-    uint16_t limit_low;
-    uint16_t base_low;   /* low 16 bits of the base address */
-    uint8_t base_middle; /* middle 8 bits of the base address */
+    uint16_t limitLow;
+    uint16_t baseLow;   /* low 16 bits of the base address */
+    uint8_t baseMiddle; /* middle 8 bits of the base address */
     uint8_t access;
     uint8_t granularity;
-    uint8_t base_high; /* high 8 bits of the base address */
+    uint8_t baseHigh; /* high 8 bits of the base address */
 } KeGDTEntry;
 
 typedef struct __attribute__((packed)) KeGDTPointer {
@@ -78,20 +78,20 @@ typedef struct __attribute__((packed)) KeGDTPointer {
  * The GDT containing all segment descriptors.
  */
 typedef struct __attribute__((packed)) KeGDT {
-    KeGDTEntry null_descriptor; /* null descriptor: offset 0x00 */
-    KeGDTEntry kernel_code;     /* kernel code segment: 0x08 (access: 0x9A, flags: 0x20) */
-    KeGDTEntry kernel_data;     /* kernel data segment: 0x10 (access: 0x92, flags: 0x00) */
-    KeGDTEntry user_code;       /* user code segment: 0x18 (access: 0xFA, flags: 0x20) */
-    KeGDTEntry user_data;       /* user data segment: 0x20 (access: 0xF2, flags: 0x00) */
+    KeGDTEntry nullDescriptor; /* null descriptor: offset 0x00 */
+    KeGDTEntry kernelCode;     /* kernel code segment: 0x08 (access: 0x9A, flags: 0x20) */
+    KeGDTEntry kernelData;     /* kernel data segment: 0x10 (access: 0x92, flags: 0x00) */
+    KeGDTEntry userCode;       /* user code segment: 0x18 (access: 0xFA, flags: 0x20) */
+    KeGDTEntry userData;       /* user data segment: 0x20 (access: 0xF2, flags: 0x00) */
 
-    uint64_t tss_low;  /* low 64 bits of the TSS base address */
-    uint64_t tss_high; /* high 64 bits of the TSS base address */
+    uint64_t tssLow;  /* low 64 bits of the TSS base address */
+    uint64_t tssHigh; /* high 64 bits of the TSS base address */
 } KeGDT;
 
 _Static_assert(sizeof(KeGDTEntry) == 8, "GDT entries must be 8 bytes");
 _Static_assert(sizeof(KeGDTPointer) == 10, "GDTR operands must be 10 bytes");
 _Static_assert(offsetof(KeGDTPointer, base) == 2, "GDTR base must follow the 16-bit limit");
-_Static_assert(offsetof(KeGDT, tss_low) == 0x28, "TSS descriptor must match selector 0x28");
+_Static_assert(offsetof(KeGDT, tssLow) == 0x28, "TSS descriptor must match selector 0x28");
 
 /**
  * Initialize the Global Descriptor Table (GDT).
@@ -104,11 +104,11 @@ KeGDTEntry KeCreateGDTEntry(uint8_t access, uint8_t granularity);
 /**
  * Load the Global Descriptor Table (GDT) and update segment registers.
  */
-extern void KeLoadGDT(const KeGDTPointer *gdt_ptr, uint16_t cs, uint16_t ds);
+extern void KeLoadGDT(const KeGDTPointer *gdtPtr, uint16_t cs, uint16_t ds);
 
 /**
  * Load the Task State Segment (TSS) with the given segment selector.
  */
-extern void KeLoadTSS(uint16_t tss_selector);
+extern void KeLoadTSS(uint16_t tssSelector);
 
 #endif /* CELESTEOS_GDT_H */

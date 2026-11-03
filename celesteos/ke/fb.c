@@ -5,7 +5,7 @@
 #include <ter_u16b.h>
 #include <ter_u16n.h>
 
-KeFramebufferState g_keFramebuffer;
+KeFramebufferState gKeFramebuffer;
 
 bool KeFbIsInitialized(const KeFramebufferState *framebuffer) {
     return framebuffer != NULL && framebuffer->framebuffer != NULL;
@@ -16,7 +16,7 @@ void KeFbSetBold(KeFramebufferState *framebuffer, bool bold) {
 }
 
 KeFramebufferState *KeFbGet(void) {
-    return &g_keFramebuffer;
+    return &gKeFramebuffer;
 }
 
 void KeFbInitialize(KeFramebufferState *framebuffer, struct limine_framebuffer *limineFramebuffer) {
@@ -48,25 +48,25 @@ void KeFbDrawPixel(KeFramebufferState *framebuffer, size_t x, size_t y, uint32_t
 
 void KeFbDrawCharacter(KeFramebufferState *framebuffer, char character, size_t x, size_t y,
     uint32_t foregroundColor, uint32_t backgroundColor) {
-    uint8_t glyph_index = (uint8_t)character;
+    uint8_t glyphIndex = (uint8_t)character;
     uint8_t *glyph = NULL;
 
     // Get the glyph bitmap for the character from the font table
     // TODO: this is hacky, is there a better way?
 
     if (framebuffer->bold) {
-        glyph = (uint8_t *)(font_8x16_b[glyph_index]);
+        glyph = (uint8_t *)(font8x16B[glyphIndex]);
     } else {
-        glyph = (uint8_t *)(font_8x16_n[glyph_index]);
+        glyph = (uint8_t *)(font8x16N[glyphIndex]);
     }
 
     for (size_t row = 0; row < FONT_HEIGHT; row++) {
-        uint8_t bitmap_row = glyph[row];
+        uint8_t bitmapRow = glyph[row];
 
         for (size_t col = 0; col < FONT_WIDTH; col++) {
-            bool is_set = (bitmap_row & (1 << (7 - col))) != 0;
+            bool isSet = (bitmapRow & (1 << (7 - col))) != 0;
             KeFbDrawPixel(
-                framebuffer, x + col, y + row, is_set ? foregroundColor : backgroundColor);
+                framebuffer, x + col, y + row, isSet ? foregroundColor : backgroundColor);
         }
     }
 }
@@ -151,16 +151,16 @@ void KeFbPrint(KeFramebufferState *framebuffer, const char *string, uint32_t for
 
 void KeFbScroll(KeFramebufferState *framebuffer) {
     // Copy screen lines up by FONT_HEIGHT rows using memcpy
-    size_t bytes_per_line = framebuffer->framebuffer->pitch;
-    size_t total_move_bytes = (framebuffer->height - FONT_HEIGHT) * bytes_per_line;
+    size_t bytesPerLine = framebuffer->framebuffer->pitch;
+    size_t totalMoveBytes = (framebuffer->height - FONT_HEIGHT) * bytesPerLine;
 
-    uint8_t *byte_buffer = (uint8_t *)(framebuffer->pixelData);
-    memcpy(byte_buffer, byte_buffer + (FONT_HEIGHT * bytes_per_line), total_move_bytes);
+    uint8_t *byteBuffer = (uint8_t *)(framebuffer->pixelData);
+    memcpy(byteBuffer, byteBuffer + (FONT_HEIGHT * bytesPerLine), totalMoveBytes);
 
     // Clear the newly exposed bottom row
-    uint32_t *bottom_row =
+    uint32_t *bottomRow =
         framebuffer->pixelData + ((framebuffer->height - FONT_HEIGHT) * framebuffer->pitchPixels);
-    memset(bottom_row, 0, FONT_HEIGHT * bytes_per_line);
+    memset(bottomRow, 0, FONT_HEIGHT * bytesPerLine);
 
     framebuffer->cursorY -= FONT_HEIGHT;
 }

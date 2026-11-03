@@ -3,9 +3,9 @@
 #include <error.h>
 
 static uint8_t *bitmap;
-static size_t total_pages;
-static size_t used_pages;
-static uint64_t higher_half_base;
+static size_t totalPages;
+static size_t usedPages;
+static uint64_t higherHalfBase;
 
 static void set_bit(size_t page) {
     bitmap[page / 8] |= (uint8_t)(1U << (page % 8));
@@ -19,11 +19,11 @@ static bool test_bit(size_t page) {
     return (bitmap[page / 8] & (uint8_t)(1U << (page % 8))) != 0;
 }
 
-int KeInitPhysMemoryManager(struct limine_memmap_response *memmap, uint64_t hhdm_base_offset) {
-    uint64_t highest_address = 0;
-    uint64_t aligned_bitmap_size;
-    uint64_t bitmap_pages;
-    uint8_t *new_bitmap = NULL;
+int KeInitPhysMemoryManager(struct limine_memmap_response *memmap, uint64_t hhdmBaseOffset) {
+    uint64_t highestAddress = 0;
+    uint64_t alignedBitmapSize;
+    uint64_t bitmapPages;
+    uint8_t *newBitmap = NULL;
 
     if (memmap == NULL || memmap->entries == NULL || memmap->entry_count == 0) {
         return ERR_INVALID_ARG;
@@ -32,59 +32,59 @@ int KeInitPhysMemoryManager(struct limine_memmap_response *memmap, uint64_t hhdm
     for (uint64_t i = 0; i < memmap->entry_count; ++i) {
         struct limine_memmap_entry *entry = memmap->entries[i];
         if (entry != NULL && entry->type == LIMINE_MEMMAP_USABLE) {
-            uint64_t end_address = entry->base + entry->length;
-            if (end_address < entry->base) {
+            uint64_t endAddress = entry->base + entry->length;
+            if (endAddress < entry->base) {
                 return ERR_OVERFLOW;
             }
-            if (end_address > highest_address) {
-                highest_address = end_address;
+            if (endAddress > highestAddress) {
+                highestAddress = endAddress;
             }
         }
     }
 
-    if (highest_address / PHYS_PAGE_SIZE > SIZE_MAX) {
+    if (highestAddress / PHYS_PAGE_SIZE > SIZE_MAX) {
         return ERR_OVERFLOW;
     }
-    size_t new_total_pages = (size_t)(highest_address / PHYS_PAGE_SIZE);
-    if (new_total_pages > SIZE_MAX - 7) {
+    size_t newTotalPages = (size_t)(highestAddress / PHYS_PAGE_SIZE);
+    if (newTotalPages > SIZE_MAX - 7) {
         return ERR_OVERFLOW;
     }
-    size_t new_bitmap_size = (new_total_pages + 7) / 8;
-    if (new_bitmap_size > SIZE_MAX - (PHYS_PAGE_SIZE - 1)) {
+    size_t newBitmapSize = (newTotalPages + 7) / 8;
+    if (newBitmapSize > SIZE_MAX - (PHYS_PAGE_SIZE - 1)) {
         return ERR_OVERFLOW;
     }
 
-    bitmap_pages = (new_bitmap_size + PHYS_PAGE_SIZE - 1) / PHYS_PAGE_SIZE;
-    aligned_bitmap_size = bitmap_pages * PHYS_PAGE_SIZE;
+    bitmapPages = (newBitmapSize + PHYS_PAGE_SIZE - 1) / PHYS_PAGE_SIZE;
+    alignedBitmapSize = bitmapPages * PHYS_PAGE_SIZE;
 
     for (uint64_t i = 0; i < memmap->entry_count; ++i) {
         struct limine_memmap_entry *entry = memmap->entries[i];
         if (entry != NULL && entry->type == LIMINE_MEMMAP_USABLE &&
-            entry->length >= aligned_bitmap_size && entry->base <= UINT64_MAX - hhdm_base_offset) {
-            new_bitmap = (uint8_t *)(uintptr_t)(entry->base + hhdm_base_offset);
+            entry->length >= alignedBitmapSize && entry->base <= UINT64_MAX - hhdmBaseOffset) {
+            newBitmap = (uint8_t *)(uintptr_t)(entry->base + hhdmBaseOffset);
             break;
         }
     }
-    if (new_bitmap == NULL) {
+    if (newBitmap == NULL) {
         return ERR_NO_MEMORY;
     }
 
-    for (size_t i = 0; i < new_bitmap_size; ++i) {
-        new_bitmap[i] = 0xFF;
+    for (size_t i = 0; i < newBitmapSize; ++i) {
+        newBitmap[i] = 0xFF;
     }
 
-    bitmap = new_bitmap;
-    total_pages = new_total_pages;
-    used_pages = 0;
-    higher_half_base = hhdm_base_offset;
+    bitmap = newBitmap;
+    totalPages = newTotalPages;
+    usedPages = 0;
+    higherHalfBase = hhdmBaseOffset;
 
     for (uint64_t i = 0; i < memmap->entry_count; ++i) {
         struct limine_memmap_entry *entry = memmap->entries[i];
         if (entry != NULL && entry->type == LIMINE_MEMMAP_USABLE) {
-            uint64_t end_address = entry->base + entry->length;
-            for (uint64_t addr = entry->base; addr < end_address;) {
+            uint64_t endAddress = entry->base + entry->length;
+            for (uint64_t addr = entry->base; addr < endAddress;) {
                 size_t page = (size_t)(addr / PHYS_PAGE_SIZE);
-                if (page < total_pages && test_bit(page)) {
+                if (page < totalPages && test_bit(page)) {
                     clear_bit(page);
                 }
                 if (UINT64_MAX - addr < PHYS_PAGE_SIZE) {
@@ -95,19 +95,19 @@ int KeInitPhysMemoryManager(struct limine_memmap_response *memmap, uint64_t hhdm
         }
     }
 
-    uint64_t bitmap_phys = (uint64_t)(uintptr_t)bitmap - higher_half_base;
-    for (uint64_t addr = bitmap_phys; addr < bitmap_phys + aligned_bitmap_size;
+    uint64_t bitmapPhys = (uint64_t)(uintptr_t)bitmap - higherHalfBase;
+    for (uint64_t addr = bitmapPhys; addr < bitmapPhys + alignedBitmapSize;
         addr += PHYS_PAGE_SIZE) {
         size_t page = (size_t)(addr / PHYS_PAGE_SIZE);
-        if (page < total_pages && !test_bit(page)) {
+        if (page < totalPages && !test_bit(page)) {
             set_bit(page);
-            ++used_pages;
+            ++usedPages;
         }
     }
 
-    if (total_pages != 0 && !test_bit(0)) {
+    if (totalPages != 0 && !test_bit(0)) {
         set_bit(0);
-        ++used_pages;
+        ++usedPages;
     }
 
     return 0;
@@ -118,11 +118,11 @@ int KeAllocPhysPage(void **page) {
         return ERR_INVALID_ARG;
     }
 
-    for (size_t i = 0; i < total_pages; ++i) {
+    for (size_t i = 0; i < totalPages; ++i) {
         if (!test_bit(i)) {
             set_bit(i);
-            ++used_pages;
-            *page = (void *)(uintptr_t)(i * PHYS_PAGE_SIZE + higher_half_base);
+            ++usedPages;
+            *page = (void *)(uintptr_t)(i * PHYS_PAGE_SIZE + higherHalfBase);
             return 0;
         }
     }
@@ -131,40 +131,40 @@ int KeAllocPhysPage(void **page) {
     return ERR_NO_MEMORY;
 }
 
-int KeAllocPhysPages(size_t count, void **out_pages) {
-    if (count == 0 || out_pages == NULL) {
+int KeAllocPhysPages(size_t count, void **outPages) {
+    if (count == 0 || outPages == NULL) {
         return ERR_INVALID_ARG;
     }
     if (count == 1) {
-        return KeAllocPhysPage(out_pages);
+        return KeAllocPhysPage(outPages);
     }
 
-    size_t free_run = 0;
-    size_t start_page = 0;
-    for (size_t page = 0; page < total_pages; ++page) {
+    size_t freeRun = 0;
+    size_t startPage = 0;
+    for (size_t page = 0; page < totalPages; ++page) {
         // Search for a contiguous run of free pages
         if (!test_bit(page)) {
             // Found a free page, increment the run length
-            if (free_run == 0) {
-                start_page = page;
+            if (freeRun == 0) {
+                startPage = page;
             }
-            ++free_run;
+            ++freeRun;
 
             // Check if the contiguous run has reached the desired count
-            if (free_run == count) {
+            if (freeRun == count) {
                 // Set the bits for the contiguous run of pages
-                for (size_t allocated = start_page; allocated < start_page + count; ++allocated) {
+                for (size_t allocated = startPage; allocated < startPage + count; ++allocated) {
                     set_bit(allocated);
-                    ++used_pages;
+                    ++usedPages;
                 }
 
                 // Return a pointer to the start of the pages
-                *out_pages = (void *)(uintptr_t)(start_page * PHYS_PAGE_SIZE + higher_half_base);
+                *outPages = (void *)(uintptr_t)(startPage * PHYS_PAGE_SIZE + higherHalfBase);
                 return 0;
             }
         } else {
             // Encountered an allocated page, reset the run length
-            free_run = 0;
+            freeRun = 0;
         }
     }
 
@@ -177,32 +177,32 @@ int KeFreePhysPage(void *page) {
         return ERR_INVALID_ARG;
     }
 
-    size_t page_index = ((uintptr_t)page - higher_half_base) / PHYS_PAGE_SIZE;
-    if (page_index >= total_pages) {
+    size_t pageIndex = ((uintptr_t)page - higherHalfBase) / PHYS_PAGE_SIZE;
+    if (pageIndex >= totalPages) {
         // Page index is out of range
         return ERR_INVALID_ARG;
     }
 
-    if (page_index < total_pages && test_bit(page_index)) {
+    if (pageIndex < totalPages && test_bit(pageIndex)) {
         // Clear the bit to mark the page as free
-        clear_bit(page_index);
-        --used_pages;
+        clear_bit(pageIndex);
+        --usedPages;
     }
 
     return 0;
 }
 
-int KeFreePhysPages(void *start_page, size_t count) {
-    if (start_page == NULL) {
+int KeFreePhysPages(void *startPage, size_t count) {
+    if (startPage == NULL) {
         return ERR_INVALID_ARG;
     }
 
     for (size_t i = 0; i < count; ++i) {
         // Grab the individual page from the contiguous block of pages
-        void *page = (void *)((uintptr_t)start_page + i * PHYS_PAGE_SIZE);
+        void *page = (void *)((uintptr_t)startPage + i * PHYS_PAGE_SIZE);
 
         // Check against overflow
-        if (i > (UINTPTR_MAX - (uintptr_t)start_page) / PHYS_PAGE_SIZE) {
+        if (i > (UINTPTR_MAX - (uintptr_t)startPage) / PHYS_PAGE_SIZE) {
             return ERR_OVERFLOW;
         }
 
@@ -217,25 +217,25 @@ int KeFreePhysPages(void *start_page, size_t count) {
 }
 
 size_t KeGetTotalPages() {
-    return total_pages;
+    return totalPages;
 }
 
 size_t KeGetUsedPages() {
-    return used_pages;
+    return usedPages;
 }
 
 size_t KeGetFreePages() {
-    return total_pages - used_pages;
+    return totalPages - usedPages;
 }
 
 size_t KeGetTotalMemory() {
-    return total_pages * PHYS_PAGE_SIZE;
+    return totalPages * PHYS_PAGE_SIZE;
 }
 
 size_t KeGetUsedMemory() {
-    return used_pages * PHYS_PAGE_SIZE;
+    return usedPages * PHYS_PAGE_SIZE;
 }
 
 size_t KeGetFreeMemory() {
-    return (total_pages - used_pages) * PHYS_PAGE_SIZE;
+    return (totalPages - usedPages) * PHYS_PAGE_SIZE;
 }

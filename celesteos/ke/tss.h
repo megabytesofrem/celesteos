@@ -20,10 +20,10 @@ typedef struct __attribute__((packed)) KeTaskStateSegment {
     uint64_t ist[7];
     uint64_t reserved2;
     uint16_t reserved3;
-    uint16_t io_map_base;
+    uint16_t ioMapBase;
 } KeTaskStateSegment;
 
-extern KeTaskStateSegment g_kernelTss;
+extern KeTaskStateSegment gKernelTss;
 
 /**
  * Initialize the boot CPU TSS and dedicated bootstrap, double-fault and

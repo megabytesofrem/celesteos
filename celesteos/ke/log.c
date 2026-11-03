@@ -10,9 +10,9 @@ static void KePrintCharacter(
     char character, uint32_t foregroundColor, uint32_t backgroundColor, bool bold) {
     outb(0xE9, character);
 
-    if (KeFbIsInitialized(&g_keFramebuffer)) {
-        KeFbSetBold(&g_keFramebuffer, bold);
-        KeFbPutCharacter(&g_keFramebuffer, character, foregroundColor, backgroundColor);
+    if (KeFbIsInitialized(&gKeFramebuffer)) {
+        KeFbSetBold(&gKeFramebuffer, bold);
+        KeFbPutCharacter(&gKeFramebuffer, character, foregroundColor, backgroundColor);
     }
 }
 
@@ -115,7 +115,7 @@ void KeLog(KeLogLevel level, const char *format, ...) {
         break;
     }
 
-    KeFbSetBold(&g_keFramebuffer, false);
+    KeFbSetBold(&gKeFramebuffer, false);
     KeVPrint(format, 0xFFFFFFFF, 0x00000000, args);
 
     va_end(args);

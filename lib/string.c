@@ -36,7 +36,7 @@ size_t strncmp(const char *str1, const char *str2, size_t num) {
 }
 
 char *strcat(char *dest, const char *src) {
-    char *original_dest = dest;
+    char *originalDest = dest;
     while (*dest != '\0') {
         ++dest;
     }
@@ -46,20 +46,20 @@ char *strcat(char *dest, const char *src) {
     }
 
     *dest = '\0';
-    return original_dest;
+    return originalDest;
 }
 
 char *strcpy(char *dest, const char *src) {
-    char *original_dest = dest;
+    char *originalDest = dest;
     while (*src) {
         *dest++ = *src++;
     }
     *dest = '\0';
-    return original_dest;
+    return originalDest;
 }
 
 char *strncpy(char *dest, const char *src, size_t num) {
-    char *original_dest = dest;
+    char *originalDest = dest;
     while (num && *src) {
         *dest++ = *src++;
         --num;
@@ -68,7 +68,7 @@ char *strncpy(char *dest, const char *src, size_t num) {
         *dest++ = '\0';
         --num;
     }
-    return original_dest;
+    return originalDest;
 }
 
 void *memset(void *ptr, int value, size_t num) {
@@ -179,8 +179,8 @@ void ftoa(double value, char *str, int precision) {
     }
 
     // Extract integer part
-    int int_part = (int)value;
-    itoa(int_part, str, 10);
+    int intPart = (int)value;
+    itoa(intPart, str, 10);
 
     // Move the pointer to the end of the integer part
     while (*str != '\0') {
@@ -191,12 +191,12 @@ void ftoa(double value, char *str, int precision) {
     *str++ = '.';
 
     // Extract fractional part
-    double frac_part = value - int_part;
+    double fracPart = value - intPart;
     for (int i = 0; i < precision; ++i) {
-        frac_part *= 10;
-        int digit = (int)frac_part;
+        fracPart *= 10;
+        int digit = (int)fracPart;
         *str++ = '0' + digit;
-        frac_part -= digit;
+        fracPart -= digit;
     }
 
     // Null-terminate the string

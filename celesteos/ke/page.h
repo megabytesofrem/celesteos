@@ -25,12 +25,12 @@ typedef struct KePageTableEntry {
     uint64_t value;
 } KePageTableEntry;
 
-static inline int KeSetPteAddress(KePageTableEntry *entry, uint64_t phys_addr) {
+static inline int KeSetPteAddress(KePageTableEntry *entry, uint64_t physAddr) {
     if (!entry) {
         return ERR_INVALID_ARG;
     }
 
-    entry->value = (entry->value & ~0x000FFFFFFFFFF000ULL) | (phys_addr & 0x000FFFFFFFFFF000ULL);
+    entry->value = (entry->value & ~0x000FFFFFFFFFF000ULL) | (physAddr & 0x000FFFFFFFFFF000ULL);
     return 0;
 }
 
@@ -110,39 +110,39 @@ typedef struct __attribute__((aligned(4096))) KePageTable {
 /**
  * Initialize the page map using the active bootloader page table.
  */
-int KePageMapInit(uint64_t hhdm_base_offset);
+int KePageMapInit(uint64_t hhdmBaseOffset);
 
 /**
  * Map a virtual address to a physical address with the specified flags.
  */
-int KeMapPage(KePageTable *table, uint64_t virt_addr, uint64_t phys_addr, uint64_t flags);
+int KeMapPage(KePageTable *table, uint64_t virtAddr, uint64_t physAddr, uint64_t flags);
 
 /**
  * Unmap a virtual address from the page table.
  */
-int KeUnmapPage(KePageTable *table, uint64_t virt_addr);
+int KeUnmapPage(KePageTable *table, uint64_t virtAddr);
 
 /**
  * Create a new user-space PML4 page table.
  */
-KePageTable *KeCreateUserPageTable(uint64_t hhdm_base);
+KePageTable *KeCreateUserPageTable(uint64_t hhdmBase);
 
 /**
  * Switch the active PML4 page table to the specified new PML4.
  * CR3 holds the physical address of the new PML4.
  */
-int KePageMapSwitchTo(KePageTable *new_pml4);
+int KePageMapSwitchTo(KePageTable *newPml4);
 
 /**
  * Invalidate page tables for the specified virtual address.
  */
-int KePageMapInvalidate(uint64_t virt_addr);
+int KePageMapInvalidate(uint64_t virtAddr);
 
 /**
  * Translate a virtual address to its corresponding physical address using the specified
  * page table.
  */
-uint64_t KeTranslatePhysAddress(KePageTable *table, uint64_t virt_addr);
+uint64_t KeTranslatePhysAddress(KePageTable *table, uint64_t virtAddr);
 
 /**
  * Get the kernel PML4's HHDM pointer and physical address saved by pmap_init.

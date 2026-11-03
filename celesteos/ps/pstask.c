@@ -7,10 +7,10 @@
 #include <limits.h>
 #include <stdatomic.h>
 
-static PsTask g_tasks[MAX_TASKS];
-static ObObjectPool g_taskPool;
-static uint64_t g_hhdmBase;
-static _Atomic uint64_t g_nextPid = 1;
+static PsTask gTasks[MAX_TASKS];
+static ObObjectPool gTaskPool;
+static uint64_t gHhdmBase;
+static _Atomic uint64_t gNextPid = 1;
 
 #define PS_HANDLE_INDEX_BITS 8U
 #define PS_HANDLE_INDEX_MASK ((UINT64_C(1) << PS_HANDLE_INDEX_BITS) - 1)
@@ -19,7 +19,7 @@ static _Atomic uint64_t g_nextPid = 1;
 static void PsTaskCreateObject(ObHeader *object, ObObjectData data);
 static void PsTaskDestroyObject(ObHeader *object);
 
-static const ObOperations g_taskOperations = {
+static const ObOperations gTaskOperations = {
     .name = "task",
     .create = PsTaskCreateObject,
     .destroy = PsTaskDestroyObject,
@@ -42,17 +42,17 @@ static bool PsDecodeHandle(KeSvcHandle handle, size_t *index, uint64_t *generati
 }
 
 void PsTaskSubsystemInit(uint64_t hhdmBase) {
-    g_hhdmBase = hhdmBase;
-    ObObjectPoolInit(&g_taskPool, g_tasks, sizeof(g_tasks[0]), MAX_TASKS, &g_taskOperations);
-    atomic_store_explicit(&g_nextPid, 1, memory_order_relaxed);
+    gHhdmBase = hhdmBase;
+    ObObjectPoolInit(&gTaskPool, gTasks, sizeof(gTasks[0]), MAX_TASKS, &gTaskOperations);
+    atomic_store_explicit(&gNextPid, 1, memory_order_relaxed);
 }
 
 static void PsTaskCreateObject(ObHeader *object, ObObjectData data) {
     (void)data;
     PsTask *task = (PsTask *)object;
     KeSpinLockInit(&task->handleLock);
-    task->pid = (PsTaskId)atomic_fetch_add_explicit(&g_nextPid, 1, memory_order_relaxed);
-    task->pageTable = KeCreateUserPageTable(g_hhdmBase);
+    task->pid = (PsTaskId)atomic_fetch_add_explicit(&gNextPid, 1, memory_order_relaxed);
+    task->pageTable = KeCreateUserPageTable(gHhdmBase);
     task->threadCount = 0;
 }
 
@@ -76,7 +76,7 @@ static void PsTaskDestroyObject(ObHeader *object) {
 }
 
 PsTask *PsTaskCreate(void) {
-    PsTask *task = (PsTask *)ObCreateInPool(&g_taskPool, ObObjectTypeTask, NULL);
+    PsTask *task = (PsTask *)ObCreateInPool(&gTaskPool, ObObjectTypeTask, NULL);
     if (!task) {
         return NULL;
     }
@@ -125,6 +125,8 @@ ObHeader *PsGetTaskHandleObject(PsTask *task, KeSvcHandle handle, uint32_t requi
     KeSpinLockAcquire(&task->handleLock);
     PsHandle *entry = &task->handles[index];
     ObHeader *object = NULL;
+
+    // Validate the handle by checking the object, generation, and required access rights
     if (entry->object && entry->generation == generation &&
         (entry->access & requiredAccess) == requiredAccess) {
         object = entry->object;

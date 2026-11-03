@@ -8,7 +8,7 @@
 
 #define PHYS_PAGE_SIZE 4096 /* 4 KiB pages*/
 
-int KeInitPhysMemoryManager(struct limine_memmap_response *memmap, uint64_t hhdm_base_offset);
+int KeInitPhysMemoryManager(struct limine_memmap_response *memmap, uint64_t hhdmBaseOffset);
 
 /**
  * Allocate a single page of physical memory.
@@ -18,7 +18,7 @@ int KeAllocPhysPage(void **page);
 /**
  * Allocate multiple contiguous pages of physical memory.
  */
-int KeAllocPhysPages(size_t count, void **out_pages);
+int KeAllocPhysPages(size_t count, void **outPages);
 
 /**
  * Free a single page of physical memory.
@@ -28,7 +28,7 @@ int KeFreePhysPage(void *page);
 /**
  * Free multiple contiguous pages of physical memory.
  */
-int KeFreePhysPages(void *start_page, size_t count);
+int KeFreePhysPages(void *startPage, size_t count);
 
 size_t KeGetTotalPages();
 size_t KeGetUsedPages();
